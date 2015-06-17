@@ -197,17 +197,6 @@
           //console.log(timeStamp);
           //console.log(logData);
           
-//        _.each(timeStamp, function(val) {
-//            //console.log(val.timestamp1);
-//            var rev1 = _.find(logData, function(time1){ return time1 == val.timestamp1 });
-//            console.log(rev1);
-//            var rev2 = _.find(logData, function(time2){ return time2 == val.timestamp2 });
-//            //console.log(val.timestamp2);
-//            console.log(rev2);
-//            
-//            
-//        });
-          
           var indexArray = [];
           var stampIndex = function(index1, index2){
               return { 
@@ -221,26 +210,10 @@
               return val[1];
           });
           
-          //console.log(logData);
           var counter = 1;
           _.each(timeStamp, function(val) {
               //console.log(val);
-              //_.each(logData, function(val2) {
-                  //console.log(val2);
-                  //var rev1 = _.find(logData, function(time1){ return time1 == val.timestamp1 });
-              
-              //console.log(counter)
-              //console.log('1');
               indexArray.push(stampIndex(_.indexOf(reducedlogData, val.timestamp1),_.indexOf(reducedlogData,            val.timestamp2)));
-              //console.log(_.indexOf(reducedlogData, val.timestamp1));
-              //console.log('2');
-              //console.log(_.indexOf(reducedlogData, val.timestamp2));
-              counter = counter + 1;
-                  //console.log(rev1);
-                  //var rev2 = _.find(logData, function(time1){ return time1 == val.timestamp2 });
-                  //console.log(rev2);
-              
-         // });
           
          });
           
