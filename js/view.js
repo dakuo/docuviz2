@@ -252,6 +252,7 @@
         };
       };
 
+
         rawData = data;
         //console.log('original');
         //console.log(rawData);
@@ -361,8 +362,8 @@
           var raw = jQuery.parseJSON(data.substring(4));
           // Send Changelog data to Model
             //console.log(data);
-          chrome.runtime.sendMessage({msg: 'changelog', docId: that.getDocId(), changelog: raw.changelog, authors: that.authors}, function(data) {});
-            chrome.runtime.sendMessage({msg: 'buildRevLengths', changelog: raw.changelog, timeStamp: that.timeStamps[0]}, function(data){});
+          chrome.runtime.sendMessage({msg: 'changelog', docId: that.getDocId(), changelog: raw.changelog, authors: that.authors, timeStamp: that.timeStamps}, function(data) {});
+           // chrome.runtime.sendMessage({msg: 'buildRevLengths', changelog: raw.changelog, timeStamp: that.timeStamps[0]}, function(data){});
         },
         error: function(error) {
           console.log(error.status);
