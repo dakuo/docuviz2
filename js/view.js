@@ -347,7 +347,7 @@
 
 
     // Retrieve Changelog data and send it to Model
-    getChangelog: function(url) {
+    getChangelog: function(url, vizType) {
       // this stores reference to current object
       var that = this;
 
@@ -362,7 +362,7 @@
           var raw = jQuery.parseJSON(data.substring(4));
           // Send Changelog data to Model
             //console.log(data);
-          chrome.runtime.sendMessage({msg: 'changelog', docId: that.getDocId(), changelog: raw.changelog, authors: that.authors, timeStamp: that.timeStamps}, function(data) {});
+          chrome.runtime.sendMessage({msg: 'changelog', vizType: vizType, docId: that.getDocId(), changelog: raw.changelog, authors: that.authors, timeStamp: that.timeStamps}, function(data) {});
            // chrome.runtime.sendMessage({msg: 'buildRevLengths', changelog: raw.changelog, timeStamp: that.timeStamps[0]}, function(data){});
         },
         error: function(error) {
@@ -370,7 +370,6 @@
         }
       });
     },
-
 
     // Bind Click Event onto the Authorviz Button
     addListenerToAuthorvizBtn: function() {
@@ -385,7 +384,7 @@
           
 
         changelogUrl = that.getChangelogUrl(location.href);
-        that.getChangelog(changelogUrl);
+        that.getChangelog(changelogUrl,'authorviz');
 
         // Remove the click event from Authorviz button
         $(document).off('click', '.js-authorviz-btn');
@@ -407,7 +406,7 @@
           console.log('got docuviz');
 
         changelogUrl = that.getChangelogUrlForDocuviz(location.href);
-        that.getChangelog(changelogUrl);
+        that.getChangelog(changelogUrl, 'docuviz');
 
         // Remove the click event from Authorviz button
         $(document).off('click', '.js-docuviz-btn');
@@ -430,7 +429,7 @@
       // js-result: The result panel
       // js-left-panel: Left Panel
 
-      var html = '<div class="authorviz js-authorviz hideVisually"><div class="authorviz__layout"><div class="l-half l-half--left authorviz__wrap--left"><div class="aligner txt-c js-left-panel" style="height: 100%"><div class="aligner-item authorviz__intro"><div class="aligner-item aligner-item-top"><h3 class="authorivz__doc-title js-doc-title">Final Paper</h3><div class="js-author authorviz__author"></div></div><div class="aligner-item js-progress-bar"><div class="authorviz__progress-bar"><div class="authorviz__progress-bar-item js-progress-so-far"></div></div><p class="authorviz__loading-text">Loading <span class="js-revision-so-far">0</span>/<span class="js-revision-out-of">?</span> revisions</p></div></div></div></div><div class="l-half l-half--right authorviz__wrap--right"><div class="authoviz__box js-result"></div></div></div></div>';
+      var html = '<div class="authorviz js-authorviz hideVisually"><div class="authorviz__layout"><div class="l-half l-half--top authorviz__wrap--top"><div class="aligner txt-c js-left-panel" style="height: 100%"><div class="aligner-item authorviz__intro"><div class="aligner-item aligner-item-top"><h3 class="authorivz__doc-title js-doc-title">Final Paper</h3><div class="js-author authorviz__author"></div></div><div class="aligner-item js-progress-bar"><div class="authorviz__progress-bar"><div class="authorviz__progress-bar-item js-progress-so-far"></div></div><p class="authorviz__loading-text">Loading <span class="js-revision-so-far">0</span>/<span class="js-revision-out-of">?</span> revisions</p></div></div></div></div><div class="l-half l-half--bottom authorviz__wrap--bottom"><div class="authoviz__box js-result"></div></div></div></div>';
 
       $('body').prepend(html);
 

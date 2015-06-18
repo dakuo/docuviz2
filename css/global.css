@@ -45,7 +45,7 @@ html, body {
   position: fixed;
   top: 0;
   height: 100%;
-  width: 50%;
+  width: 100%;
   z-index: 100000;
 }
 
@@ -53,10 +53,17 @@ html, body {
   left: 0;
 }
 
+.l-half--top {
+  bottom: 70%;
+}
+
 .l-half--right {
   right: 0;
 }
 
+.l-half--bottom {
+  top: 30%;
+}
 
 
 
@@ -64,12 +71,12 @@ html, body {
 /* Object */
 .aligner {
   position: relative;
-  height: 300px;
+  height: 400px;
 }
 
     .aligner-item {
       position:  absolute;
-      top:       50%;
+      top:       30%;
       left:      0;
       -webkit-transform: translate(0, -50%);
       -ms-transform: translate(0, -50%);
@@ -159,10 +166,20 @@ html, body {
 
 
 .authorviz__wrap--left {
-  background: rgba(32,38,47,0.95);
+    background: rgba(32,38,47,0.95);
+/*    background: white;*/
+}
+
+.authorviz__wrap--top {
+    background: rgba(32,38,47,0.95);
+/*    background: white;*/
 }
 
 .authorviz__wrap--right {
+  background: white;
+}
+
+.authorviz__wrap--bottom {
   background: white;
 }
 
@@ -171,7 +188,7 @@ html, body {
   position: relative;
   padding: 100px 60px;
   margin: 0 auto;
-  max-width: 800px;
+  max-width: 80%;
   height: 100%;
   overflow: auto;
   z-index: ;
@@ -179,7 +196,8 @@ html, body {
 
 .authorviz__intro {
   height: 350px;
-  padding: 0 30px
+  padding: 0 30px;
+    
 }
 
 
@@ -187,6 +205,9 @@ html, body {
   font-size: 40px;
   text-transform: uppercase;
   color: white;
+    position: relative;
+    top: 10px;
+    margin: 0 auto;
 }
 
 
@@ -215,7 +236,7 @@ html, body {
 .authorviz__progress-bar {
   position: relative;
     bottom: 0px;
-    top: 200px;
+    top: 30px;
   width: 100%;
   max-width: 400px;
   height: 8px;
@@ -235,5 +256,5 @@ html, body {
 .authorviz__loading-text {
   color: #999;
     position: relative;
-    top: 220px;
+    top: 50px;
 }

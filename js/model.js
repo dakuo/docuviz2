@@ -43,17 +43,17 @@
     },
 
     renderDocuviz: function(chars, authors) {
-        //return '<p>hello world</p>';
-      return _.reduce(chars, function(memo, obj) {
-        var author = _.where(authors, {id: obj.aid});
-
-        if(obj.s === "\n") {
-          return memo + "<br>";
-        } else {
-          return memo + '<span style="color:' + author[0]['color'] + '">' + obj.s + '</span>';
-        }
-
-      },'');
+        return '<svg height="210" width="400"><path d="M150 0 L75 200 L225 200 Z" /></svg>';
+//      return _.reduce(chars, function(memo, obj) {
+//        var author = _.where(authors, {id: obj.aid});
+//
+//        if(obj.s === "\n") {
+//          return memo + "<br>";
+//        } else {
+//          return memo + '<span style="color:' + author[0]['color'] + '">' + obj.s + '</span>';
+//        }
+//
+//      },'');
     },
       
       
@@ -153,7 +153,7 @@
     },
 
 
-    buildRevisions: function(docId, changelog, authors, timeStampsAndAuthors) {
+    buildRevisions: function(vizType, docId, changelog, authors, timeStampsAndAuthors) {
       // Clear previous revision data
       this.str = [];
 
@@ -202,10 +202,30 @@
             // When Progress Bar reaches 100%, do something
             if(soFar === revisionNumber) {
                 // === revisionNumber
-                console.log(revLengths);
+               // console.log(revLengths);
                 //JSON.stringify(revLengths);
                 var jsonText = JSON.stringify(revLengths);
-                console.log(jsonText);
+                //console.log(jsonText);
+                
+                
+                if (vizType === 'authorviz'){
+                    console.log('type is authorviz');
+                
+              html = that.render(that.str, authors); // need to change this to build Docuviz
+                console.log('length');
+                console.log(that.str.length);
+              chrome.tabs.query({url: '*://docs.google.com/*/' + docId + '/edit'}, function(tabs) {
+                chrome.tabs.sendMessage(tabs[0].id, {msg: 'render', html: html}, function(response) {
+                //    console.log(response);
+                    
+                });
+               });
+                
+                };
+                
+              if (vizType === 'docuviz'){
+                  console.log('type is docuviz');
+                  
                 
               html = that.renderDocuviz(that.str, authors); // need to change this to build Docuviz
                 console.log('length');
@@ -216,6 +236,9 @@
                     
                 });
                });
+                
+                };
+                
             };
               
              // console.log('current interval: ' + currentInterval);
@@ -291,7 +314,7 @@
       switch(request.msg) {
         // If the message is 'changelog', run 'buildRevision'
         case 'changelog':
-          authorviz.buildRevisions(request.docId, request.changelog, request.authors, request.timeStamp);
+          authorviz.buildRevisions(request.vizType, request.docId, request.changelog, request.authors, request.timeStamp);
             break;
 //          case 'buildRevLengths':
 //              authorviz.calculateRevisionLengths(request.changelog, request.timeStamp);
