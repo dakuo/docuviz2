@@ -41,20 +41,6 @@
 
       },'');
     },
-
-    renderDocuviz: function(chars, authors) {
-        return '<svg height="210" width="400"><path d="M150 0 L75 200 L225 200 Z" /></svg>';
-//      return _.reduce(chars, function(memo, obj) {
-//        var author = _.where(authors, {id: obj.aid});
-//
-//        if(obj.s === "\n") {
-//          return memo + "<br>";
-//        } else {
-//          return memo + '<span style="color:' + author[0]['color'] + '">' + obj.s + '</span>';
-//        }
-//
-//      },'');
-    },
       
       
     renderToString: function(chars) {
@@ -203,15 +189,13 @@
             if(soFar === revisionNumber) {
                 // === revisionNumber
                // console.log(revLengths);
-                //JSON.stringify(revLengths);
-                var jsonText = JSON.stringify(revLengths);
-                //console.log(jsonText);
+
                 
                 
                 if (vizType === 'authorviz'){
                     console.log('type is authorviz');
                 
-              html = that.render(that.str, authors); // need to change this to build Docuviz
+              html = that.render(that.str, authors);
                 console.log('length');
                 console.log(that.str.length);
               chrome.tabs.query({url: '*://docs.google.com/*/' + docId + '/edit'}, function(tabs) {
@@ -226,12 +210,14 @@
               if (vizType === 'docuviz'){
                   console.log('type is docuviz');
                   
-                
-              html = that.renderDocuviz(that.str, authors); // need to change this to build Docuviz
+                  //var jsonText = JSON.stringify(revLengths);
+                //console.log(jsonText);
+             // html = that.renderDocuviz(that.str, revLengths); // need to change this to build Docuviz
+                  console.log(revLengths);
                 console.log('length');
                 console.log(that.str.length);
               chrome.tabs.query({url: '*://docs.google.com/*/' + docId + '/edit'}, function(tabs) {
-                chrome.tabs.sendMessage(tabs[0].id, {msg: 'render', html: html}, function(response) {
+                chrome.tabs.sendMessage(tabs[0].id, {msg: 'renderDocuviz', chars: that.str, revData: revLengths}, function(response) {
                 //    console.log(response);
                     
                 });
@@ -249,10 +235,11 @@
                     
                     // array: [length, timestamp, author, current string]
                     //console.log(timeStampsAndAuthors[1][currentInterval]);
-                    revLengths.push([that.str.length,timeStampsAndAuthors[0][currentInterval], timeStampsAndAuthors[1][currentInterval],that.renderToString(that.str)]);
+                    // for the purpose of this version, current string interval is deleted: that.renderToString(that.str)
+                    revLengths.push([that.str.length,timeStampsAndAuthors[0][currentInterval], timeStampsAndAuthors[1][currentInterval]]);
                     //contentInterval.push(that.renderToString(that.str));
                     currentInterval +=1;
-                    //console.log('rev Array for:' + currentInterval + ' is '  + revLengths); 
+                   // console.log('rev Array for:' + currentInterval + ' is '  + revLengths); 
                     //console.log(contentInterval);
                 }
                 ;
