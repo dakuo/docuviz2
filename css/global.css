@@ -62,7 +62,7 @@ html, body {
 }
 
 .l-half--bottom {
-  top: 30%;
+  top: 20%;
 }
 
 
@@ -76,7 +76,7 @@ html, body {
 
     .aligner-item {
       position:  absolute;
-      top:       30%;
+      top:       15%;
       left:      0;
       -webkit-transform: translate(0, -50%);
       -ms-transform: translate(0, -50%);
@@ -195,24 +195,24 @@ html, body {
 }
 
 .authorviz__intro {
-  height: 350px;
+  height: 200px;
   padding: 0 30px;
     
 }
 
 
 .authorivz__doc-title {
-  font-size: 40px;
+  font-size: 36px;
   text-transform: uppercase;
   color: white;
     position: relative;
-    top: 10px;
+    top: 5px;
     margin: 0 auto;
 }
 
 
 .authorviz__author {
-  max-height: 500px;
+  max-height: 200px;
   margin: 0 auto;
 }
 
@@ -236,7 +236,7 @@ html, body {
 .authorviz__progress-bar {
   position: relative;
     bottom: 0px;
-    top: 30px;
+    top: 65px;
   width: 100%;
   max-width: 400px;
   height: 8px;
@@ -256,7 +256,7 @@ html, body {
 .authorviz__loading-text {
   color: #999;
     position: relative;
-    top: 50px;
+    top: 70px;
 }
 
 .axis path,

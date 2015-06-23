@@ -537,9 +537,11 @@
     renderResultPanelForDocuviz: function(chars, revData) {
         
 
-        var margin = {top: 20, right: 20, bottom: 30, left: 60},
-            width = 1000 - margin.left - margin.right,
+        var margin = {top: 10, right: 20, bottom: 30, left: 60},
+            width = 960 - margin.left - margin.right,
             height = 500 - margin.top - margin.bottom;
+        
+        var barHeight = 10; // author bar height
         
         var data = _.map(revData, function(val){
             var timeRev = new Date(val[1].timestamp2);
@@ -551,15 +553,32 @@
                    }
             });
         
-        console.log(revData);
+        var authorsColors = [];
+    
+        _.each(data, function(val){
+            var colorLoop = [];
+                _.each(val.revAuthor, function(val2){
+                    colorLoop.push(val2.color);
+                });
+            
+            authorsColors.push(colorLoop);
+        });
+            
+        console.log(authorsColors);
+
+
+        //console.log(revData);
         console.log(data);
+        
         // x is revTime
         // y scale is revLength 
-        var x = d3.time.scale()
-        .range([0, width]);
+
         
+		var x = d3.scale.ordinal().domain(d3.range(data.length)).rangeRoundBands([0, width], 0.5);
         var y = d3.scale.linear()
             .range([height, 0]);
+            y.domain(d3.extent(data, function(d) { return d.revLength; }));
+        
         
         var xAxis = d3.svg.axis()
             .scale(x)
@@ -567,10 +586,10 @@
 
         var yAxis = d3.svg.axis()
             .scale(y)
-            .orient("left");
+            .orient("left")
         
         var line = d3.svg.line()
-            .x(function(d) { return x(d.revTime); })
+            .x(function(d,i) { return x(i); })
             .y(function(d) { return y(d.revLength); });
         
         var svg = d3.select($('.js-result')[0]).append("svg")
@@ -579,8 +598,8 @@
           .append("g")
             .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-              x.domain(d3.extent(data, function(d) { return d.revTime; }));
-              y.domain(d3.extent(data, function(d) { return d.revLength; }));
+              //x.domain(d3.extent(data, function(d) { return d.revTime; }));
+              
         
 
         
@@ -592,9 +611,10 @@
           svg.append("g")
               .attr("class", "y axis")
               .call(yAxis)
+       //   .attr("transform", "translate(" + margin.left + ",0)")
             .append("text")
               .attr("transform", "rotate(-90)")
-              .attr("y", 9)
+              .attr("y", 6)
               .attr("dy", ".71em")
               .style("text-anchor", "end")
               .text("Revision Lengths");
@@ -604,6 +624,42 @@
               .attr("class", "line")
               .attr("d", line);
         
+        // Draw author legends:
+        
+		 for(var index = 0; index< authorsColors.length; index++){
+            // console.log('current index: ' + index);
+		 	var currentColors = authorsColors[index][0]; 
+             console.log(authorsColors[index]);
+			//deal with multi author
+				svg.selectAll("authorLabel_"+index).data(authorsColors[index]).enter().append("rect")
+            // svg.select($('x axis')[0]).data(currentColors).enter().append("rect")
+				.attr("class", "author_label")
+				.attr("x", function() {
+                    
+					return x(index);
+				})
+				.attr("y", function(d,i){
+					return (i*(barHeight + 1)) + height+30;
+                    //return height+30;
+				})
+				// "rev" for the change authorlabel function
+				//.attr("rev",index + revision_start_index - 1)
+				.attr("width", x.rangeBand())
+				.attr("height", barHeight)
+//                .style("fill", currentColors)
+				.style("fill", function(d, i) {
+					return d;
+				})
+				.attr("transform", "translate(0," + (margin.top - (5*barHeight)) + ")")
+				//work on the "authors being there without editing anything" issue, the change will only effect the author label. code by Dakuo
+				/*
+				.on("click", function(d) {
+					$('#authorlabel_change_doc_id').val(doc_id);
+					$('#authorlabel_change_rev_id').val($(this.attr("rev"));
+					$('#authorlabel_dialog_form').dialog( "open" );
+				});
+				*/;
+			}
         
        // console.log(svg);
         
@@ -638,7 +694,7 @@
           sendResponse('end');
           break;
               
-        case 'renderDocuviz':
+        case 'renderDocuviz': // this is when the Docuviz button is pressed
           authorviz.renderResultPanelForDocuviz(request.chars, request.revData);
           sendResponse('end');
           break;
