@@ -537,7 +537,7 @@
     renderResultPanelForDocuviz: function(chars, revData) {
         
 
-        var margin = {top: 60, right: 20, bottom: 30, left: 60},
+        var margin = {top: 160, right: 20, bottom: 20, left: 60},
             width = 1280 - margin.left - margin.right,
             height = 500 - margin.top - margin.bottom;
         
@@ -547,6 +547,7 @@
             var timeRev = new Date(val[1].timestamp2);
             var parseTime = timeRev.toISOString();
             var parseDate = new Date(parseTime);
+            //var dayDate = parseDate.toLocaleString();
             return {revLength: val[0],
                     revAuthor: val[2],
                     revTime: parseDate
@@ -570,11 +571,13 @@
         //console.log(revData);
         console.log(data);
         
-        // x is revTime
+        // x is revTimes
         // y scale is revLength 
 
         
-		var x = d3.scale.ordinal().domain(d3.range(data.length)).rangeRoundBands([0, width], 0.2);
+		
+        var x = d3.scale.ordinal().domain(d3.range(data.length)).rangeRoundBands([0, width], 0.5);
+        //var x = d3.scale.ordinal().domain(_.map(data, function(d) { return d.revTime; })).rangeRoundBands([0, width], 0.2);
         var y = d3.scale.linear()
             .range([0, height]);
             y.domain([d3.min(data, function(d) { return d.revLength; }) - (d3.max(data, function(d) { return d.revLength; }) / data.length),d3.max(data, function(d) { return d.revLength; })]);
@@ -583,11 +586,12 @@
         
         var xAxis = d3.svg.axis()
             .scale(x)
-            .orient("top");
+            .orient("top")
+        .tickFormat('');
 
         var yAxis = d3.svg.axis()
             .scale(y)
-            .orient("left")
+            .orient("left");
         
         var line = d3.svg.line()
             .x(function(d,i) { return x(i); })
@@ -598,9 +602,6 @@
             .attr("height", height + margin.top + margin.bottom)
           .append("g")
             .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-
-              //x.domain(d3.extent(data, function(d) { return d.revTime; }));
-              
         
 
         
@@ -632,13 +633,36 @@
           .data(data)
         .enter().append("rect")
           .attr("class", "bar")
-          .attr("x", function(d,i) { return x(i); })
+         // .attr("x", function(d) { return x(d.revTime); })
+      .attr("x", function(d,i) { return x(i); })
           .attr("width", x.rangeBand())
           .attr("y", 0)
           .attr("height", function(d) { return y(d.revLength); })
       .style("fill", function(d) {
 					return d.revAuthor[0].color;
 				});
+        
+        
+        // Draw time label:
+        
+        
+        
+		var time_label = svg.selectAll("time_label").data(data).enter()
+		.append("text")
+		.attr("class", "time_label")
+		.attr("x", 80)
+		.attr("y", function(d, i) {
+			return x(i) + (x.rangeBand()/2);
+		})
+		.attr("font-family", "sans-serif")
+		.attr("font-size", "10px")
+		.attr("fill", "black")
+		.html(
+			function(d) {
+				return d.revTime.toString().substring(4, 10) + " " + d.revTime.toString().substring(16, 21);
+			})
+		.attr("transform","translate(0," + 15 + ") rotate(-90)");   
+
         
         // Draw author legends:
         
@@ -655,31 +679,17 @@
 					return x(index);
 				})
 				.attr("y", function(d,i){
-					return (i*(barHeight + 1)) - 50;
+					return (i*(barHeight + 1)) - 120;
                     //return height+30;
 				})
-				// "rev" for the change authorlabel function
-				//.attr("rev",index + revision_start_index - 1)
+
 				.attr("width", x.rangeBand())
 				.attr("height", barHeight)
-//                .style("fill", currentColors)
 				.style("fill", function(d, i) {
 					return d;
 				})
-				.attr("transform", "translate(0," + (margin.top - (5*barHeight)) + ")")
-				//work on the "authors being there without editing anything" issue, the change will only effect the author label. code by Dakuo
-				/*
-				.on("click", function(d) {
-					$('#authorlabel_change_doc_id').val(doc_id);
-					$('#authorlabel_change_rev_id').val($(this.attr("rev"));
-					$('#authorlabel_dialog_form').dialog( "open" );
-				});
-				*/;
+				.attr("transform", "translate(0," + (6*barHeight) + ")");
 			}
-        
-       // console.log(svg);
-        
-        
     },
 
   });
