@@ -186,9 +186,9 @@ html, body {
 
 .authoviz__box {
   position: relative;
-  padding: 100px 60px;
-  margin: 0 auto;
-  max-width: 80%;
+  padding: 50px 20px;
+  margin: 50px auto;
+  max-width: 90%;
   height: 100%;
   overflow: auto;
   z-index: ;
@@ -274,4 +274,8 @@ html, body {
   fill: none;
   stroke: steelblue;
   stroke-width: 1.5px;
+}
+
+.bar {
+  fill: steelblue;
 }

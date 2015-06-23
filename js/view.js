@@ -537,8 +537,8 @@
     renderResultPanelForDocuviz: function(chars, revData) {
         
 
-        var margin = {top: 10, right: 20, bottom: 30, left: 60},
-            width = 960 - margin.left - margin.right,
+        var margin = {top: 60, right: 20, bottom: 30, left: 60},
+            width = 1280 - margin.left - margin.right,
             height = 500 - margin.top - margin.bottom;
         
         var barHeight = 10; // author bar height
@@ -564,7 +564,7 @@
             authorsColors.push(colorLoop);
         });
             
-        console.log(authorsColors);
+        //console.log(authorsColors);
 
 
         //console.log(revData);
@@ -574,15 +574,16 @@
         // y scale is revLength 
 
         
-		var x = d3.scale.ordinal().domain(d3.range(data.length)).rangeRoundBands([0, width], 0.5);
+		var x = d3.scale.ordinal().domain(d3.range(data.length)).rangeRoundBands([0, width], 0.2);
         var y = d3.scale.linear()
-            .range([height, 0]);
-            y.domain(d3.extent(data, function(d) { return d.revLength; }));
+            .range([0, height]);
+            y.domain([d3.min(data, function(d) { return d.revLength; }) - (d3.max(data, function(d) { return d.revLength; }) / data.length),d3.max(data, function(d) { return d.revLength; })]);
         
+        console.log("Mininum is " + d3.min(data, function(d) { return d.revLength; }));
         
         var xAxis = d3.svg.axis()
             .scale(x)
-            .orient("bottom");
+            .orient("top");
 
         var yAxis = d3.svg.axis()
             .scale(y)
@@ -605,7 +606,7 @@
         
           svg.append("g")
               .attr("class", "x axis")
-              .attr("transform", "translate(0," + height + ")")
+              .attr("transform", "translate(0," + 10 + ")")
               .call(xAxis);
 
           svg.append("g")
@@ -617,19 +618,34 @@
               .attr("y", 6)
               .attr("dy", ".71em")
               .style("text-anchor", "end")
-              .text("Revision Lengths");
+              .text("Revs");
 
-          svg.append("path")
-              .datum(data)
-              .attr("class", "line")
-              .attr("d", line);
+//          svg.append("path")
+//              .datum(data)
+//              .attr("class", "line")
+//              .attr("d", line);
+        
+        
+        
+        
+      svg.selectAll(".bar")
+          .data(data)
+        .enter().append("rect")
+          .attr("class", "bar")
+          .attr("x", function(d,i) { return x(i); })
+          .attr("width", x.rangeBand())
+          .attr("y", 0)
+          .attr("height", function(d) { return y(d.revLength); })
+      .style("fill", function(d) {
+					return d.revAuthor[0].color;
+				});
         
         // Draw author legends:
         
 		 for(var index = 0; index< authorsColors.length; index++){
             // console.log('current index: ' + index);
 		 	var currentColors = authorsColors[index][0]; 
-             console.log(authorsColors[index]);
+             //console.log(authorsColors[index]);
 			//deal with multi author
 				svg.selectAll("authorLabel_"+index).data(authorsColors[index]).enter().append("rect")
             // svg.select($('x axis')[0]).data(currentColors).enter().append("rect")
@@ -639,7 +655,7 @@
 					return x(index);
 				})
 				.attr("y", function(d,i){
-					return (i*(barHeight + 1)) + height+30;
+					return (i*(barHeight + 1)) - 50;
                     //return height+30;
 				})
 				// "rev" for the change authorlabel function
