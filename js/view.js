@@ -292,27 +292,7 @@
                           
     return [timestamps, authors];
     },
-      
-      
-//      calculateRevisionLengths: function(logData, timeStamp){
-//          console.log(timeStamp);
-//          console.log(logData);
-//          
-//        _.each(timeStamp, function(val) {
-//            //console.log(val.timestamp1);
-//            var rev1 = _.find(logData, function(time1){ return time1 == val.timestamp1 });
-//            console.log(rev1);
-//            var rev2 = _.find(logData, function(time2){ return time2 == val.timestamp2 });
-//            //console.log(val.timestamp2);
-//            console.log(rev2);
-//            
-//            
-//        });
-//          
-//        
-//    
-//        
-//    },
+
       
     getDocTitle: function() {
       return $('#docs-title-inner').text();
@@ -550,7 +530,8 @@
             //var dayDate = parseDate.toLocaleString();
             return {revLength: val[0],
                     revAuthor: val[2],
-                    revTime: parseDate
+                    revTime: parseDate,
+                    revSegments: val[3],
                    }
             });
         
@@ -593,9 +574,9 @@
             .scale(y)
             .orient("left");
         
-        var line = d3.svg.line()
-            .x(function(d,i) { return x(i); })
-            .y(function(d) { return y(d.revLength); });
+//        var line = d3.svg.line()
+//            .x(function(d,i) { return x(i); })
+//            .y(function(d) { return y(d.revLength); });
         
         var svg = d3.select($('.js-result')[0]).append("svg")
             .attr("width", width + margin.left + margin.right)
