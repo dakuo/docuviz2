@@ -143,12 +143,12 @@
 
       // Async run through each entry in a synchronous sequence.
       async.eachSeries(changelog, function(entry, callBack) {
-        authorId = entry[2],
-        command = entry[0];
+            authorId = entry[2],
+            command = entry[0];
 
         // Retrieve the Google Doc Tab and send a message to that Tab's view
-        chrome.tabs.query({url: '*://docs.google.com/*/' + docId + '/edit'}, function(tabs) {
-          chrome.tabs.sendMessage(tabs[0].id, {msg: 'progress', soFar: soFar + 1}, function(response) {
+            chrome.tabs.query({url: '*://docs.google.com/*/' + docId + '/edit'}, function(tabs) {
+            chrome.tabs.sendMessage(tabs[0].id, {msg: 'progress', soFar: soFar + 1}, function(response) {
 
               
             // Update progress bar
@@ -173,11 +173,11 @@
                 if (vizType === 'authorviz'){
                     console.log('type is authorviz');
                 
-              html = that.render(that.str, authors);
-                console.log('length');
-                console.log(that.str.length);
-              chrome.tabs.query({url: '*://docs.google.com/*/' + docId + '/edit'}, function(tabs) {
-                chrome.tabs.sendMessage(tabs[0].id, {msg: 'render', html: html}, function(response) {
+                    html = that.render(that.str, authors);
+                    console.log('length');
+                    console.log(that.str.length);
+                    chrome.tabs.query({url: '*://docs.google.com/*/' + docId + '/edit'}, function(tabs) {
+                    chrome.tabs.sendMessage(tabs[0].id, {msg: 'render', html: html}, function(response) {
                 //    console.log(response);
                     
                 });
@@ -186,12 +186,10 @@
                 };
                 
               if (vizType === 'docuviz'){
-                  console.log('type is docuviz');
-                
-             // html = that.renderDocuviz(that.str, revLengths); // need to change this to build Docuviz
-                  console.log("revLength: " + revLengths);
-              chrome.tabs.query({url: '*://docs.google.com/*/' + docId + '/edit'}, function(tabs) {
-                chrome.tabs.sendMessage(tabs[0].id, {msg: 'renderDocuviz', chars: that.str, revData: revLengths}, function(response) {
+                    console.log('type is docuviz');
+                 // console.log("revLength: " + revLengths);
+                    chrome.tabs.query({url: '*://docs.google.com/*/' + docId + '/edit'}, function(tabs) {
+                    chrome.tabs.sendMessage(tabs[0].id, {msg: 'renderDocuviz', chars: that.str, revData: revLengths}, function(response) {
                 //    console.log(response);
                     
                 });
@@ -208,7 +206,7 @@
 
 //                        console.log("authors: " + authors);
                         var segments = that.buildAuthorsSegment(that.str,authors);
-                        console.log("segments: " + currentInterval + " " + segments);
+                        //console.log("segments: " + currentInterval + " " + segments);
                         // array: [length, timestamp, author, current string]
                         //console.log(timeStampsAndAuthors[1][currentInterval]);
                         // for the purpose of this version, current string interval is deleted: that.renderToString(that.str)
@@ -245,7 +243,11 @@
               
               if (element.aid != tempAuthor){
                   //console.log("not equal");
-                  segments.push([tempAuthor, content: tempStr]);
+                  var currentAuthor = _.find(authors, function(eachAuthor){ 
+                      return eachAuthor.id === tempAuthor;
+                  });
+                  
+                  segments.push([currentAuthor, tempStr]);
                   tempStr = '';
                   tempAuthor = element.aid;
               };
@@ -253,11 +255,13 @@
               if (element.aid === tempAuthor) {
                   //console.log("equal");
                   tempStr += element.s;
+                  var currentAuthor = _.find(authors, function(eachAuthor){ 
+                      return eachAuthor.id === tempAuthor;
+                  });
                   
                   // the if statement below handles the case when the revision is done by 1 author
                   if (counter === (chars.length-1)){
-                      console.log("enter the end");
-                      segments.push([tempAuthor,tempStr]);
+                      segments.push([currentAuthor,tempStr]);
                   };
               };
               counter += 1;
@@ -290,13 +294,9 @@
               //console.log(val);
               indexArray.push(stampIndex(_.indexOf(reducedlogData, val.timestamp1),_.indexOf(reducedlogData,            val.timestamp2)));
           
-         });
-          
-          console.log(indexArray);
-          
+         }); 
+          //console.log(indexArray);
           return indexArray;
-    
-        
     },
       
       
@@ -312,9 +312,6 @@
         case 'changelog':
           authorviz.buildRevisions(request.vizType, request.docId, request.changelog, request.authors, request.timeStamp);
             break;
-//          case 'buildRevLengths':
-//              authorviz.calculateRevisionLengths(request.changelog, request.timeStamp);
-//              break;
 
         default:
       }
