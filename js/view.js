@@ -546,22 +546,16 @@
             authorsColors.push(colorLoop);
         });
             
-        //console.log(authorsColors);
-
-
-        //console.log(revData);
         console.log(data);
         
-        // x is revTimes
-        // y scale is revLength 
 
         
 		
         var x = d3.scale.ordinal().domain(d3.range(data.length)).rangeRoundBands([0, width], 0.5);
-        //var x = d3.scale.ordinal().domain(_.map(data, function(d) { return d.revTime; })).rangeRoundBands([0, width], 0.2);
         var y = d3.scale.linear()
             .range([0, height]);
-            y.domain([d3.min(data, function(d) { return d.revLength; }) - (d3.max(data, function(d) { return d.revLength; }) / data.length),d3.max(data, function(d) { return d.revLength; })]);
+
+        y.domain([0, d3.max(data, function(d) { return d.revLength; })]);
         
         console.log("Mininum is " + d3.min(data, function(d) { return d.revLength; }));
         
@@ -574,9 +568,6 @@
             .scale(y)
             .orient("left");
         
-//        var line = d3.svg.line()
-//            .x(function(d,i) { return x(i); })
-//            .y(function(d) { return y(d.revLength); });
         
         var svg = d3.select($('.js-result')[0]).append("svg")
             .attr("width", width + margin.left + margin.right)
@@ -594,39 +585,36 @@
           svg.append("g")
               .attr("class", "y axis")
               .call(yAxis)
-       //   .attr("transform", "translate(" + margin.left + ",0)")
             .append("text")
-              .attr("transform", "rotate(-90)")
+              .attr("transform", "translate("+ 0 +","+ (height - 100) +")" + "rotate(-90)")
               .attr("y", 6)
               .attr("dy", ".71em")
               .style("text-anchor", "end")
-              .text("Revs");
-
-//          svg.append("path")
-//              .datum(data)
-//              .attr("class", "line")
-//              .attr("d", line);
+              .text("Revision Length");
         
         
+        // New version bag graph with segments:
         
-        
-      svg.selectAll(".bar")
-          .data(data)
-        .enter().append("rect")
-          .attr("class", "bar")
-         // .attr("x", function(d) { return x(d.revTime); })
-      .attr("x", function(d,i) { return x(i); })
-          .attr("width", x.rangeBand())
-          .attr("y", 0)
-          .attr("height", function(d) { return y(d.revLength); })
-      .style("fill", function(d) {
-					return d.revAuthor[0].color;
-				});
-        
+        _.each(data, function(rev, index){
+            var segStartIndex = 0;
+            var soFarSegmentsLength = 0;
+            svg.selectAll(".bar").data(rev.revSegments).enter()
+            .append("rect")
+            .attr("x", function(d,i) { return x(index); })
+            .attr("y", function(d,i){
+                segStartIndex = y(soFarSegmentsLength);
+                soFarSegmentsLength = soFarSegmentsLength + d[1].length;
+                return segStartIndex;})
+            
+            .attr("width", x.rangeBand())
+            .attr("height", function(d,i){ 
+                //console.log(d[1].length);
+                return y(d[1].length);})
+            .style("fill", function(d) { return d[0].color;}); 
+            
+        });
         
         // Draw time label:
-        
-        
         
 		var time_label = svg.selectAll("time_label").data(data).enter()
 		.append("text")
@@ -648,12 +636,9 @@
         // Draw author legends:
         
 		 for(var index = 0; index< authorsColors.length; index++){
-            // console.log('current index: ' + index);
 		 	var currentColors = authorsColors[index][0]; 
-             //console.log(authorsColors[index]);
 			//deal with multi author
 				svg.selectAll("authorLabel_"+index).data(authorsColors[index]).enter().append("rect")
-            // svg.select($('x axis')[0]).data(currentColors).enter().append("rect")
 				.attr("class", "author_label")
 				.attr("x", function() {
                     
@@ -661,7 +646,6 @@
 				})
 				.attr("y", function(d,i){
 					return (i*(barHeight + 1)) - 120;
-                    //return height+30;
 				})
 
 				.attr("width", x.rangeBand())

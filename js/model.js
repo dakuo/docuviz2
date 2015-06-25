@@ -153,7 +153,6 @@
               
             // Update progress bar
             soFar += 1;
-            //var tempAuthor = authorId;
               
             that.construct(command, authorId);
               
@@ -166,10 +165,6 @@
 
             // When Progress Bar reaches 100%, do something
             if(soFar === revisionNumber) {
-                // === revisionNumber
-
-                
-                
                 if (vizType === 'authorviz'){
                     console.log('type is authorviz');
                 
@@ -204,18 +199,14 @@
                 if (currentInterval < that.timestamps.length){
                     if (soFar === that.timestamps[currentInterval].index2) {
 
-//                        console.log("authors: " + authors);
                         var segments = that.buildAuthorsSegment(that.str,authors);
-                        //console.log("segments: " + currentInterval + " " + segments);
-                        // array: [length, timestamp, author, current string]
-                        //console.log(timeStampsAndAuthors[1][currentInterval]);
+
+                        // array is: [length, timestamp, author, segments, current string]
+                        
                         // for the purpose of this version, current string interval is deleted: that.renderToString(that.str)
                         revLengths.push([that.str.length,timeStampsAndAuthors[0][currentInterval], timeStampsAndAuthors[1][currentInterval],segments]);
                         //contentInterval.push(that.renderToString(that.str));
                         currentInterval +=1;
-                       // console.log('rev Array for:' + currentInterval + ' is '  + revLengths); 
-                        //console.log(contentInterval);
-                        //segments = [];
                     };
                     
 
@@ -233,7 +224,6 @@
       
       
       buildAuthorsSegment: function(chars, authors){
-          //var authorsContribution = [];
           var segments = [];
           var tempAuthor = chars[0].aid;
           var tempStr = '';
@@ -242,7 +232,6 @@
           _.each(chars, function(element){
               
               if (element.aid != tempAuthor){
-                  //console.log("not equal");
                   var currentAuthor = _.find(authors, function(eachAuthor){ 
                       return eachAuthor.id === tempAuthor;
                   });
@@ -253,7 +242,6 @@
               };
               
               if (element.aid === tempAuthor) {
-                  //console.log("equal");
                   tempStr += element.s;
                   var currentAuthor = _.find(authors, function(eachAuthor){ 
                       return eachAuthor.id === tempAuthor;
@@ -273,9 +261,6 @@
       },
       
       calculateRevisionLengths: function(logData, timeStamp){
-          //console.log(timeStamp);
-          //console.log(logData);
-          
           var indexArray = [];
           var stampIndex = function(index1, index2){
               return { 
@@ -291,11 +276,9 @@
           
           var counter = 1;
           _.each(timeStamp, function(val) {
-              //console.log(val);
               indexArray.push(stampIndex(_.indexOf(reducedlogData, val.timestamp1),_.indexOf(reducedlogData,            val.timestamp2)));
           
          }); 
-          //console.log(indexArray);
           return indexArray;
     },
       
