@@ -512,6 +512,113 @@
       $('.js-result').html(html);
     },
       
+    
+    compareNames: function(oldString, newString){
+
+        var changeCount = 0;
+            changeCount = this.levDist(oldString, newString);
+        //alert(changeCount);
+
+    },
+
+      
+      // Levenshtein distance algorithm helps calculate a total number of: insertion, deletion and substituion; when comparing two string
+      levDist: function(s, t) {
+            var d = []; //2d matrix
+
+            // Step 1
+            var n = s.length;
+            var m = t.length;
+
+            if (n == 0) return m;
+            if (m == 0) return n;
+
+            //Create an array of arrays in javascript (a descending loop is quicker)
+            for (var i = n; i >= 0; i--) d[i] = [];
+
+            // Step 2
+            for (var i = n; i >= 0; i--) d[i][0] = i;
+            for (var j = m; j >= 0; j--) d[0][j] = j;
+
+            // Step 3
+            for (var i = 1; i <= n; i++) {
+                var s_i = s.charAt(i - 1);
+
+                // Step 4
+                for (var j = 1; j <= m; j++) {
+
+                    //Check the jagged ld total so far
+                    if (i == j && d[i][j] > 4) return n;
+
+                    var t_j = t.charAt(j - 1);
+                    var cost = (s_i == t_j) ? 0 : 1; // Step 5
+
+                    //Calculate the minimum
+                    var mi = d[i - 1][j] + 1;
+                    var b = d[i][j - 1] + 1;
+                    var c = d[i - 1][j - 1] + cost;
+
+                    if (b < mi) mi = b;
+                    if (c < mi) mi = c;
+
+                    d[i][j] = mi; // Step 6
+
+                    //Damerau transposition
+                    if (i > 1 && j > 1 && s_i == t.charAt(j - 2) && s.charAt(i - 2) == t_j) {
+                        d[i][j] = Math.min(d[i][j], d[i - 2][j - 2] + cost);
+                    }
+                }
+            }
+
+            // Step 7
+            return d[n][m];
+        },      
+      
+      
+    wordInString: function (s, word){
+      return new RegExp( '\\b' + word + '\\b', 'i').test(s);
+    },
+
+    renderPath: function(chars, revData){
+        var nextRevSegments = 1;
+        var insideSegCounter = 0;
+        var that = this;
+        _.each(revData, function(rev){
+            _.each(rev.revSegments, function(revSegment){
+                _.each(revData[nextRevSegments].revSegments, function(nextRevSegment){
+                   
+                    if((revSegment[1].length > 4)){
+                    // if(that.wordInString(nextRevSegment[1],revSegment[1])){
+                        
+                        if(nextRevSegment[1].includes(revSegment[1])){
+                            if(nextRevSegment[0].name == revSegment[0].name){
+                        
+                                  if (_.isEqual(revSegment[1], nextRevSegment[1])){
+                                      console.log("equal between: " + revSegment[1] + " by: " + revSegment[0].name);
+                                      console.log("and: " + nextRevSegment[1] + " by: " + nextRevSegment[0].name);
+                                      insideSegCounter += 1;
+                                      console.log(insideSegCounter);
+                                  }
+////                        
+//                        
+                                else {
+                                    //console.log(that.levDist(revSegment[1], nextRevSegment[1]));
+                                   // console.log("differences between:   " + revSegment[1] + " BY: " + revSegment[0].name);
+    //                                console.log("AND:   " + nextRevSegment[1] + " BY: " + nextRevSegment[0].name);
+    //                                console.log("IS AT INDEX:   " + nextRevSegment[1].lastIndexOf(revSegment[1]));
+
+                                };
+                        };
+                     };     
+                    };     
+                    
+                });
+                
+                if (nextRevSegments < revData.length-1){ nextRevSegments += 1;};
+                
+            });           
+        });
+    },
       
       
     renderResultPanelForDocuviz: function(chars, revData) {
@@ -557,7 +664,7 @@
 
         y.domain([0, d3.max(data, function(d) { return d.revLength; })]);
         
-        console.log("Mininum is " + d3.min(data, function(d) { return d.revLength; }));
+       // console.log("Mininum is " + d3.min(data, function(d) { return d.revLength; }));
         
         var xAxis = d3.svg.axis()
             .scale(x)
@@ -654,7 +761,12 @@
 					return d;
 				})
 				.attr("transform", "translate(0," + (6*barHeight) + ")");
-			}
+			};
+        
+        
+        
+        
+        this.renderPath(chars, data);
     },
 
   });

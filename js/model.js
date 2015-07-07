@@ -133,8 +133,9 @@
           authorId = null,
           revLengths = [],
           currentInterval = 0,
-          timestamps = [];
-        var contentInterval = [];
+          timestamps = [], // array of [index1,index2] in the changeLog (intervalChangesIndex)
+          calculateInterval = false;
+       // var contentInterval = [];
         
         // console.log(timeStampsAndAuthors);
         if (vizType === 'docuviz'){
@@ -155,11 +156,7 @@
             soFar += 1;
               
             that.construct(command, authorId);
-              
             
-            
-
-
             // Callback lets async knows that the sequence is finished can it can start run another entry
             callBack();
 
@@ -198,7 +195,7 @@
             if (vizType === 'docuviz'){
                 if (currentInterval < that.timestamps.length){
                     if (soFar === that.timestamps[currentInterval].index2) {
-
+                        calculateInterval = true;
                         var segments = that.buildAuthorsSegment(that.str,authors);
 
                         // array is: [length, timestamp, author, segments, current string]
@@ -260,6 +257,7 @@
         
       },
       
+      // change this function name to calculateIntervalChangesIndex 
       calculateRevisionLengths: function(logData, timeStamp){
           var indexArray = [];
           var stampIndex = function(index1, index2){
@@ -274,7 +272,7 @@
               return val[1];
           });
           
-          var counter = 1;
+         // var counter = 1;
           _.each(timeStamp, function(val) {
               indexArray.push(stampIndex(_.indexOf(reducedlogData, val.timestamp1),_.indexOf(reducedlogData,            val.timestamp2)));
           
