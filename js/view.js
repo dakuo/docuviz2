@@ -23,8 +23,8 @@
     // Store each author object in the document
     // Each author object will have a unique ID, color, and name
     authors: [],
-      
-    timeStamps: [],
+    authorsTimestamp: [],
+    timestamps: [],
     revisionLengths: [],
       
 
@@ -92,20 +92,15 @@
           regexMatch = url.match("((https?:\/\/)?docs\.google\.com\/(.*?\/)*document\/d\/(.*?))\/edit"),
           http = regexMatch[1],
           
-          // after: https://docs.google.com/document/d/101qa3iTDpprM6E2FZX_2mFbfimEWG1F8Pr9OevEEbDg
           historyUrl = null;
 
           if(switchUrl) {
             http = http.replace('/d/','/u/1/d/');
           }
-        // after: https://docs.google.com/document/u/1/d/101qa3iTDpprM6E2FZX_2mFbfimEWG1F8Pr9OevEEbDg
 
           historyUrl = http + '/revisions/history?id=' + this.getDocId() + "&token=" + token + "&start=1&end=-1&zoom_level=0";
 
       return historyUrl;
-        // original: https://docs.google.com/document/d/101qa3iTDpprM6E2FZX_2mFbfimEWG1F8Pr9OevEEbDg/edit
-        //token: AC4w5VjhhaJ5WZp_tK0-0iX7V7ojGWrQfA:1432234030769
-        // history URL: https://docs.google.com/document/u/1/d/101qa3iTDpprM6E2FZX_2mFbfimEWG1F8Pr9OevEEbDg/revisions/history?id=101qa3iTDpprM6E2FZX_2mFbfimEWG1F8Pr9OevEEbDg&token=AC4w5Vhte2pgYVwuPp_by3OYbNtiN7c7Dg:1432234618784&start=1&end=-1&zoom_level=0
     },
 
 
@@ -132,31 +127,13 @@
         success: function(data) {
           var raw = jQuery.parseJSON(data.substring(4)),
               revisionNumber = raw[raw.length-1][raw[raw.length-1].length-1][3];
-            // json data:
-            /*)]}'
-            [null,1,[[null,[[null,null,"Kenny Pham","#1FA15D","05890976967686304979"]
-            ]
-            ,1,6177,1432165712483,1432199373561,[[null,1469,1432167667352]
-            ,[null,3108,1432180278916]
-            ,[null,3510,1432188882333]
-            ,[null,4560,1432192812525]
-            ,[null,6095,1432195839152]
-            ]
-            ]
-            ]
-            ]*/
-            
-            
-            // json data url 200 status: https://docs.google.com/document/u/1/d/101qa3iTDpprM6E2FZX_2mFbfimEWG1F8Pr9OevEEbDg/revisions/history?id=101qa3iTDpprM6E2FZX_2mFbfimEWG1F8Pr9OevEEbDg&token=AC4w5Vhte2pgYVwuPp_by3OYbNtiN7c7Dg:1432234618784&start=1&end=-1&zoom_level=0
-            // json data 400 bad request: https://docs.google.com/document/d/101qa3iTDpprM6E2FZX_2mFbfimEWG1F8Pr9OevEEbDg/revisions/history?id=101qa3iTDpprM6E2FZX_2mFbfimEWG1F8Pr9OevEEbDg&token=AC4w5Vhte2pgYVwuPp_by3OYbNtiN7c7Dg:1432234618784&start=1&end=-1&zoom_level=0
 
           that.setRevisionNumber(revisionNumber);
           $('.js-authorviz-btn').removeClass('is-disabled');
           $('.js-docuviz-btn').removeClass('is-disabled');
 
           that.authors = that.parseAuthors(raw[2]);
-          that.timeStamps = that.parseTimestampsAuthors(raw[2]);
-        //that.revisionLengths = that.calculateRevisionLengths(raw[2], that.timeStamps[0]);
+          that.parseTimestampsAuthors(raw[2])
             
         }
       })
@@ -228,12 +205,13 @@
       
     // ** BB
     parseTimestampsAuthors: function(data) {
-      var rawData,
+      var that = this,
+        rawData,
           i,
           rawAuthors = [],
-          authors = [],
-          authorId = [],
-          timestamps = [];
+        //  authors = [],
+          authorId = [];
+          //timestamps = [];
 
       // Author is a factory that creat "author object" a set of structural property and value.
       // If you come from Programming language like Java, C, C++, Python, think of this Author as a Class used to create as many author children as needed
@@ -254,24 +232,20 @@
 
 
         rawData = data;
-        //console.log('original');
-        //console.log(rawData);
         
 
       _.each(rawData, function(val) {
-          timestamps.push(timeStamp(val[4], val[5]));
+          //timestamps.push(timeStamp(val[4], val[5]));
+          that.timestamps.push((timeStamp(val[4], val[5])));
+          //timestamps.push(val[5]);
                           
       });
         
-    //console.log('timestamp');
-      //  console.log(timestamps);
 
       rawData = _.map(data, function(val) {
         return val[1];
       });
         
-       // console.log('map');
-    //    console.log(rawData);
         
         // find authors related to timestamps array:
       _.each(rawData, function(val) {
@@ -283,14 +257,11 @@
           
           )
               
-            authors.push(array);
+            that.authorsTimestamp.push(array);
           array = [];
           
       });
-            // console.log('authors:');
-            // console.log(authors);
                           
-    return [timestamps, authors];
     },
 
       
@@ -341,8 +312,8 @@
           var raw = jQuery.parseJSON(data.substring(4));
           // Send Changelog data to Model
             //console.log(data);
-          chrome.runtime.sendMessage({msg: 'changelog', vizType: vizType, docId: that.getDocId(), changelog: raw.changelog, authors: that.authors, timeStamp: that.timeStamps}, function(data) {});
-           // chrome.runtime.sendMessage({msg: 'buildRevLengths', changelog: raw.changelog, timeStamp: that.timeStamps[0]}, function(data){});
+          chrome.runtime.sendMessage({msg: 'changelog', vizType: vizType, docId: that.getDocId(), changelog: raw.changelog, authors: that.authors, timeStamp: that.timestamps, authorsTimestamp: that.authorsTimestamp}, function(data) {});
+           // chrome.runtime.sendMessage({msg: 'buildRevLengths', changelog: raw.changelog, timeStamp: that.timestamps[0]}, function(data){});
         },
         error: function(error) {
           console.log(error.status);
@@ -511,115 +482,7 @@
     renderResultPanel: function(html) {
       $('.js-result').html(html);
     },
-      
-    
-    compareNames: function(oldString, newString){
-
-        var changeCount = 0;
-            changeCount = this.levDist(oldString, newString);
-        //alert(changeCount);
-
-    },
-
-      
-      // Levenshtein distance algorithm helps calculate a total number of: insertion, deletion and substituion; when comparing two string
-      levDist: function(s, t) {
-            var d = []; //2d matrix
-
-            // Step 1
-            var n = s.length;
-            var m = t.length;
-
-            if (n == 0) return m;
-            if (m == 0) return n;
-
-            //Create an array of arrays in javascript (a descending loop is quicker)
-            for (var i = n; i >= 0; i--) d[i] = [];
-
-            // Step 2
-            for (var i = n; i >= 0; i--) d[i][0] = i;
-            for (var j = m; j >= 0; j--) d[0][j] = j;
-
-            // Step 3
-            for (var i = 1; i <= n; i++) {
-                var s_i = s.charAt(i - 1);
-
-                // Step 4
-                for (var j = 1; j <= m; j++) {
-
-                    //Check the jagged ld total so far
-                    if (i == j && d[i][j] > 4) return n;
-
-                    var t_j = t.charAt(j - 1);
-                    var cost = (s_i == t_j) ? 0 : 1; // Step 5
-
-                    //Calculate the minimum
-                    var mi = d[i - 1][j] + 1;
-                    var b = d[i][j - 1] + 1;
-                    var c = d[i - 1][j - 1] + cost;
-
-                    if (b < mi) mi = b;
-                    if (c < mi) mi = c;
-
-                    d[i][j] = mi; // Step 6
-
-                    //Damerau transposition
-                    if (i > 1 && j > 1 && s_i == t.charAt(j - 2) && s.charAt(i - 2) == t_j) {
-                        d[i][j] = Math.min(d[i][j], d[i - 2][j - 2] + cost);
-                    }
-                }
-            }
-
-            // Step 7
-            return d[n][m];
-        },      
-      
-      
-    wordInString: function (s, word){
-      return new RegExp( '\\b' + word + '\\b', 'i').test(s);
-    },
-
-    renderPath: function(chars, revData){
-        var nextRevSegments = 1;
-        var insideSegCounter = 0;
-        var that = this;
-        _.each(revData, function(rev){
-            _.each(rev.revSegments, function(revSegment){
-                _.each(revData[nextRevSegments].revSegments, function(nextRevSegment){
-                   
-                    if((revSegment[1].length > 4)){
-                    // if(that.wordInString(nextRevSegment[1],revSegment[1])){
-                        
-                        if(nextRevSegment[1].includes(revSegment[1])){
-                            if(nextRevSegment[0].name == revSegment[0].name){
-                        
-                                  if (_.isEqual(revSegment[1], nextRevSegment[1])){
-                                      console.log("equal between: " + revSegment[1] + " by: " + revSegment[0].name);
-                                      console.log("and: " + nextRevSegment[1] + " by: " + nextRevSegment[0].name);
-                                      insideSegCounter += 1;
-                                      console.log(insideSegCounter);
-                                  }
-////                        
-//                        
-                                else {
-                                    //console.log(that.levDist(revSegment[1], nextRevSegment[1]));
-                                   // console.log("differences between:   " + revSegment[1] + " BY: " + revSegment[0].name);
-    //                                console.log("AND:   " + nextRevSegment[1] + " BY: " + nextRevSegment[0].name);
-    //                                console.log("IS AT INDEX:   " + nextRevSegment[1].lastIndexOf(revSegment[1]));
-
-                                };
-                        };
-                     };     
-                    };     
-                    
-                });
-                
-                if (nextRevSegments < revData.length-1){ nextRevSegments += 1;};
-                
-            });           
-        });
-    },
-      
+          
       
     renderResultPanelForDocuviz: function(chars, revData) {
         

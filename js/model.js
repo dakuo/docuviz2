@@ -162,15 +162,13 @@
             
             
             // Break string downs into character and add individual character to 'str' array
-            _.each(entry.s, function(character, index) {
-                that.tempSegLength += 1;
-                
+            _.each(entry.s, function(character, index) {           
               var charObj = {
                 s: character,
                 aid: authorId
               };
-
-                //that.tempSegStr += character;
+                
+              that.tempSegLength += 1;
               that.str.insert(charObj, (insertStartIndex - 1) + index);
                 
             });
@@ -180,7 +178,6 @@
         else if (type === 'ds') {
             deleteStartIndex = entry.si;
             deleteEndIndex = entry.ei;
-            //that.tempSegLength += (deleteStartIndex + 1 - deleteEndIndex);
             this.str.delete(deleteStartIndex - 1, deleteEndIndex - 1);
       }
         
@@ -204,7 +201,7 @@
       
       
 
-    buildRevisions: function(vizType, docId, changelog, authors, revTimestampAndRevAuthors) {
+    buildRevisions: function(vizType, docId, changelog, authors, revTimestamps, revAuthors) {
       // Clear previous revision data
       this.str = [];
       var that = this,
@@ -215,20 +212,13 @@
           authorId = null,
           revs = [],
           revs2 = [],
-          currentInterval = 0,
           currentRevID = 0,
-          intervalChangesIndex = [], // array of [index1,index2] in the changeLog (intervalChangesIndex)
+          intervalChangesIndex = [],
           currentSegID = 0; 
         
         if (vizType === 'docuviz'){
-            intervalChangesIndex = this.calculateIntervalChangesIndex(changelog, revTimestampAndRevAuthors[0]);
-            _.each(intervalChangesIndex, function(val){
-               // console.log("intervalChangesIndex: " + val.index2);
-            });
-            
+            intervalChangesIndex = this.calculateIntervalChangesIndex(changelog, revTimestamps);
         };
-        
-        //var prevAuthor = authors[0].id;
         
         var prevAuthor = _.find(authors, function(eachAuthor){ 
                   return eachAuthor.id === authors[0].id;
@@ -258,6 +248,15 @@
               
             if (vizType === 'authorviz'){
                 that.construct(command, authorId);
+                if(soFar === editCount) {
+                    if (vizType === 'authorviz'){
+                        html = that.render(that.str, authors);
+                        chrome.tabs.query({url: '*://docs.google.com/*/' + docId + '/edit'}, function(tabs) {    
+                            chrome.tabs.sendMessage(tabs[0].id, {msg: 'render', html: html}, function(response) {});
+                        });
+
+                    };
+                };
             }
                 
             else if (vizType === 'docuviz'){
@@ -266,24 +265,10 @@
                 
                 if (currentRevID < intervalChangesIndex.length){
                     
-                    if (soFar === intervalChangesIndex[currentRevID].index2) {
-                        
-                        if (currentInterval >= 1){
-                            var oldRevSegments = revs2[currentInterval-1][3]; // get all segments from last revision
-                            
-                            
-                            
-                        };
-                        
+                    if (soFar === intervalChangesIndex[currentRevID]) {
                         var segments = that.buildAuthorsSegment(that.str,authors);
-                        // array is: [length, timestamp, author, segments]
-                        revs.push([that.str.length,revTimestampAndRevAuthors[0][currentRevID],           revTimestampAndRevAuthors[1][currentRevID],segments]);
+                        revs.push([that.str.length,revTimestamps[currentRevID], revAuthors[currentRevID],segments]);
                         
-                       // revs2.push([that.str.length,revTimestampAndRevAuthors[0][currentRevID],           revTimestampAndRevAuthors[1][currentRevID],that.allSegments]);
-                        
-                        
-                        
-                        //currentInterval +=1;
                         currentRevID += 1;
                     };
                     
@@ -296,62 +281,19 @@
                     
                     prevAuthor = currentAuthor;
                 };
-            
                 
+                
+                    if (soFar === editCount) {
+                        if (vizType === 'docuviz'){
+                                console.log('type is docuviz');
+                                chrome.tabs.query({url: '*://docs.google.com/*/' + docId + '/edit'}, function(tabs) {
+                                chrome.tabs.sendMessage(tabs[0].id, {msg: 'renderDocuviz', chars: that.str, revData: revs}, function(response) {});
+                                });
+                        };
+                    };                
             };
-                
-            
-            
-            // Callback lets async knows that the sequence is finished can it can start run another entry
-            // callBack();
 
-            // When Progress Bar reaches 100%, do something
-            if(soFar === editCount) {
-                if (vizType === 'authorviz'){
-                    console.log('type is authorviz');
-                
-                    html = that.render(that.str, authors);
-                    console.log('length');
-                    console.log(that.str.length);
-                    chrome.tabs.query({url: '*://docs.google.com/*/' + docId + '/edit'}, function(tabs) {    
-                        chrome.tabs.sendMessage(tabs[0].id, {msg: 'render', html: html}, function(response) {});
-                    });
-                
-                };
-                
-                if (vizType === 'docuviz'){
-                        console.log('type is docuviz');
-                        //console.log(revs2);
-                       // console.log("all segments: " + that.allSegments);
-                    
-                    _.each(that.allSegments, function(segment){
-                            console.log("author: " + segment.author.name + " length: " + segment.segLength + " SEG ID: " + segment.segID + " REV ID: " + segment.revID);   
-                    });
-                        console.log("currentSegID: " + currentSegID);
-                        console.log("currentRevID: " + currentRevID);
-                        chrome.tabs.query({url: '*://docs.google.com/*/' + docId + '/edit'}, function(tabs) {
-                        chrome.tabs.sendMessage(tabs[0].id, {msg: 'renderDocuviz', chars: that.str, revData: revs}, function(response) {});
-                        });
-                
-                };
-                
-            };
-              
-             // console.log('current interval: ' + currentInterval);
-                
-//            if (vizType === 'docuviz'){
-//                if (currentInterval < intervalChangesIndex.length){
-//                    if (soFar === intervalChangesIndex[currentInterval].index2) {
-//                        var segments = that.buildAuthorsSegment(that.str,authors);
-//
-//                        // array is: [length, timestamp, author, segments]
-//
-//                        revs.push([that.str.length,revTimestampAndRevAuthors[0][currentInterval], revTimestampAndRevAuthors[1][currentInterval],segments]);
-//                        currentInterval +=1;
-//                    };
-//                };
-//            };
-//                
+            // Callback lets async knows that the sequence is finished can it can start run another entry           
                 callBack();
      
           });
@@ -363,44 +305,6 @@
     },
       
       
-      
-      buildRevs: function(authors, segStr, segID, parentSegID, offset,revID){
-          var segments = [];
-          var tempAuthor = chars[0].aid;
-          var tempStr = '';
-          var counter = 0;
-          
-          
-          _.each(chars, function(element){
-              
-              if (element.aid != tempAuthor){
-                  var currentAuthor = _.find(authors, function(eachAuthor){ 
-                      return eachAuthor.id === tempAuthor;
-                  });
-                  
-                  segments.push([currentAuthor, tempStr]);
-                  tempStr = '';
-                  tempAuthor = element.aid;
-              };
-              
-              if (element.aid === tempAuthor) {
-                  tempStr += element.s;
-                  var currentAuthor = _.find(authors, function(eachAuthor){ 
-                      return eachAuthor.id === tempAuthor;
-                  });
-                  
-                  // the if statement below handles the case when the revision is done by 1 author
-                  if (counter === (chars.length-1)){
-                      segments.push([currentAuthor,tempStr]);
-                  };
-              };
-              counter += 1;
-          });
-
-          return segments;
-          
-        
-      },
       
       
       buildAuthorsSegment: function(chars, authors){
@@ -455,9 +359,9 @@
               return val[1];
           });
           
-         // var counter = 1;
           _.each(timeStamp, function(val) {
-              indexArray.push(stampIndex(_.indexOf(reducedlogData, val.timestamp1),_.indexOf(reducedlogData,            val.timestamp2)));
+
+              indexArray.push(_.indexOf(reducedlogData,val.timestamp2));
           
          }); 
           return indexArray;
@@ -474,7 +378,7 @@
       switch(request.msg) {
         // If the message is 'changelog', run 'buildRevision'
         case 'changelog':
-          authorviz.buildRevisions(request.vizType, request.docId, request.changelog, request.authors, request.timeStamp);
+          authorviz.buildRevisions(request.vizType, request.docId, request.changelog, request.authors, request.timeStamp, request.authorsTimestamp);
             break;
 
         default:
