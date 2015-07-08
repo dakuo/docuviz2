@@ -312,7 +312,7 @@
           var raw = jQuery.parseJSON(data.substring(4));
           // Send Changelog data to Model
             //console.log(data);
-          chrome.runtime.sendMessage({msg: 'changelog', vizType: vizType, docId: that.getDocId(), changelog: raw.changelog, authors: that.authors, timeStamp: that.timestamps, authorsTimestamp: that.authorsTimestamp}, function(data) {});
+          chrome.runtime.sendMessage({msg: 'changelog', vizType: vizType, docId: that.getDocId(), changelog: raw.changelog, authors: that.authors, revTimestamps: that.timestamps, revAuthors: that.authorsTimestamp}, function(data) {});
            // chrome.runtime.sendMessage({msg: 'buildRevLengths', changelog: raw.changelog, timeStamp: that.timestamps[0]}, function(data){});
         },
         error: function(error) {
