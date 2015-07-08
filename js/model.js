@@ -28,6 +28,7 @@
     // "str" stores all the Character objects from a Google Doc
     str: [],
 
+
     // Render method construct HTML DOM element from a set of Character and Author Data
     render: function(chars, authors) {
       return _.reduce(chars, function(memo, obj) {
@@ -90,6 +91,7 @@
           };
 
           that.str.insert(charObj, (insertStartIndex - 1) + index);
+           // that.allSegments.push(segment());
         });
 
       } else if (type === 'ds') {
@@ -100,16 +102,14 @@
       }
         
         else if (type === 'as') {
-            //console.log("entering as");
+           
       var stringModifications = entry.sm,
                    startIndex = entry.si,
                      endIndex = entry.ei,
                   specialType = entry.st
        // console.log(entry);
       for (var i = startIndex - 1; i < endIndex; i++) {
-        //console.log(that.str[i]);
         $.extend(that.str[i], stringModifications)
-        //console.log(that.str[i]);
       }
     }
         else{
@@ -120,32 +120,133 @@
     },
 
       
+    allSegments: [],
+    tempSegLength: 0,
+      tempSegStr: '',
+    segment: function(author, segStr, segID, parentSegID, offset,revID) {
+        return {
+            author: author,
+            segLength: segStr,
+            segID: segID,
+            parentSegID: parentSegID,
+            offset: offset,
+            revID: revID
+            };
+        
+    },
+      
+      
+    constructForDocuviz: function(entry, authorId, currentRevID, currentSegID) {
+      var that = this,
+          type = entry.ty,
+          insertStartIndex = null,
+          deleteStartIndex = null,
+          deleteEndIndex = null;
+    
+
+      if(type === 'mlti') {
+            _.each(entry.mts, function(ent) {
+              that.constructForDocuviz(ent, authorId, currentRevID, currentSegID);
+            });
+      } 
+        
+        else if(type === 'rplc') {
+            _.each(entry.snapshot, function(ent) {
+              that.constructForDocuviz(ent, authorId, currentRevID, currentSegID);
+            });
+
+      }
+        
+        else if(type === 'is') {
+            insertStartIndex = entry.ibi;
+            
+            
+            // Break string downs into character and add individual character to 'str' array
+            _.each(entry.s, function(character, index) {
+                that.tempSegLength += 1;
+                
+              var charObj = {
+                s: character,
+                aid: authorId
+              };
+
+                //that.tempSegStr += character;
+              that.str.insert(charObj, (insertStartIndex - 1) + index);
+                
+            });
+
+        }
+        
+        else if (type === 'ds') {
+            deleteStartIndex = entry.si;
+            deleteEndIndex = entry.ei;
+            //that.tempSegLength += (deleteStartIndex + 1 - deleteEndIndex);
+            this.str.delete(deleteStartIndex - 1, deleteEndIndex - 1);
+      }
+        
+        else if (type === 'as') {
+            
+          var stringModifications = entry.sm,
+                       startIndex = entry.si,
+                         endIndex = entry.ei,
+                      specialType = entry.st
+           
+          for (var i = startIndex - 1; i < endIndex; i++) {
+                $.extend(that.str[i], stringModifications)
+          };
+    }
+        else {
+    // todo
+        }
+
+      return true;
+    },      
+      
       
 
-    buildRevisions: function(vizType, docId, changelog, authors, timeStampsAndAuthors) {
+    buildRevisions: function(vizType, docId, changelog, authors, revTimestampAndRevAuthors) {
       // Clear previous revision data
       this.str = [];
       var that = this,
           soFar = 0,
-          revisionNumber = changelog.length,
+          editCount = changelog.length,
           html = '',
           command = null,
           authorId = null,
-          revLengths = [],
+          revs = [],
+          revs2 = [],
           currentInterval = 0,
-          timestamps = [], // array of [index1,index2] in the changeLog (intervalChangesIndex)
-          calculateInterval = false;
-       // var contentInterval = [];
+          currentRevID = 0,
+          intervalChangesIndex = [], // array of [index1,index2] in the changeLog (intervalChangesIndex)
+          currentSegID = 0; 
         
-        // console.log(timeStampsAndAuthors);
         if (vizType === 'docuviz'){
-            that.timestamps = this.calculateRevisionLengths(changelog, timeStampsAndAuthors[0])
+            intervalChangesIndex = this.calculateIntervalChangesIndex(changelog, revTimestampAndRevAuthors[0]);
+            _.each(intervalChangesIndex, function(val){
+               // console.log("intervalChangesIndex: " + val.index2);
+            });
+            
         };
-
+        
+        //var prevAuthor = authors[0].id;
+        
+        var prevAuthor = _.find(authors, function(eachAuthor){ 
+                  return eachAuthor.id === authors[0].id;
+              });
+        
+        
       // Async run through each entry in a synchronous sequence.
       async.eachSeries(changelog, function(entry, callBack) {
             authorId = entry[2],
             command = entry[0];
+          
+          
+          // Find author object based on authorId:
+          
+              var currentAuthor = _.find(authors, function(eachAuthor){ 
+                  return eachAuthor.id === authorId;
+              });
+            
 
         // Retrieve the Google Doc Tab and send a message to that Tab's view
             chrome.tabs.query({url: '*://docs.google.com/*/' + docId + '/edit'}, function(tabs) {
@@ -155,69 +256,151 @@
             // Update progress bar
             soFar += 1;
               
-            that.construct(command, authorId);
+            if (vizType === 'authorviz'){
+                that.construct(command, authorId);
+            }
+                
+            else if (vizType === 'docuviz'){
+                that.constructForDocuviz(command, authorId, currentRevID, currentSegID);  
+                
+                
+                if (currentRevID < intervalChangesIndex.length){
+                    
+                    if (soFar === intervalChangesIndex[currentRevID].index2) {
+                        
+                        if (currentInterval >= 1){
+                            var oldRevSegments = revs2[currentInterval-1][3]; // get all segments from last revision
+                            
+                            
+                            
+                        };
+                        
+                        var segments = that.buildAuthorsSegment(that.str,authors);
+                        // array is: [length, timestamp, author, segments]
+                        revs.push([that.str.length,revTimestampAndRevAuthors[0][currentRevID],           revTimestampAndRevAuthors[1][currentRevID],segments]);
+                        
+                       // revs2.push([that.str.length,revTimestampAndRevAuthors[0][currentRevID],           revTimestampAndRevAuthors[1][currentRevID],that.allSegments]);
+                        
+                        
+                        
+                        //currentInterval +=1;
+                        currentRevID += 1;
+                    };
+                    
+                    if (prevAuthor.id != currentAuthor.id){
+                        that.allSegments.push(that.segment(prevAuthor, that.tempSegLength, currentSegID, -1, 0, currentRevID));
+                        currentSegID += 1;
+                        that.tempSegLength = 0;
+                        that.tempSegStr = '';
+                    };
+                    
+                    prevAuthor = currentAuthor;
+                };
+            
+                
+            };
+                
+            
             
             // Callback lets async knows that the sequence is finished can it can start run another entry
-            callBack();
+            // callBack();
 
             // When Progress Bar reaches 100%, do something
-            if(soFar === revisionNumber) {
+            if(soFar === editCount) {
                 if (vizType === 'authorviz'){
                     console.log('type is authorviz');
                 
                     html = that.render(that.str, authors);
                     console.log('length');
                     console.log(that.str.length);
-                    chrome.tabs.query({url: '*://docs.google.com/*/' + docId + '/edit'}, function(tabs) {
-                    chrome.tabs.sendMessage(tabs[0].id, {msg: 'render', html: html}, function(response) {
-                //    console.log(response);
-                    
-                });
-               });
+                    chrome.tabs.query({url: '*://docs.google.com/*/' + docId + '/edit'}, function(tabs) {    
+                        chrome.tabs.sendMessage(tabs[0].id, {msg: 'render', html: html}, function(response) {});
+                    });
                 
                 };
                 
-              if (vizType === 'docuviz'){
-                    console.log('type is docuviz');
-                 // console.log("revLength: " + revLengths);
-                    chrome.tabs.query({url: '*://docs.google.com/*/' + docId + '/edit'}, function(tabs) {
-                    chrome.tabs.sendMessage(tabs[0].id, {msg: 'renderDocuviz', chars: that.str, revData: revLengths}, function(response) {
-                //    console.log(response);
+                if (vizType === 'docuviz'){
+                        console.log('type is docuviz');
+                        //console.log(revs2);
+                       // console.log("all segments: " + that.allSegments);
                     
-                });
-               });
+                    _.each(that.allSegments, function(segment){
+                            console.log("author: " + segment.author.name + " length: " + segment.segLength + " SEG ID: " + segment.segID + " REV ID: " + segment.revID);   
+                    });
+                        console.log("currentSegID: " + currentSegID);
+                        console.log("currentRevID: " + currentRevID);
+                        chrome.tabs.query({url: '*://docs.google.com/*/' + docId + '/edit'}, function(tabs) {
+                        chrome.tabs.sendMessage(tabs[0].id, {msg: 'renderDocuviz', chars: that.str, revData: revs}, function(response) {});
+                        });
                 
                 };
                 
             };
               
              // console.log('current interval: ' + currentInterval);
-            if (vizType === 'docuviz'){
-                if (currentInterval < that.timestamps.length){
-                    if (soFar === that.timestamps[currentInterval].index2) {
-                        calculateInterval = true;
-                        var segments = that.buildAuthorsSegment(that.str,authors);
-
-                        // array is: [length, timestamp, author, segments, current string]
-                        
-                        // for the purpose of this version, current string interval is deleted: that.renderToString(that.str)
-                        revLengths.push([that.str.length,timeStampsAndAuthors[0][currentInterval], timeStampsAndAuthors[1][currentInterval],segments]);
-                        //contentInterval.push(that.renderToString(that.str));
-                        currentInterval +=1;
-                    };
-                    
-
-                };
-            };
-              
-            
-              
-              
+                
+//            if (vizType === 'docuviz'){
+//                if (currentInterval < intervalChangesIndex.length){
+//                    if (soFar === intervalChangesIndex[currentInterval].index2) {
+//                        var segments = that.buildAuthorsSegment(that.str,authors);
+//
+//                        // array is: [length, timestamp, author, segments]
+//
+//                        revs.push([that.str.length,revTimestampAndRevAuthors[0][currentInterval], revTimestampAndRevAuthors[1][currentInterval],segments]);
+//                        currentInterval +=1;
+//                    };
+//                };
+//            };
+//                
+                callBack();
+     
           });
 
         });
+          
+        
       });
     },
+      
+      
+      
+      buildRevs: function(authors, segStr, segID, parentSegID, offset,revID){
+          var segments = [];
+          var tempAuthor = chars[0].aid;
+          var tempStr = '';
+          var counter = 0;
+          
+          
+          _.each(chars, function(element){
+              
+              if (element.aid != tempAuthor){
+                  var currentAuthor = _.find(authors, function(eachAuthor){ 
+                      return eachAuthor.id === tempAuthor;
+                  });
+                  
+                  segments.push([currentAuthor, tempStr]);
+                  tempStr = '';
+                  tempAuthor = element.aid;
+              };
+              
+              if (element.aid === tempAuthor) {
+                  tempStr += element.s;
+                  var currentAuthor = _.find(authors, function(eachAuthor){ 
+                      return eachAuthor.id === tempAuthor;
+                  });
+                  
+                  // the if statement below handles the case when the revision is done by 1 author
+                  if (counter === (chars.length-1)){
+                      segments.push([currentAuthor,tempStr]);
+                  };
+              };
+              counter += 1;
+          });
+
+          return segments;
+          
+        
+      },
       
       
       buildAuthorsSegment: function(chars, authors){
@@ -257,8 +440,8 @@
         
       },
       
-      // change this function name to calculateIntervalChangesIndex 
-      calculateRevisionLengths: function(logData, timeStamp){
+      
+      calculateIntervalChangesIndex: function(logData, timeStamp){
           var indexArray = [];
           var stampIndex = function(index1, index2){
               return { 

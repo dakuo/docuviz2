@@ -263,15 +263,15 @@
                           
       });
         
-    console.log('timestamp');
-        console.log(timestamps);
+    //console.log('timestamp');
+      //  console.log(timestamps);
 
       rawData = _.map(data, function(val) {
         return val[1];
       });
         
-        console.log('map');
-        console.log(rawData);
+       // console.log('map');
+    //    console.log(rawData);
         
         // find authors related to timestamps array:
       _.each(rawData, function(val) {
@@ -287,8 +287,8 @@
           array = [];
           
       });
-             console.log('authors:');
-             console.log(authors);
+            // console.log('authors:');
+            // console.log(authors);
                           
     return [timestamps, authors];
     },
@@ -766,7 +766,7 @@
         
         
         
-        this.renderPath(chars, data);
+       // this.renderPath(chars, data);
     },
 
   });
