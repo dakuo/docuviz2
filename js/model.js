@@ -91,7 +91,7 @@
           };
 
           that.str.insert(charObj, (insertStartIndex - 1) + index);
-           // that.allSegments.push(segment());
+           // that.allSegmentsInCurrentRev.push(segment());
         });
 
       } else if (type === 'ds') {
@@ -112,31 +112,45 @@
         $.extend(that.str[i], stringModifications)
       }
     }
-        else{
+        else {
     // todo
-        }
+         }
 
       return true;
     },
 
       
-    allSegments: [],
+    allSegmentsInCurrentRev: [],
     tempSegLength: 0,
-      tempSegStr: '',
-    constructSegment: function(author, segStr, segID, parentSegID, offset,revID) {
+    tempConstructSegmentsForCurrentRev: [],
+    prevStr: '',
+    pleaseContinue: true,
+    tempAuthorStr: '',
+    firstInsertBeginIndex: null,
+    endInsertBeginIndex: null,
+
+    constructSegment: function(author, segStr, segID, parentSegID, offset,revID, beginIndex, endIndex) {
         return {
             author: author,
             segLength: segStr,
             segID: segID,
             parentSegID: parentSegID,
             offset: offset,
-            revID: revID
-            };
-        
+            revID: revID,
+            beginIndex: beginIndex,
+            endIndex: endIndex
+        };
+    },
+
+    findParentSegmentHelper: function(locationBasedOnLength, segmentID){
+    	return{
+    		locationBasedOnLength: locationBasedOnLength,
+    		segmentID: segmentID
+    	};
     },
       
       
-	constructForDocuviz: function(entry, authorId, currentRevID, currentSegID, segsInPrevRev) {
+	constructForDocuviz: function(entry, authorId, currentRevID, currentSegID, segsInPrevRev, prevStr, pleaseContinue) {
 		var that = this,
 		  type = entry.ty,
 		  insertStartIndex = null,
@@ -146,13 +160,13 @@
 
 		if(type === 'mlti') {
 		    _.each(entry.mts, function(ent) {
-		      that.constructForDocuviz(ent, authorId, currentRevID, currentSegID, segsInPrevRev);
+		      that.constructForDocuviz(ent, authorId, currentRevID, currentSegID, segsInPrevRev, prevStr, pleaseContinue);
 		    });
 		} 
 
 		else if(type === 'rplc') {
 		    _.each(entry.snapshot, function(ent) {
-		      that.constructForDocuviz(ent, authorId, currentRevID, currentSegID, segsInPrevRev);
+		      that.constructForDocuviz(ent, authorId, currentRevID, currentSegID, segsInPrevRev, prevStr, pleaseContinue);
 		    });
 		}
 
@@ -160,7 +174,11 @@
 			// the first rev
 			if(segsInPrevRev===null){
 			    insertStartIndex = entry.ibi;
-			    
+
+				if (that.firstInsertBeginIndex===null){
+					that.firstInsertBeginIndex = insertStartIndex;
+				};			    
+
 			    // Break string downs into character and add individual character to 'str' array
 			    _.each(entry.s, function(character, index) {           
 			      var charObj = {
@@ -168,13 +186,107 @@
 			        aid: authorId
 			      };
 			
-			      that.tempSegLength += s.length;
+			      that.tempSegLength += character.length;
 			      that.str.insert(charObj, (insertStartIndex - 1) + index);
 			    });
 			}
 			// calculating the second and following revs, using the segs in previous rev
 			else{
 
+				insertStartIndex = entry.ibi;
+				var locationSoFar = 0,
+					findParentSegmentHelperArray = [],
+					parentSegmentID = null;
+				
+
+				// this for loop purpose is to create a different kind of array. For example, the length of each segment in one rev is:
+				// [200,100,300,50] . So we can convert this to: [200,300,600,650]. This can help because if the ibi is 250 we can know right away that
+				// it belong to segment at index 1. ibi: 350 will belong to segment at index 2. The calculation is in the for loop and find function.
+				for (var i = 0; i < segsInPrevRev.length; i++) {
+
+					if (i === 0){
+						findParentSegmentHelperArray.push(that.findParentSegmentHelper(segsInPrevRev[i].segLength, segsInPrevRev[i].segID));
+					}
+					else{
+						findParentSegmentHelperArray.push(that.findParentSegmentHelper((findParentSegmentHelperArray[locationSoFar].locationBasedOnLength + segsInPrevRev[i].segLength), segsInPrevRev[i].segID));
+						locationSoFar += 1;
+					};
+				};
+
+				_.find(findParentSegmentHelperArray, function(eachSegment){
+					if (insertStartIndex <= eachSegment.locationBasedOnLength){ 
+						parentSegmentID = eachSegment.segmentID;
+					}
+					else{
+						parentSegmentID = -1;
+					};
+				});
+
+				// if there is no parent
+				if (parentSegmentID == -1){
+
+					if (pleaseContinue===true){
+						if (that.firstInsertBeginIndex===null){
+							that.firstInsertBeginIndex = insertStartIndex;
+						};
+						that.tempAuthorStr += entry.s;
+					}
+
+					else{
+						that.endInsertBeginIndex = insertStartIndex;
+						that.tempConstructSegmentsForCurrentRev.push(that.constructSegment(authorId,that.tempAuthorStr, currentSegID, parentSegmentID, insertStartIndex, currentRevID, that.firstInsertBeginIndex, that.endInsertBeginIndex));
+						that.tempAuthorStr = '';
+						that.firstInsertBeginIndex = null;
+					}
+
+				}
+
+				// if found parentSegmentID
+
+				else{
+
+					if (pleaseContinue===true){
+						if (that.firstInsertBeginIndex===null){
+							that.firstInsertBeginIndex = insertStartIndex;
+						};
+
+						that.tempAuthorStr += entry.s;
+					}
+
+					else {
+						that.endInsertBeginIndex = insertStartIndex;
+						var findSegment = null;
+
+						// need to find the parent segmentID to know about the beginning and end
+						_.find(segsInPrevRev, function(eachSegment){
+							if (eachSegment.segID === parentSegmentID){
+								findSegment = eachSegment;
+							};
+						});
+
+						//var strToString = that.renderToString(prevStr);
+						//var substringBefore = strToString.substring(findSegment.beginIndex,that.firstInsertBeginIndex);
+						//var substringAfter = strToString.substring(that.endInsertBeginIndex,findSegment.endIndex);	
+						//that.tempConstructSegmentsForCurrentRev.push(that.constructSegment(authorId,substringBefore.length, currentSegID, parentSegmentID, insertStartIndex, currentRevID, that.firstInsertBeginIndex, that.endInsertBeginIndex));
+						that.tempConstructSegmentsForCurrentRev.push(that.constructSegment(authorId,that.tempAuthorStr.length, currentSegID, parentSegmentID, insertStartIndex, currentRevID, that.firstInsertBeginIndex, that.endInsertBeginIndex));
+						//that.tempConstructSegmentsForCurrentRev.push(that.constructSegment(authorId,substringAfter.length, currentSegID, parentSegmentID, insertStartIndex, currentRevID, that.firstInsertBeginIndex, that.endInsertBeginIndex));
+						that.tempAuthorStr = '';
+						that.firstInsertBeginIndex = null;
+					};
+				};
+
+
+				//console.log(findParentSegmentHelperArray);
+
+			    _.each(entry.s, function(character, index) {           
+			      var charObj = {
+			        s: character,
+			        aid: authorId
+			      };
+			
+			      that.tempSegLength += character.length;
+			      that.str.insert(charObj, (insertStartIndex - 1) + index);
+			    });
 			}
 		}
 
@@ -188,6 +300,11 @@
 			}
 			// calculating the second and following revs, using the segs in previous rev
 			else{
+
+			    deleteStartIndex = entry.si;
+			    deleteEndIndex = entry.ei;
+			    that.tempSegLength -= (deleteEndIndex - deleteStartIndex + 1);
+			    this.str.delete(deleteStartIndex - 1, deleteEndIndex - 1);
 
 			}
 		}
@@ -219,10 +336,12 @@
 		  command = null,
 		  authorId = null,
 		  revs = [],
-		  // revs2 = [],
+		   revs2 = [],
 		  currentRevID = 0,
 		  intervalChangesIndex = [],
-		  currentSegID = 0; 
+		  currentSegID = 0,
+		  segsInPrevRev = null,
+		  differentAuthor = null;
         
         if (vizType === 'docuviz'){
             intervalChangesIndex = this.calculateIntervalChangesIndex(changelog, revTimestamps);
@@ -237,8 +356,7 @@
 		// Async run through each entry in a synchronous sequence.
 		async.eachSeries(changelog, function(entry, callBack) {
 		    authorId = entry[2],
-		    command = entry[0],
-		  	segsInPrevRev = null;
+		    command = entry[0];
 		  
 		  	// Find author object based on authorId:
 		  
@@ -256,48 +374,101 @@
 		    soFar += 1;
 		      
 		    if (vizType === 'authorviz'){
-		        // that.construct(command, authorId);
-		        // if(soFar === editCount) {
+		        that.construct(command, authorId);
+		        if(soFar === editCount) {
 
-		        //         html = that.render(that.str, authors);
-		        //         chrome.tabs.query({url: '*://docs.google.com/*/' + docId + '/edit'}, function(tabs) {    
-		        //             chrome.tabs.sendMessage(tabs[0].id, {msg: 'render', html: html}, function(response) {});
-		        //         });
+		                html = that.render(that.str, authors);
+		                chrome.tabs.query({url: '*://docs.google.com/*/' + docId + '/edit'}, function(tabs) {    
+		                    chrome.tabs.sendMessage(tabs[0].id, {msg: 'render', html: html}, function(response) {});
+		                });
 
 
-		        // };
+		        };
 		    }
 		        
 		    else if (vizType === 'docuviz'){
-		        that.constructForDocuviz(command, authorId, currentRevID, currentSegID, segsInPrevRev);  
-		        
+                
+		        that.constructForDocuviz(command, authorId, currentRevID, currentSegID, segsInPrevRev, that.prevStr, that.pleaseContinue);  
+
 		        if (currentRevID < intervalChangesIndex.length){
-		            
-		            if (soFar === intervalChangesIndex[currentRevID]) {
-		            	if(currentRevId==0){
-			                var segments = that.buildAuthorsSegment(that.str,authors);
-			                revs.push([that.str.length,revTimestamps[currentRevID], revAuthors[currentRevID],segments]);
-			                
-		                }
-		                else{
-		                	// Other cutting points, where we should push rev into revs
-		                }
-		                currentRevID += 1;
+		        	// handle author difference other than the first revision
+
+
+		            if (prevAuthor.id === currentAuthor.id){
+		            	that.pleaseContinue = true;
+		            	prevAuthor = currentAuthor;
 		            };
-		            else{
-		            	// where we calculate the segments, but not pushing rev
-		            }
-		            
-		            if (prevAuthor.id != currentAuthor.id){
-		                that.allSegments.push(that.constructSegment(prevAuthor, that.tempSegLength, currentSegID, -1, 0, currentRevID));
+
+		            if (prevAuthor.id != currentAuthor.id && currentRevID != 0){
 		                currentSegID += 1;
 		                that.tempSegLength = 0;
-		                that.tempSegStr = '';
+		                that.pleaseContinue = false;
+		                prevAuthor = currentAuthor;
+
+		            };
+
+		        	// if previous author is different than the current author OR soFar has reaches the first cutting point
+		        	// in case the first revision has only one author contributed to it 
+		            if (prevAuthor.id != currentAuthor.id || soFar === intervalChangesIndex[0]) {
+		                that.allSegmentsInCurrentRev.push(that.constructSegment(prevAuthor, that.tempSegLength, currentSegID, -1, 0, currentRevID, that.firstInsertBeginIndex,that.tempSegLength));
+		                currentSegID += 1;
+		                that.tempSegLength = 0;
+		                that.firstInsertBeginIndex = null;
+		                that.pleaseContinue = false;
 		                prevAuthor = currentAuthor;
 		            };
+
+
+		            if (soFar === intervalChangesIndex[currentRevID]) {
+		            	// if this is the first revision, first cutting point
+		            	if(currentRevID === 0){ 
+			                var segments = that.buildAuthorsSegment(that.str,authors);
+			                revs.push([that.str.length,revTimestamps[currentRevID], revAuthors[currentRevID],segments]);
+
+			                console.log(that.allSegmentsInCurrentRev);
+			                revs2.push([that.str.length,revTimestamps[currentRevID], revAuthors[currentRevID],that.allSegmentsInCurrentRev]);
+			                that.allSegmentsInCurrentRev = []; // clear all segments in the current Rev to prepare for the next Rev 
+			                currentRevID += 1;
+			                segsInPrevRev = revs2[0][3]; // set the segsInPrevRev to the first rev to prepare for the second one
+			                that.tempSegLength = 0;
+			                that.prevStr = that.str;
+			                that.pleaseContinue = false;
+
+
+			                // after this point construct begin to take segsInPrevRev into consideration. From now on, sigInPrevRev is not null anymore    
+		                }
+
+		                // Until the next cutting point, the construct is still running:
+		                // Other cutting points, where we should push rev into revs 
+		                else {
+		                	that.pleaseContinue = false;
+		                	var segments = that.buildAuthorsSegment(that.str,authors);
+		                	revs.push([that.str.length,revTimestamps[currentRevID], revAuthors[currentRevID],[]]);
+		                	
+		                	// push rev into revs
+		                	revs2.push([that.str.length,revTimestamps[currentRevID], revAuthors[currentRevID],that.tempConstructSegmentsForCurrentRev]);
+
+		                	console.log("curent revID: " + currentRevID);
+		                	console.log(that.tempConstructSegmentsForCurrentRev);
+
+		                	that.tempConstructSegmentsForCurrentRev = [];
+		                	currentRevID += 1;
+		                	that.tempSegLength = 0;
+		                	segsInPrevRev = revs2[currentRevID-1][3]; // the next cutting point is reached, set segInPrevRev to the previous rev
+		                	that.prevStr = that.str;
+		                }
+		                
+		            };
+
+
+		            // else{
+		            // 	// where we calculate the segments, but not pushing rev
+		            // }
+		            
+
 		            
 		            
-		        };
+		        }
 		        // reaching the end of changelog
 	            else {
                     console.log('the end of changelog');
