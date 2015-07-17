@@ -339,16 +339,17 @@
             // When the button is click, show the app and disable this button
             $(document).on('click', '.js-authorviz-btn', function() {
                 var changelogUrl = null;
-
+                $('.js-result').html('')
                 // Make the App Visible to user
                 $('.js-authorviz').removeClass('hideVisually');
+                //$('.js-progress-bar').removeClass('hideVisually');
 
 
                 changelogUrl = that.getChangelogUrl(location.href);
                 that.getChangelog(changelogUrl, 'authorviz');
 
                 // Remove the click event from Authorviz button
-                $(document).off('click', '.js-authorviz-btn');
+               // $(document).off('click', '.js-authorviz-btn');
             });
         },
 
@@ -361,16 +362,17 @@
             // When the button is click, show the app and disable this button
             $(document).on('click', '.js-docuviz-btn', function() {
                 var changelogUrl = null;
-
+                $('.js-result').html('')
                 // Make the App Visible to user
                 $('.js-authorviz').removeClass('hideVisually');
+               // $('.js-progress-bar').removeClass('hideVisually');
                 console.log('got docuviz');
 
                 changelogUrl = that.getChangelogUrlForDocuviz(location.href);
                 that.getChangelog(changelogUrl, 'docuviz');
 
-                // Remove the click event from Authorviz button
-                $(document).off('click', '.js-docuviz-btn');
+                // Remove the click event from Docuviz button
+               // $(document).off('click', '.js-docuviz-btn');
             });
         },
 
@@ -464,10 +466,17 @@
             $(document).on('click', '.js-close', function() {
                 $('.js-authorviz').addClass('hideVisually');
 
-                $(document).on('click', '.js-authorviz-btn', function() {
-                    // Show App
-                    $('.js-authorviz').removeClass('hideVisually');
-                });
+                // $(document).on('click', '.js-authorviz-btn', function() {
+                //     // Show App
+                //     $('.js-authorviz').removeClass('hideVisually');
+                // });
+
+                // $(document).on('click', '.js-docuviz-btn', function() {
+                //     // Show App
+                //     $('.js-authorviz').removeClass('hideVisually');
+                // });
+
+
             });
         },
 
@@ -481,7 +490,8 @@
             $(document).on('click', '.js-print', function() {
                 var printContent = $('.js-result');
                 var printWindow = window.open('', '', 'left=0,top=0,width=800,height=900,toolbar=0,scrollbars=0,status=0');
-                printWindow.document.write(printContent.html());
+                printWindow.document.write($('.js-author').html() + printContent.html());
+                console.log(printContent.html());
                 printWindow.document.close();
                 printWindow.focus();
                 printWindow.print();
@@ -569,11 +579,13 @@
             svg.append("g")
                 .attr("class", "x axis")
                 .attr("transform", "translate(0," + 10 + ")")
-                .call(xAxis);
+                .call(xAxis)
+                .attr("fill","none");
 
             svg.append("g")
                 .attr("class", "y axis")
                 .call(yAxis)
+                .attr("shape-rendering","crispEdges")
                 .append("text")
                 .attr("transform", "translate(" + 0 + "," + (height - 100) + ")" + "rotate(-90)")
                 .attr("y", 6)
@@ -653,21 +665,14 @@
 
 
 
-
             // this.renderPath(chars, data);
         },
 
     });
 
 
-
-
-
     // When Google Doc is finished loading, initialize authorViz app
     authorviz.init();
-
-
-
 
 
     // These methods are provided by Chrome API

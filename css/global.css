@@ -259,16 +259,19 @@ html, body {
     top: 70px;
 }
 
-.axis path,
-.axis line {
-  fill: none;
-  stroke: #000;
-  shape-rendering: crispEdges;
+
+.y.axis path,
+.y.axis line {
+    fill: none;
+    stroke: #000;
+    shape-rendering: crispEdges;
 }
 
+
+/*
 .x.axis path {
   display: none;
-}
+}*/
 
 .line {
   fill: none;

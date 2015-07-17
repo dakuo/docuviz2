@@ -1,0 +1,125 @@
+Pseudo code for segments finding
+
+convertToLocationBased: function(segmentsArray)
+	var result = [];
+	var locationSoFar = 0;
+
+    for (var i = 0; i < segmentsArray.length; i++) {
+
+        if (i === 0) {
+            result.push(that.findParentSegmentHelper(segmentsArray[i].segStr.length, segmentsArray[i]));
+        } else {
+            result.push(that.findParentSegmentHelper((findParentSegmentHelperArray[locationSoFar].locationBasedOnLength + segmentsArray[i].segStr.length), segmentsArray[i]));
+            locationSoFar += 1;
+        };
+    };
+
+	return result;
+
+
+totalLength: function(segmentsArray){
+	var total;
+	_.each(segmentsArray, function(eachSegment){
+		total += eachSegment.segStr.length;
+
+	});
+	return total;
+};
+
+buildSegmentsBefore: function(entry,startIndex, author, segmentsArray){
+
+	var segmentsBefore = [];
+	locationBased = that.converToLocationBased(segmentsArray);
+
+    _.each(locationBased, function(eachSegment) {
+        if (eachSegment.locationBasedOnLength <= startIndex) {
+            segmentsBefore.push(eachSegment.segmentID);
+        };
+    }); 
+
+    _.find(locationBased, function(eachSegment) {
+        if (eachSegment.locationBasedOnLength <= startIndex) {
+            var belongTo = eachSegment;
+        };
+    }); 
+
+
+    if (author === belongTo.author){
+    	segmentsBefore.pop();
+
+    	var strInBelongTo = belongTo.segStr;
+
+    	strInBelongTo.insert(entry,(startIndex-that.totalLength(segmentsBefore)) -1);
+
+    	newSegment = that.constructSegment(belongTo.author, strInBelongTo, belongTo.segID, belongTo.parentSegID, belongTo.offset, belongTo.revID);
+
+    	segmentsBefore.push(newSegment);
+
+    }
+
+    else if (author != belongTo.author){
+    	segmentsBefore.pop();
+
+    	var strInBelongTo = belongTo.segStr;
+
+    	var strFromOld = strInBelongTo.substring(that.totalLength(segmentsBefore), startIndex-that.totalLength(segmentsBefore));
+
+    	oldSegment = that.constructSegment(belongTo.author, strFromOld, belongTo.currentSegID, belongTo.parentSegID, belongTo.offset, belongTo.revID);
+
+    	segmentsBefore.push(oldSegment);
+
+    	that.currentSegID += 1
+    	newSegment = that.constructSegment(author, entry, that.currentSegID, -1, belongTo.offset, belongTo.revID);
+
+    	segmentsBefore.push(newSegment);
+
+    };
+
+    return segmentsBefore;
+	
+};
+
+
+buildSegmentsAfter: function(entry,startIndex, author, segmentsArray){
+
+	var segmentsAfter = [];
+	locationBased = that.converToLocationBased(segmentsArray);
+
+    _.each(locationBased, function(eachSegment) {
+        if (eachSegment.locationBasedOnLength >= startIndex) {
+            segmentsAfter.push(eachSegment.segmentID);
+        };
+    }); 
+
+    _.find(locationBased, function(eachSegment) {
+        if (eachSegment.locationBasedOnLength >= startIndex) {
+            var belongTo = eachSegment;
+        };
+    }); 
+
+
+    if (author === belongTo.author){
+    	segmentsAfter.shift(); // remove the first element of the array because the author is the same, we handle it in Before
+
+    }
+
+    else if (author != belongTo.author){
+    	segmentsAfter.shift();
+
+    	var strInBelongTo = belongTo.segStr;
+
+    	var strFromOld = strInBelongTo.substring((startIndex-that.totalLength(segmentsBefore))+1, locationBased.slice(-1)[0].locationBasedOnLength);
+
+    	newSegment = that.constructSegment(belongTo.author, strFromOld, belongTo.segID, belongTo.parentSegID, belongTo.offset, belongTo.revID);
+
+    	segmentsAfter.unshift(newSegment);
+
+    };
+
+
+
+    return segmentsAfter;
+
+};
+
+

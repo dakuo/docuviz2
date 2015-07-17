@@ -1,0 +1,51 @@
+Pseudo code for the algorithm:
+
+
+
+firstRevisionSegments = segments that are passed after first revision 
+segmentsArray = []
+
+if type is insert:
+
+	if that.firstRevisionSegments.length > 0:
+		var parentID = find parent ID for the current insert begin index
+		if parent ID is different than -1 (there is a parent):
+			that.segmentsArray.push(all segments from beginning of segments in previous revision ID to insert begin index)
+			that.segmentsArray.push(content of the current insert begin index)
+			that.segmentsArray.push(all segments from (insert begin index + 1) to the end of segments in previous revision ID to )
+			that.firstRevisionSegments = [] 
+
+		if parent ID is -1 (means that it has to be at the end of all segments):
+			that.segmentsArray.push(all segments from beginning of segments in previous revision ID to insert begin index)
+			that.segmentsArray.push(content of the current insert begin index)
+			that.firstRevisionSegments = []
+
+	else:
+		var parentID = find parent ID for the current insert begin index in current segmentsArray
+
+		if parent ID is different than -1 (there is a parent):
+			var segmentsBefore = find all segments before the insert begin index
+			var segmentsAfter = find all segments after the insert begin index
+			that.segmentsArray = [] (clear segmentArrays)
+			that.segmentsArray.push(segmentsBefore)
+			that.segmentsArray.push(content of the current insert begin index)
+			that.segmentsArray.push(segmentsAfter)
+
+		if parent ID is -1 (means that it has to be at the end of all segments):
+			var segmentsBefore = find all segments before the insert begin index
+			that.segmentsArray = [] (clear segmentArrays)
+			segmentsArray.push(segmentsBefore)
+			segmentsArray.push(content of the current insert begin index)
+
+
+
+if type is delete:
+	if that.firstRevisionSegments.length > 0:
+		var parentIDBefore = find parent ID for the current delete start index
+		var parentIDAfter = find parent D for the current delete end index
+
+		
+
+
+
+
