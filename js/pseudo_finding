@@ -26,10 +26,24 @@ totalLength: function(segmentsArray){
 	return total;
 };
 
+
+
+
+buildSegmentsWhenInsertForDocuviz: function(entry, startIndex, author, segmentsArray){
+    var that = this;
+    var segmentsBefore = that.buildSegmentsBefore(entry, startIndex, author, segsmentsArray);
+    var segmentsAfter = that.buildSegmentsAfter(entry, startIndex, author, segmentsArray);
+
+},
+
+
+
+
 buildSegmentsBefore: function(entry,startIndex, author, segmentsArray){
 
 	var segmentsBefore = [];
-	locationBased = that.converToLocationBased(segmentsArray);
+	var that = this;
+	var locationBased = that.converToLocationBased(segmentsArray);
 
     _.each(locationBased, function(eachSegment) {
         if (eachSegment.locationBasedOnLength <= startIndex) {
@@ -77,13 +91,14 @@ buildSegmentsBefore: function(entry,startIndex, author, segmentsArray){
 
     return segmentsBefore;
 	
-};
+},
 
 
 buildSegmentsAfter: function(entry,startIndex, author, segmentsArray){
 
 	var segmentsAfter = [];
-	locationBased = that.converToLocationBased(segmentsArray);
+	var that = this;
+	var locationBased = that.converToLocationBased(segmentsArray);
 
     _.each(locationBased, function(eachSegment) {
         if (eachSegment.locationBasedOnLength >= startIndex) {
@@ -115,11 +130,8 @@ buildSegmentsAfter: function(entry,startIndex, author, segmentsArray){
     	segmentsAfter.unshift(newSegment);
 
     };
-
-
-
     return segmentsAfter;
 
-};
+},
 
 
