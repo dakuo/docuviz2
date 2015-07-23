@@ -135,3 +135,97 @@ buildSegmentsAfter: function(entry,startIndex, author, segmentsArray){
 },
 
 
+deleteSegments: function(deleteStartIndex, deleteEndIdex, author, segsmentsArray){
+    var segmentsBefore = [];
+    var segmentsAfter = [];
+    var that = this;
+    var locationBased = that.converToLocationBased(segmentsArray);
+
+    _.each(locationBased, function(eachSegment) {
+        if (eachSegment.locationBasedOnLength <= deleteStartIndex) {
+            segmentsBefore.push(eachSegment.segmentID);
+        };
+    }); 
+
+     _.each(locationBased, function(eachSegment) {
+        if (eachSegment.locationBasedOnLength >= deleteStartIndex) {
+            segmentsAfter.push(eachSegment.segmentID);
+        };
+    });   
+
+
+    var belongToDeleteStartIndex = segmentsBefore[segmentsBefore.length-1];
+    var belongToDeleteEndIndex = segmentsAfter[0];
+
+    if (segmentsBefore.length > 0){
+        segmentsBefore.pop();
+
+
+    };    
+
+    if (segmentsAfter.length > 0){
+        segmentsAfter.shift();
+    };
+    
+
+},
+
+
+
+
+BACKUP:
+
+
+
+
+                        if (tempSegsArray.length > 0){
+                            console.log("segmentsAfter BELONG TO:");
+
+                            console.log(tempSegsArray[0]);
+
+                            console.log("*******--------******")
+                            // find the segments that the current insert index is belong to
+                            var belongTo = tempSegsArray[0];
+
+
+                            if (author === belongTo.author){
+                                tempSegsArray.shift(); // remove the first element of the array because the author is the same, we handle it in Before
+                                console.log("AUTHOR ===== BELONGTO.AUTHOR");
+                            }
+
+                            else if (author != belongTo.author){
+
+                                tempSegsArray.shift(); // remove the first element, substring and then push to the first again.
+
+
+                                if (tempSegsArray.length === 0){
+                                    var strInBelongTo = belongTo.segStr;
+                                    var strFromOld = strInBelongTo.substring(startIndex-1, strInBelongTo.length);
+
+                                    var newSegment = that.constructSegment(belongTo.author, strFromOld, belongTo.segID, belongTo.parentSegID, belongTo.offset, belongTo.revID,0,0,"from buildSegmentsAfter when length === 0 ");
+
+                                    tempSegsArray.unshift(newSegment);
+                                }
+
+                                else{
+
+                                    var strInBelongTo = belongTo.segStr;
+
+                                    //var strFromOld = strInBelongTo.substring(startIndex+1, locationBased.slice(-1)[0].locationBasedOnLength);
+
+                                    var strFromOld = strInBelongTo.substring((startIndex-that.totalLength(segmentsBefore)+1), strInBelongTo.length);
+
+                                    var newSegment = that.constructSegment(belongTo.author, strFromOld, belongTo.segID, belongTo.parentSegID, belongTo.offset, belongTo.revID,0,0,"from buildSegmentsAfter");
+
+                                    tempSegsArray.unshift(newSegment);
+
+
+                                };
+                            
+
+
+
+                            };
+
+                        }
+
