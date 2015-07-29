@@ -137,11 +137,6 @@
                 allSegmentsInCurrentRev: [],
                 tempSegLength: 0,
                 tempConstructSegmentsForCurrentRev: [],
-                prevStr: '',
-                pleaseContinue: true,
-                pleaseContinue2: true,
-                pleaseContinue3: true,
-                pleaseContinue4: true,
                 tempAuthorStr: '',
                 firstInsertBeginIndex: null,
                 endInsertBeginIndex: null,
@@ -153,6 +148,7 @@
                 segmentsArray: [],
                 allSegmentsInCurrentRev: [],
                 revID: 0,
+                firstChangeAfterFirstRevision: true,
 
 
 
@@ -385,7 +381,7 @@
 
 
 
-                                        if (soFar <= 135){
+                                        if (soFar <= 335){
                                         that.constructForDocuviz(command, authorId, that.revID, that.currentSegID, segsInPrevRev, that.prevStr, that.pleaseContinue);
                                         };
 
