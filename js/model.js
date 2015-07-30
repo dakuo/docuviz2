@@ -135,35 +135,24 @@
 
 
                 allSegmentsInCurrentRev: [],
-                tempSegLength: 0,
                 tempConstructSegmentsForCurrentRev: [],
-                prevStr: '',
-                pleaseContinue: true,
-                pleaseContinue2: true,
-                pleaseContinue3: true,
-                pleaseContinue4: true,
-                tempAuthorStr: '',
-                firstInsertBeginIndex: null,
-                endInsertBeginIndex: null,
-                firstDeleteStartIndex: null,
-                endDeleteEndIndex: null,
-                currentSegID: 0,
-                prevStr: '',
                 firstRevisionSegments: [],
                 segmentsArray: [],
                 allSegmentsInCurrentRev: [],
                 revID: 0,
+                currentSegID: 0,
                 firstChangeAfterFirstRevision: true,
 
 
 
-                theOneSegment: function(author, type, index, endIndex, character){
+                oneSegment: function(authorColor, segID, parentSegID, offset, segStr, segLength){
                 	return {
-                		author: author,
-                		type: type,
-                		index: index,
-                		endIndex: endIndex,
-                		character: character
+                		authorColor: authorColor,
+                		segID: segID,
+                		parentSegID: parentSegID,
+                		offset: offset,
+                        segStr: segStr,
+                		segLength: segLength
                 	};
                 },
 
@@ -402,7 +391,7 @@
                                                 chrome.tabs.sendMessage(tabs[0].id, {
                                                     msg: 'renderDocuviz',
                                                     chars: that.str,
-                                                    revData: revs
+                                                    revData: revs2
                                                 }, function(response) {});
                                             });
                                         };
@@ -436,7 +425,7 @@
                                             };
 
 
-                                            if (soFar === intervalChangesIndex[currentRevID]) {
+                                            if (soFar === intervalChangesIndex[currentRevID]+1) {
                                                 // if this is the first revision, first cutting point
                                                 if (currentRevID === 0) {
                                                     var segments = that.buildAuthorsSegment(that.str, authors);
@@ -444,7 +433,11 @@
 
                                                     that.firstRevisionSegments.push(that.constructSegment(prevAuthor.id, that.renderToString(that.str), that.currentSegID, -1, 0, currentRevID, 0, that.str.length));
                                                     // that.currentSegID += 1;
-                                                    revs2.push([that.str.length, revTimestamps[currentRevID], revAuthors[currentRevID], that.firstRevisionSegments]);
+
+
+                                                    var segments2 = that.buildSegmentsForOneRevision(that.firstRevisionSegments, authors);
+
+                                                    revs2.push([that.str.length, revTimestamps[currentRevID], revAuthors[currentRevID], segments2]);
 
                                                     console.log(that.firstRevisionSegments);
 
@@ -472,19 +465,18 @@
                                                   //  that.pleaseContinue = false;
                                                     var segments = that.buildAuthorsSegment(that.str, authors);
                                                     revs.push([that.str.length, revTimestamps[currentRevID], revAuthors[currentRevID], segments]);
-                                                   // console.log("before group:");
-                                                    //console.log(that.tempConstructSegmentsForCurrentRev);
 
-                                                    //var newSegments = that.groupingSegments(that.tempConstructSegmentsForCurrentRev);
-                                                    //console.log("after group:");
-                                                   // console.log(newSegments);
-                                                    // push rev into revs
-                                                    revs2.push([that.str.length, revTimestamps[currentRevID], revAuthors[currentRevID], that.allSegmentsInCurrentRev]);
+
+                                                    var segments2 = that.buildSegmentsForOneRevision(that.allSegmentsInCurrentRev, authors);
+
+                                                    revs2.push([that.str.length, revTimestamps[currentRevID], revAuthors[currentRevID], segments2]);
 
                                                     console.log("curent revID: " + currentRevID);
-                                                    console.log(that.allSegmentsInCurrentRev);
+                                                     console.log(that.allSegmentsInCurrentRev);
+                                                     that.firstChangeAfterFirstRevision = true;
+                                                    //console.log(revs2);
                                                     //segsInPrevRev = that.tempConstructSegmentsForCurrentRev;
-                                                  //  that.allSegmentsInCurrentRev = [];
+                                                    // that.allSegmentsInCurrentRev = [];
                                                     //that.currentSegID = 0;
                                                     currentRevID += 1;
 
@@ -514,51 +506,6 @@
                                 });
                             });
                         });
-                    },
-
-
-                    groupingSegments: function(currentSegments){
-                        var result = [];
-                        var tempStr = '';
-                        var that = this;
-                        //var segID = 0;
-
-                        for (var i=0;i<currentSegments.length-1;i++){
-
-
-                            if (currentSegments[i].author === currentSegments[i+1].author) {
-                                tempStr += currentSegments[i].segLength;
-                            }
-                            else{
-                                result.push(that.constructSegment(currentSegments[i].author, tempStr + currentSegments[i].segLength, currentSegments[i].segID, currentSegments[i].parentSegID, currentSegments[i].offset, currentSegments[i].revID,currentSegments[i].beginIndex,currentSegments[i].endIndex));
-                                tempStr = '';
-                               // segID+=1;
-                            };
-
-                        };
-                        return result;                            
-
-                    },
-
-
-
-                    convertToLocationBased: function(segmentsArray){
-                        var result = [];
-                        var locationSoFar = 0;
-                        var that = this;
-                        for (var i = 0; i < segmentsArray.length; i++) {
-
-                            if (i === 0) {
-                                result.push(that.findParentSegmentHelper(segmentsArray[i].segStr.length, segmentsArray[i]));
-                            } else {
-                                result.push(that.findParentSegmentHelper((result[locationSoFar].locationBasedOnLength + segmentsArray[i].segStr.length + 1), segmentsArray[i]));
-                                locationSoFar += 1;
-                            };
-                        };
-
-                        return result;
-
-
                     },
 
 
@@ -671,15 +618,15 @@
 
                                 result.delete(segmentLocation, segmentLocation);
 
-                                var offSet = startIndex- effectedSegment.locationBasedOnLength[0];
+                                //var offSet = startIndex- effectedSegment.locationBasedOnLength[0];
                                 that.currentSegID += 1;
 
                                 if (that.firstChangeAfterFirstRevision === true){
-                                    var segBefore = that.constructSegment(effectedSegment.segmentID.author, strBeforeStartIndex, that.currentSegID, effectedSegment.segmentID.segID, offSet, that.revID,effectedSegment.locationBasedOnLength[0],startIndex - effectedSegment.locationBasedOnLength[0], "from buildSegment Before in author !=  segment author");
-                                    //that.firstChangeAfterFirstRevision = false;
+                                    var segBefore = that.constructSegment(effectedSegment.segmentID.author, strBeforeStartIndex, that.currentSegID, effectedSegment.segmentID.segID, 0, that.revID,effectedSegment.locationBasedOnLength[0],startIndex - effectedSegment.locationBasedOnLength[0], "from buildSegment Before in author !=  segment author");
+                                    
                                 }
                                 else{
-                                    var segBefore = that.constructSegment(effectedSegment.segmentID.author, strBeforeStartIndex, that.currentSegID, effectedSegment.segmentID.parentSegID, offSet, that.revID,effectedSegment.locationBasedOnLength[0],startIndex - effectedSegment.locationBasedOnLength[0], "from buildSegment Before in author !=  segment author");
+                                    var segBefore = that.constructSegment(effectedSegment.segmentID.author, strBeforeStartIndex, that.currentSegID, effectedSegment.segmentID.parentSegID, 0, that.revID,effectedSegment.locationBasedOnLength[0],startIndex - effectedSegment.locationBasedOnLength[0], "from buildSegment Before in author !=  segment author");
 
                                 };
 
@@ -693,11 +640,11 @@
                                 if (strAfterStartIndex.length>0){
                                     that.currentSegID += 1;
                                     // calculate offset in here
-                                    var offSet = startIndex- effectedSegment.locationBasedOnLength[0];
+                                    var offSet = startIndex- effectedSegment.locationBasedOnLength[0]+1;
 
                                     if (that.firstChangeAfterFirstRevision === true){
                                         var segAfter = that.constructSegment(effectedSegment.segmentID.author, strAfterStartIndex, that.currentSegID, effectedSegment.segmentID.segID, offSet, that.revID,startIndex - effectedSegment.locationBasedOnLength[0] + entry.length, effectedSegment.locationBasedOnLength[1] + entry.length, "from buildSegment After in author !=  segment author");
-                                        //that.firstChangeAfterFirstRevision = false;
+                                        
                                     }
 
                                     else{
@@ -725,7 +672,7 @@
                                     that.currentSegID += 1;
                                     if (that.firstChangeAfterFirstRevision === true){
                                         var segAfter = that.constructSegment(effectedSegment.segmentID.author, strAfterStartIndex, that.currentSegID, effectedSegment.segmentID.segID, offSet, that.revID,startIndex - effectedSegment.locationBasedOnLength[0] + entry.length, effectedSegment.locationBasedOnLength[1] + entry.length, "from buildSegment After in author !=  segment author");
-                                        
+                                        //that.firstChangeAfterFirstRevision = false;
                                     }
                                     else{
                                         var segAfter = that.constructSegment(effectedSegment.segmentID.author, strAfterStartIndex, that.currentSegID, effectedSegment.segmentID.parentSegID, offSet, that.revID,startIndex - effectedSegment.locationBasedOnLength[0] + entry.length, effectedSegment.locationBasedOnLength[1] + entry.length, "from buildSegment After in author !=  segment author");
@@ -746,105 +693,6 @@
                         
                     },
 
-
-                    buildSegmentsAfter: function(entry,startIndex, author, segmentsArray, segmentsBefore){
-
-                        var segmentsAfter = [];
-                        var that = this;
-                        var locationBased = that.convertToLocationBased(segmentsArray);
-
-
-
-
-                       console.log("AFTER locationBased");
-                       console.log(locationBased);
-                       console.log("^^^^^^^^^^^^^^^^^^^^")
-
-                        _.each(locationBased, function(eachSegment) {
-                            if (eachSegment.locationBasedOnLength >= startIndex+entry.length) {
-                                segmentsAfter.push(eachSegment.segmentID);
-                            };
-                        }); 
-
-
-
-
-                        // _.find(locationBased, function(eachSegment) {
-                        //     if (eachSegment.locationBasedOnLength >= startIndex) {
-                        //         var belongTo = eachSegment.segmentID;
-                        //     };
-                        // }); 
-
-                        console.log("segmentsAfter");
-                        _.each(segmentsAfter, function(eachSegment){
-                            console.log(eachSegment);
-                        });
-                        console.log("************")
-
-                        if (segmentsAfter.length > 0){
-                            console.log("segmentsAfter BELONG TO:");
-
-                            console.log(segmentsAfter[0]);
-
-                            console.log("*******--------******")
-                            // find the segments that the current insert index is belong to
-                            var belongTo = segmentsAfter[0];
-
-
-                            if (author === belongTo.author){
-                                segmentsAfter.shift(); // remove the first element of the array because the author is the same, we handle it in Before
-                                console.log("AUTHOR ===== BELONGTO.AUTHOR");
-                            }
-
-                            else if (author != belongTo.author){
-
-                                segmentsAfter.shift(); // remove the first element, substring and then push to the first again.
-
-
-                                if (segmentsAfter.length === 0){
-                                    var strInBelongTo = belongTo.segStr;
-                                    var strFromOld = strInBelongTo.substring(startIndex-1, strInBelongTo.length);
-
-                                    var newSegment = that.constructSegment(belongTo.author, strFromOld, belongTo.segID, belongTo.parentSegID, belongTo.offset, that.revID,0,0,"from buildSegmentsAfter when length === 0 ");
-
-                                    segmentsAfter.unshift(newSegment);
-                                }
-
-                                else{
-
-                                    var strInBelongTo = belongTo.segStr;
-
-                                    //var strFromOld = strInBelongTo.substring(startIndex+1, locationBased.slice(-1)[0].locationBasedOnLength);
-
-                                    var strFromOld = strInBelongTo.substring((startIndex-that.totalLength(segmentsBefore)+1), strInBelongTo.length);
-
-                                    var newSegment = that.constructSegment(belongTo.author, strFromOld, belongTo.segID, belongTo.parentSegID, belongTo.offset, that.revID,0,0,"from buildSegmentsAfter");
-
-                                    segmentsAfter.unshift(newSegment);
-
-
-                                };
-                            
-
-
-
-                            };
-
-                        }
-
-                        else{
-                            segmentsAfter = [];
-                        }
-
-                        console.log("!!!!!!!!!!!!!");
-                        console.log("SEGMENT AFTER AFTER FINISH");
-                        console.log(segmentsAfter);
-                        console.log("!!!!!!!!!!!!")
-
-
-                        return segmentsAfter;
-
-                    },
 
                     deleteSegments: function(deleteStartIndex, deleteEndIndex, author, segmentsArray){
                         var segmentsBefore = [];
@@ -922,7 +770,6 @@
                                 result[deleteStartSegmentLocation].segStr = strInBelongTo;
 
 
-
                             }
 
                             else{
@@ -950,36 +797,25 @@
 
 
 
-                    findParentSegment: function(startIndex, segsInPrevRev) {
-                            var locationSoFar = 0,
-                            	that = this,
-                                findParentSegmentHelperArray = [],
-                                parentSegmentID = null;
+                    buildSegmentsForOneRevision: function(segmentsArray, authors){
+                        var segments = [];
+                        var counter = 0;
+                        var that = this;
 
-                            // this for loop purpose is to create a different kind of array. For example, the length of each segment in one rev is:
-                            // [200,100,300,50] . So we can convert this to: [200,300,600,650]. This can help because if the ibi is 250 we can know right away that
-                            // it belong to segment at index 1. ibi: 350 will belong to segment at index 2. The calculation is in the for loop and find function.
-                            
-                            for (var i = 0; i < segsInPrevRev.length; i++) {
 
-                                if (i === 0) {
-                                    findParentSegmentHelperArray.push(that.findParentSegmentHelper(segsInPrevRev[i].segLength.length, segsInPrevRev[i].segID));
-                                } else {
-                                    findParentSegmentHelperArray.push(that.findParentSegmentHelper((findParentSegmentHelperArray[locationSoFar].locationBasedOnLength + segsInPrevRev[i].segLength.length), segsInPrevRev[i].segID));
-                                    locationSoFar += 1;
-                                };
-                            };
+                        _.each(segmentsArray, function(eachSegment){
 
-                            _.find(findParentSegmentHelperArray, function(eachSegment) {
+                            var currentAuthor = _.find(authors, function(eachAuthor) {
+                                return eachAuthor.id === eachSegment.author;
+                            });
 
-                                if (startIndex <= eachSegment.locationBasedOnLength) {
-                                    parentSegmentID = eachSegment.segmentID;
-                                } else {
-                                    parentSegmentID = -1;
-                                };
-                            }); 
-                            
-                            return parentSegmentID;                  	
+                            var authorColor = currentAuthor.color;
+                            var segment = that.oneSegment(authorColor, eachSegment.segID, eachSegment.parentSegID, eachSegment.offset, eachSegment.segStr, eachSegment.segStr.length)
+                            segments.push(segment);
+                        });
+
+
+                        return segments;
 
                     },
 

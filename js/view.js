@@ -596,31 +596,6 @@
 
             // New version bag graph with segments:
 
-            _.each(data, function(rev, index) {
-                var segStartIndex = 0;
-                var soFarSegmentsLength = 0;
-                svg.selectAll(".bar").data(rev.revSegments).enter()
-                    .append("rect")
-                    .attr("x", function(d, i) {
-                        return x(index);
-                    })
-                    .attr("y", function(d, i) {
-                        segStartIndex = y(soFarSegmentsLength);
-                        soFarSegmentsLength = soFarSegmentsLength + d[1].length;
-                        return segStartIndex;
-                    })
-
-                .attr("width", x.rangeBand())
-                    .attr("height", function(d, i) {
-                        //console.log(d[1].length);
-                        return y(d[1].length);
-                    })
-                    .style("fill", function(d) {
-                        return d[0].color;
-                    });
-
-            });
-
             // Draw time label:
 
             var time_label = svg.selectAll("time_label").data(data).enter()
@@ -661,12 +636,210 @@
                         return d;
                     })
                     .attr("transform", "translate(0," + (6 * barHeight) + ")");
-            };
+            }
+
+
+
+
+            _.each(data, function(rev, index) {
+                var segStartIndex = 0;
+                var soFarSegmentsLength = 0;
+
+                svg.selectAll(".bar").data(rev.revSegments).enter()
+                    .append("rect")
+                    .attr("x", function(d, i) {
+                        return x(index);
+                    })
+                    .attr("y", function(d, i) {
+                        segStartIndex = y(soFarSegmentsLength);
+                        //soFarSegmentsLength = soFarSegmentsLength + d[1].length;
+                        soFarSegmentsLength = soFarSegmentsLength + d.segLength;
+                        return segStartIndex;
+                    })
+                    .attr("width", x.rangeBand())
+                    .attr("height", function(d, i) {
+                        //console.log(d[1].length);
+                        //return y(d[1].length);
+                        return y(d.segLength);
+                    })
+                    .style("fill", function(d) {
+                        //return d[0].color;
+                        return d.authorColor;
+                    });
+            });
+
+        // compute link 
+        var link = [], preSegment = [], newSegment = [], preIndex = -1;
+
+
+
+        // var locateSegmentWithID = function(segmentsArray, segID) {
+        //     if (segmentsArray.length === 0){
+        //         return -1;
+        //     }
+        //     else {
+        //         _.each(segmentsArray, function(eachSegment, index){
+        //             if (eachSegment.segID === segID){ 
+        //                 return index;
+        //             }
+        //         });
+        //         return -1;
+        //     }
+        // };
+
+        for (var j = 0; j < data.length - 1; j++) {
+            link[j] = [];//link[j] represent the link between revision j and j+1
+            preSegment = data[j].revSegments; //revision j segments
+            newSegment = data[j + 1].revSegments; //revision j+1 segments
+            //iterate revision j+1 segments to find father segment (segmentId) or it own(-1) in the previous revision
+            for (var k = 0; k < newSegment.length; k++) {
+                // If fatherSegmentIndex<0, it is not a child segment, either has a link to itself, or no link
+                if (newSegment[k].parentSegID < 0) {
+
+                    //preIndex = preSegment.indexOf(newSegment[k]);
+                    if (preSegment.length != 0){
+                        _.each(preSegment, function(eachSegment, index){
+                            console.log("new seg id: " + newSegment[k].segID);
+                            console.log("eachSegment id: " + eachSegment.segID);                            
+                            if (eachSegment.segID === newSegment[k].segID){ 
+                                console.log("found");
+                                // preIndex = index;
+                                link[j].push([ eachSegment, newSegment[k] ]);
+                            }
+                        });
+                    }
+                    // //preIndex = -1 means that the segment is not in the previous revision
+                    // if (preIndex != -1) {
+                    //     link[j].push([ preSegment[preIndex], newSegment[k] ]);
+                    // } else {
+                    //     //No link
+                    // }
+                } else {
+                    // fatherSegmentIndex>0 it's a child segment, need to calculate the offset and position
+                    if (preSegment.length != 0){
+                        _.each(preSegment, function(eachSegment, index){
+                            if (eachSegment.segID === newSegment[k].parentSegID){ 
+                                preIndex = index;
+                            }
+                        });
+                    }                 
+                    //If preindex != -1 means, the father is in previous revision, so link the fathter segment and child segment
+                    if (preIndex != -1) {
+                        link[j].push([ preSegment[preIndex], newSegment[k] ]);
+                    }
+                    // If preindex = -1 means, the father is not in previous revision, so link the child segment and itself in previsous version
+                    else {
+                        //preIndex = preSegment.indexOf(newSegment[k]);
+                        if (preSegment.length != 0){
+                            _.each(preSegment, function(eachSegment, index){
+                                if (eachSegment.segID === newSegment[k].segID){ 
+                                    preIndex = index;
+                                }
+                            });
+                        }
+                        if (preIndex != -1) {
+                            link[j]
+                            .push([ preSegment[preIndex], newSegment[k] ]);
+                        } else {
+                            // means it has a father, but it's not in previous version,
+                            alert("link compute error" + preIndex + " "
+                                + newSegment[k].segID);
+                        }
+                    }
+                }
+            }// End of Segments  for-loop
+            // If there's no link at all, put a empty link for visualize reason
+            if (link[j].length == 0) {
+                link[j].push([ -1, -1 ]);
+            }
+        }// End of revision for-loop to compute the links
+
+
+        // Link rectangles
+        var linkGroups = svg.selectAll("linkGroup").data(link).enter()
+            .append("g")
+            .attr("class", "linkGroup");
+        // For d
+        var linkRevisionIndex = -1;
+        // For rev
+        var linkRevisionIndex2 = -1;
+
+        linkGroups
+            .selectAll("link")
+            .data(function(d) {
+                return d;
+            })
+            .enter()
+            .append("path")
+            .attr("class", "link")
+            .attr(
+                "d",
+                function(d, i) {
+                    if (i == 0) {
+                        linkRevisionIndex++;
+                        accumulateSegLength1 = 0;
+                        accumulateSegLength2 = 0;
+                    }
+                    // If d[1] = -1 means it has only an empty link (-1,-1)
+                    if (d[1] == -1) {
+                        return "";
+                    } else {
+                        var x0 = x(linkRevisionIndex) + x.rangeBand();
+                        var tempSegments1 = data[linkRevisionIndex].revSegments;
+                        var tempSegments2 = data[linkRevisionIndex + 1].revSegments;
+
+                        var index1 = tempSegments1.indexOf(d[0]);
+                        var index2 = tempSegments2.indexOf(d[1]);
+
+                        var accumulateSegLength1 = 0, accumulateSegLength2 = 0;
+
+                        for (var q = 0; q < index1; q++) {
+                            accumulateSegLength1 += tempSegments1[q].segLength;
+                        }
+                        for (var q = 0; q < index2; q++) {
+                            accumulateSegLength2 += tempSegments2[q].segLength;
+                        }
+
+                        if (d[1].segID === d[0].segID) {
+                            var y0 = y(accumulateSegLength1);
+                        } else {
+                            var y0 = y(accumulateSegLength1
+                                + d[1].offset);
+                        }
+                        var y1 = y(accumulateSegLength2);
+
+                        var x1 = x0 + x.rangeBand();
+                        var dy = y(d[1].segLength);
+
+                        return "M " + x0 + "," + y0 + " " + x0
+                        + "," + (y0 + dy) + " " + x1 + ","
+                        + (y1 + dy) + " " + x1 + "," + y1
+                        + "Z";
+                    }
+            })
+            .attr("rev", function(d, i){
+                if (i == 0) {
+                    linkRevisionIndex2++;
+                }
+                return linkRevisionIndex2;
+            })
+            .attr("fill", function(d, i) {
+                if (d[1] != -1)
+                    return d[1].authorColor;
+            })
+            .attr("opacity", 0.8);
+            
+
+
 
 
 
             // this.renderPath(chars, data);
         },
+
+
+
+
 
     });
 
