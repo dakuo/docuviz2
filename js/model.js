@@ -141,7 +141,7 @@
                 allSegmentsInCurrentRev: [],
                 revID: 0,
                 currentSegID: 0,
-                firstChangeAfterFirstRevision: true,
+                firstChangeAfterFirstRevision: null,
 
 
 
@@ -224,15 +224,18 @@
 
 
                             if (that.firstRevisionSegments.length > 0){
-                                that.buildSegmentsWhenInsertForDocuviz(entry.s, insertStartIndex, authorId, that.firstRevisionSegments);
-                                console.log("first insert after firstRevisionSegments");
-                                console.log(that.allSegmentsInCurrentRev);
+                                //that.buildSegmentsWhenInsertForDocuviz(entry.s, insertStartIndex, authorId, that.firstRevisionSegments);
+                                that.allSegmentsInCurrentRev = that.buildSegmentsWhenInsert(entry.s, insertStartIndex, authorId, that.firstRevisionSegments);
+                                //console.log("first insert after firstRevisionSegments for entry: " + entry.s);
+                                //console.log(that.allSegmentsInCurrentRev);
                                 that.firstRevisionSegments = [];
 
                             }
 
                             else{
-                                that.buildSegmentsWhenInsertForDocuviz(entry.s, insertStartIndex, authorId, that.allSegmentsInCurrentRev);
+                                 that.allSegmentsInCurrentRev = that.buildSegmentsWhenInsert(entry.s, insertStartIndex, authorId, that.allSegmentsInCurrentRev);
+
+                                //that.buildSegmentsWhenInsertForDocuviz(entry.s, insertStartIndex, authorId, that.allSegmentsInCurrentRev);
 
                             };
 
@@ -321,7 +324,7 @@
                         intervalChangesIndex = this.calculateIntervalChangesIndex(changelog, revTimestamps);
                         console.log(intervalChangesIndex);
                         //};
-
+                        console.log("editCount: " + editCount);
                         // ***
                         var prevAuthor = _.find(authors, function(eachAuthor) {
                             return eachAuthor.id === authors[0].id;
@@ -375,8 +378,9 @@
 
 
 
-                                        //if (soFar <= 1000){
+                                        //if (soFar <= 135){
                                         that.constructForDocuviz(command, authorId, that.revID, that.currentSegID, segsInPrevRev, that.prevStr, that.pleaseContinue);
+                                        console.log(revs);
                                         //};
 
                                         //console.log("SoFar: " + soFar);
@@ -395,8 +399,8 @@
                                                 }, function(response) {});
                                             });
                                         };
-                                        //if (currentRevID < intervalChangesIndex.length) {
                                         if (currentRevID < intervalChangesIndex.length) {
+                                        //if (currentRevID < 2) {
 
                                             // if (prevAuthor.id === currentAuthor.id) {
                                             //     that.pleaseContinue = true;
@@ -415,17 +419,17 @@
 
                                             // // if previous author is different than the current author OR soFar has reaches the first cutting point
                                             // // in case the first revision has only one author contributed to it 
-                                            if (prevAuthor.id != currentAuthor.id || soFar === intervalChangesIndex[0]) {
+                                            //if (prevAuthor.id != currentAuthor.id || soFar === intervalChangesIndex[0]) {
                                                 //that.firstRevisionSegments.push(that.constructSegment(prevAuthor.id, that.renderToString(that.str), that.currentSegID, -1, 0, currentRevID, 0, that.str.length));
                                                 //that.currentSegID += 1;
                                                // that.tempSegLength = 0;
                                                // that.firstInsertBeginIndex = null;
                                                 //that.pleaseContinue = false;
                                                // prevAuthor = currentAuthor;
-                                            };
+                                            //};
 
 
-                                            if (soFar === intervalChangesIndex[currentRevID]+1) {
+                                            if (soFar === intervalChangesIndex[currentRevID]) {
                                                 // if this is the first revision, first cutting point
                                                 if (currentRevID === 0) {
                                                     var segments = that.buildAuthorsSegment(that.str, authors);
@@ -445,7 +449,7 @@
                                                     currentRevID += 1;
                                                     that.revID +=1;
                                                     segsInPrevRev = revs2[0][3]; // set the segsInPrevRev to the first rev to prepare for the second one
-
+                                                    that.firstChangeAfterFirstRevision = true;
                                                    // that.firstRevisionSegments = revs2[0][3];
                                                    // that.tempSegLength = 0;
                                                    // that.prevStr = that.str;
@@ -473,6 +477,9 @@
 
                                                     console.log("curent revID: " + currentRevID);
                                                      console.log(that.allSegmentsInCurrentRev);
+
+                                                     console.log(revs);
+                                                     //that.firstRevisionSegments = that.allSegmentsInCurrentRev;
                                                      that.firstChangeAfterFirstRevision = true;
                                                     //console.log(revs2);
                                                     //segsInPrevRev = that.tempConstructSegmentsForCurrentRev;
@@ -541,33 +548,33 @@
 
 
                     buildSegmentsWhenInsertForDocuviz: function(entry, startIndex, author, segmentsArray){
-                        var that = this;
-                        var segmentsBefore2 = that.buildSegmentsBefore(entry, startIndex, author, segmentsArray);
+                       //  var that = this;
+                       //  var segmentsBefore2 = that.buildSegmentsBefore(entry, startIndex, author, segmentsArray);
 
-                        // have to do something here
+                       //  // have to do something here
 
-                        that.allSegmentsInCurrentRev = [];
+                       //  that.allSegmentsInCurrentRev = [];
 
 
-                        _.each(segmentsBefore2, function(eachSegment){
-                            that.allSegmentsInCurrentRev.push(eachSegment);
-                        });
+                       //  _.each(segmentsBefore2, function(eachSegment){
+                       //      that.allSegmentsInCurrentRev.push(eachSegment);
+                       //  });
 
-                        // _.each(segmentsAfter2, function(eachSegment){
-                        //     that.allSegmentsInCurrentRev.push(eachSegment);
-                        // });    
+                       //  // _.each(segmentsAfter2, function(eachSegment){
+                       //  //     that.allSegmentsInCurrentRev.push(eachSegment);
+                       //  // });    
                         
-                       // that.allSegmentsInCurrentRev = that.groupingSegments(that.allSegmentsInCurrentRev);
-                        console.log("---CURRENT REV SEGMENTS WHEN INSERT--------");
-                        // _.each(that.allSegmentsInCurrentRev, function(eachSegment){
-                        //     console.log(eachSegment);
-                        // });    
-                        console.log("---------------------------")
+                       // // that.allSegmentsInCurrentRev = that.groupingSegments(that.allSegmentsInCurrentRev);
+                       //  console.log("---CURRENT REV SEGMENTS WHEN INSERT--------");
+                       //  // _.each(that.allSegmentsInCurrentRev, function(eachSegment){
+                       //  //     console.log(eachSegment);
+                       //  // });    
+                       //  console.log("---------------------------")
                     },
 
 
 
-                    buildSegmentsBefore: function(entry,startIndex, author, segmentsArray){
+                    buildSegmentsWhenInsert: function(entry,startIndex, author, segmentsArray){
 
                         var segmentsBefore = [];
                         var result = segmentsArray;
@@ -583,11 +590,12 @@
                        // console.log(locationBased);
 
 
-                        //console.log("TOlocationBased2");
-                       //console.log(locationBased2);
+                        console.log("TOlocationBased2");
+                        console.log(locationBased2);
 
                         console.log("**** insertStartIndex:" + startIndex);
                         console.log("**** insert string:" + _.escape(entry));
+                        console.log("author: " + author);
 
 
                         var segmentLocation = 0;
@@ -599,20 +607,120 @@
                             }
                         });
 
-                        //console.log("Belong to index: " + segmentLocation);
+                        console.log("Belong to index: " + segmentLocation);
+                        console.log(effectedSegment);
 
 
                         if (author === effectedSegment.segmentID.author){
-                            var strInBelongTo = effectedSegment.segmentID.segStr;
-                            strInBelongTo = strInBelongTo.insert(startIndex-effectedSegment.locationBasedOnLength[0]-1, entry);
-                            result[segmentLocation].segStr = strInBelongTo;
+                            console.log("same author");
+                            //if (that.revID === effectedSegment.segmentID.revID){
+                                var strInBelongTo = effectedSegment.segmentID.segStr;
+                                console.log("length before: " + strInBelongTo.length);
+                                strInBelongTo = strInBelongTo.insert(startIndex-effectedSegment.locationBasedOnLength[0], entry);
+                                console.log("insert for same author at: " + (startIndex-effectedSegment.locationBasedOnLength[0]));
+                                console.log("length after: " + strInBelongTo.length);
+                                result[segmentLocation].segStr = strInBelongTo;
+                            // }
+                            // else{
+
+                            //     var strInBelongTo = effectedSegment.segmentID.segStr;
+
+                            //     var strBeforeStartIndex = strInBelongTo.substring(0, startIndex - effectedSegment.locationBasedOnLength[0]-1);
+                            //     var strAfterStartIndex = strInBelongTo.substring(startIndex - effectedSegment.locationBasedOnLength[0]);
+                                
+                            //     if (strBeforeStartIndex.length>0){
+
+                            //         result.delete(segmentLocation, segmentLocation);
+
+                            //         //var offSet = startIndex- effectedSegment.locationBasedOnLength[0];
+                            //         that.currentSegID += 1;
+
+                            //         if (that.firstChangeAfterFirstRevision === true){
+                            //             var segBefore = that.constructSegment(effectedSegment.segmentID.author, strBeforeStartIndex, that.currentSegID, effectedSegment.segmentID.segID, 0, that.revID,effectedSegment.locationBasedOnLength[0],startIndex - effectedSegment.locationBasedOnLength[0], "from buildSegment Before in author !=  segment author");
+                                        
+                            //         }
+                            //         else{
+                            //             var segBefore = that.constructSegment(effectedSegment.segmentID.author, strBeforeStartIndex, that.currentSegID, effectedSegment.segmentID.parentSegID, 0, that.revID,effectedSegment.locationBasedOnLength[0],startIndex - effectedSegment.locationBasedOnLength[0], "from buildSegment Before in author !=  segment author");
+
+                            //         };
+
+                            //         result.insert(segBefore, segmentLocation)
+                            //         that.currentSegID += 1;
+                            //         var currentSeg = that.constructSegment(author, entry, that.currentSegID, -1, 0, that.revID, startIndex - effectedSegment.locationBasedOnLength[0], startIndex - effectedSegment.locationBasedOnLength[0] + entry.length, "middle part where author != prev author");
+
+                            //         result.insert(currentSeg, segmentLocation+1);
+
+
+                            //         if (strAfterStartIndex.length>0){
+                            //             that.currentSegID += 1;
+                            //             // calculate offset in here
+                            //             var offSet = startIndex- effectedSegment.locationBasedOnLength[0]+1;
+
+                            //             if (that.firstChangeAfterFirstRevision === true){
+                            //                 var segAfter = that.constructSegment(effectedSegment.segmentID.author, strAfterStartIndex, that.currentSegID, effectedSegment.segmentID.segID, offSet, that.revID,startIndex - effectedSegment.locationBasedOnLength[0] + entry.length, effectedSegment.locationBasedOnLength[1] + entry.length, "from buildSegment After in author !=  segment author");
+                                            
+                            //             }
+
+                            //             else{ 
+                            //                 var segAfter = that.constructSegment(effectedSegment.segmentID.author, strAfterStartIndex, that.currentSegID, effectedSegment.segmentID.parentSegID, offSet, that.revID,startIndex - effectedSegment.locationBasedOnLength[0] + entry.length, effectedSegment.locationBasedOnLength[1] + entry.length, "from buildSegment After in author !=  segment author");
+                            //                 console.log("enter segAfter");
+                            //                 console.log(segAfter);
+                            //             };
+                            //             result.insert(segAfter, segmentLocation+2);
+                            //             that.firstChangeAfterFirstRevision = false;
+
+                            //         };
+
+                            //     }
+
+                            //     else { // handle the case where before Str is blank
+
+                            //         result.delete(segmentLocation, segmentLocation);
+
+                            //         that.currentSegID += 1;
+                            //         var currentSeg = that.constructSegment(author, entry, that.currentSegID, -1, 0, that.revID, startIndex - effectedSegment.locationBasedOnLength[0], startIndex - effectedSegment.locationBasedOnLength[0] + entry.length, "middle part where author != prev author");
+
+                            //         result.insert(currentSeg, segmentLocation);
+                            //         var offSet = startIndex- effectedSegment.locationBasedOnLength[0]-1;
+
+                            //         if (strAfterStartIndex.length>0){
+                            //             that.currentSegID += 1;
+                            //             if (that.firstChangeAfterFirstRevision === true){
+                            //                 var segAfter = that.constructSegment(effectedSegment.segmentID.author, strAfterStartIndex, that.currentSegID, effectedSegment.segmentID.segID, offSet, that.revID,startIndex - effectedSegment.locationBasedOnLength[0] + entry.length, effectedSegment.locationBasedOnLength[1] + entry.length, "from buildSegment After in author !=  segment author");
+                            //                 //that.firstChangeAfterFirstRevision = false;
+                            //             }
+                            //             else{
+                            //                 var segAfter = that.constructSegment(effectedSegment.segmentID.author, strAfterStartIndex, that.currentSegID, effectedSegment.segmentID.parentSegID, offSet, that.revID,startIndex - effectedSegment.locationBasedOnLength[0] + entry.length, effectedSegment.locationBasedOnLength[1] + entry.length, "from buildSegment After in author !=  segment author");
+
+                            //             };
+
+                            //             result.insert(segAfter, segmentLocation+1);
+                            //             that.firstChangeAfterFirstRevision = false;
+
+                            //         };
+
+                            //     };
+
+
+
+                            // };
+
                         }
 
                         else{ // when author != effectedSegment.segmentID.author
                             var strInBelongTo = effectedSegment.segmentID.segStr;
+                            console.log("author is different");
+                            // var strBeforeStartIndex = strInBelongTo.substring(effectedSegment.locationBasedOnLength[0], startIndex - effectedSegment.locationBasedOnLength[1]-1);
+                            // console.log("strBeforeStartIndex start from: " + effectedSegment.locationBasedOnLength[0] + "to: " + (startIndex - effectedSegment.locationBasedOnLength[0]-1));
+                            // var strAfterStartIndex = strInBelongTo.substring(startIndex - effectedSegment.locationBasedOnLength[0]-1, effectedSegment.locationBasedOnLength[1]);
+                            // console.log("strAfterStartIndex start from: " + (startIndex - effectedSegment.locationBasedOnLength[0]-1) + "to: " + (effectedSegment.locationBasedOnLength[1]));
 
-                            var strBeforeStartIndex = strInBelongTo.substring(effectedSegment.locationBasedOnLength[0], startIndex - effectedSegment.locationBasedOnLength[0]-1);
-                            var strAfterStartIndex = strInBelongTo.substring(startIndex - effectedSegment.locationBasedOnLength[0]-1, effectedSegment.locationBasedOnLength[1])
+
+
+                            var strBeforeStartIndex = strInBelongTo.substring(0, startIndex - effectedSegment.locationBasedOnLength[0]-1);
+                            //console.log("strBeforeStartIndex start from: " + effectedSegment.locationBasedOnLength[0] + "to: " + (startIndex - effectedSegment.locationBasedOnLength[0]-1));
+                            var strAfterStartIndex = strInBelongTo.substring(startIndex - effectedSegment.locationBasedOnLength[0]);
+                            //console.log("strAfterStartIndex start from: " + (startIndex - effectedSegment.locationBasedOnLength[0]-1) + "to: " + (effectedSegment.locationBasedOnLength[1] - insertStartIndex));
 
                             if (strBeforeStartIndex.length>0){
 
@@ -647,9 +755,10 @@
                                         
                                     }
 
-                                    else{
+                                    else{ 
                                         var segAfter = that.constructSegment(effectedSegment.segmentID.author, strAfterStartIndex, that.currentSegID, effectedSegment.segmentID.parentSegID, offSet, that.revID,startIndex - effectedSegment.locationBasedOnLength[0] + entry.length, effectedSegment.locationBasedOnLength[1] + entry.length, "from buildSegment After in author !=  segment author");
-
+                                        console.log("enter segAfter");
+                                        console.log(segAfter);
                                     };
                                     result.insert(segAfter, segmentLocation+2);
                                     that.firstChangeAfterFirstRevision = false;
@@ -666,7 +775,7 @@
                                 var currentSeg = that.constructSegment(author, entry, that.currentSegID, -1, 0, that.revID, startIndex - effectedSegment.locationBasedOnLength[0], startIndex - effectedSegment.locationBasedOnLength[0] + entry.length, "middle part where author != prev author");
 
                                 result.insert(currentSeg, segmentLocation);
-                                var offSet = startIndex- effectedSegment.locationBasedOnLength[0];
+                                var offSet = startIndex- effectedSegment.locationBasedOnLength[0]+1;
 
                                 if (strAfterStartIndex.length>0){
                                     that.currentSegID += 1;
@@ -707,8 +816,8 @@
                         // console.log(locationBased);
 
 
-                        //console.log("locationBased2: ");
-                        //console.log(locationBased2);
+                        console.log("locationBased2: ");
+                        console.log(locationBased2);
 
 
                         console.log("deleteStartIndex" + deleteStartIndex);
@@ -730,9 +839,12 @@
 
 
                             var strInBelongTo = effectedSegmentOfDelete.segmentID.segStr;
-                            strInBelongTo = strInBelongTo.substring(0, deleteStartIndex-effectedSegmentOfDelete.locationBasedOnLength[0]-1)+strInBelongTo.substring(deleteStartIndex- effectedSegmentOfDelete.locationBasedOnLength[0],effectedSegmentOfDelete.locationBasedOnLength[1]);
+                            console.log("before delete: " + strInBelongTo);
+                            console.log("delete from:" + (deleteStartIndex-effectedSegmentOfDelete.locationBasedOnLength[0]) + "to: " + (deleteStartIndex- effectedSegmentOfDelete.locationBasedOnLength[0]+1));
+                            strInBelongTo = strInBelongTo.substring(0, deleteStartIndex-effectedSegmentOfDelete.locationBasedOnLength[0])+strInBelongTo.substring(deleteStartIndex- effectedSegmentOfDelete.locationBasedOnLength[0]+1);
 
                             result[deleteSegmentLocation].segStr = strInBelongTo;
+                            console.log("after delete: " + result[deleteSegmentLocation].segStr);
 
                         }
 
@@ -765,19 +877,20 @@
                             if (deleteStartSegmentLocation === deleteStartSegmentLocation){ //within segment
                                 console.log("delete within segment");
                                 var strInBelongTo = effectedSegmentOfDeleteStart.segmentID.segStr;
-                                strInBelongTo = strInBelongTo.substring(0, deleteStartIndex-effectedSegmentOfDeleteStart.locationBasedOnLength[0]-1)+strInBelongTo.substring(deleteEndIndex- effectedSegmentOfDeleteStart.locationBasedOnLength[0],effectedSegmentOfDeleteStart.locationBasedOnLength[1]);
-
+                                strInBelongTo = strInBelongTo.substring(0, deleteStartIndex-effectedSegmentOfDeleteStart.locationBasedOnLength[0])+strInBelongTo.substring(deleteEndIndex- effectedSegmentOfDeleteStart.locationBasedOnLength[0]+1);
+                                // dont touch this one, this is correct.
                                 result[deleteStartSegmentLocation].segStr = strInBelongTo;
 
 
                             }
 
                             else{
+                                console.log("CHECK IF ENTER");
                                 var strInBelongToDeleteStart = effectedSegmentOfDeleteStart.segmentID.segStr;
-                                strInBelongToDeleteStart = strInBelongToDeleteStart.substring(0, deleteStartIndex-effectedSegmentOfDeleteStart.locationBasedOnLength[0]);
+                                strInBelongToDeleteStart = strInBelongToDeleteStart.substring(0, deleteStartIndex-effectedSegmentOfDeleteStart.locationBasedOnLength[0]-1);
 
                                 var strInBelongToDeleteEnd = effectedSegmentOfDeleteEnd.segmentID.segStr;
-                                strInBelongToDeleteEnd = strInBelongToDeleteEnd.substring(deleteEndIndex - effectedSegmentOfDeleteEnd.locationBasedOnLength[0], effectedSegmentOfDeleteStart.locationBasedOnLength[1]);
+                                strInBelongToDeleteEnd = strInBelongToDeleteEnd.substring(deleteEndIndex- effectedSegmentOfDeleteEnd.locationBasedOnLength[0]);
 
 
                                 result.delete(deleteStartSegmentLocation, deleteEndSegmentLocation);

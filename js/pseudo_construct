@@ -41,10 +41,17 @@ if type is insert:
 
 if type is delete:
 	if that.firstRevisionSegments.length > 0:
-		var parentIDBefore = find parent ID for the current delete start index
-		var parentIDAfter = find parent D for the current delete end index
+		// var parentIDBefore = find parent ID for the current delete start index
+		// var parentIDAfter = find parent ID for the current delete end index
 
-		
+		var segmentsBefore = find all segments before the delete start index
+		var segmentsAfter = find all segments after the delete end index
+
+
+
+
+
+
 
 
 
