@@ -698,9 +698,7 @@
 
                     //preIndex = preSegment.indexOf(newSegment[k]);
                     if (preSegment.length != 0){
-                        _.each(preSegment, function(eachSegment, index){
-                            console.log("new seg id: " + newSegment[k].segID);
-                            console.log("eachSegment id: " + eachSegment.segID);                            
+                        _.each(preSegment, function(eachSegment, index){                          
                             if (eachSegment.segID === newSegment[k].segID){ 
                                 console.log("found");
                                 // preIndex = index;
@@ -714,11 +712,16 @@
                     // } else {
                     //     //No link
                     // }
-                } else {
+                } 
+                else {
                     // fatherSegmentIndex>0 it's a child segment, need to calculate the offset and position
                     if (preSegment.length != 0){
                         _.each(preSegment, function(eachSegment, index){
-                            if (eachSegment.segID === newSegment[k].parentSegID){ 
+                            if (eachSegment.segID === newSegment[k].segID){ 
+                                link[j].push([ eachSegment, newSegment[k] ]);
+                                
+                            }
+                            else if (eachSegment.segID === newSegment[k].parentSegID){
                                 preIndex = index;
                             }
                         });
@@ -726,25 +729,24 @@
                     //If preindex != -1 means, the father is in previous revision, so link the fathter segment and child segment
                     if (preIndex != -1) {
                         link[j].push([ preSegment[preIndex], newSegment[k] ]);
+                        preIndex = -1;
                     }
-                    // If preindex = -1 means, the father is not in previous revision, so link the child segment and itself in previsous version
                     else {
-                        //preIndex = preSegment.indexOf(newSegment[k]);
-                        if (preSegment.length != 0){
-                            _.each(preSegment, function(eachSegment, index){
-                                if (eachSegment.segID === newSegment[k].segID){ 
-                                    preIndex = index;
-                                }
-                            });
-                        }
-                        if (preIndex != -1) {
-                            link[j]
-                            .push([ preSegment[preIndex], newSegment[k] ]);
-                        } else {
-                            // means it has a father, but it's not in previous version,
-                            alert("link compute error" + preIndex + " "
-                                + newSegment[k].segID);
-                        }
+                        // if (preSegment.length != 0){
+                        //     _.each(preSegment, function(eachSegment, index){
+                        //         if (eachSegment.segID === newSegment[k].segID){ 
+                        //             preIndex = index;
+                        //         }
+                        //     });
+                        // }
+                        // if (preIndex != -1) {
+                        //     link[j]
+                        //     .push([ preSegment[preIndex], newSegment[k] ]);
+                        // } else {
+                        //     // means it has a father, but it's not in previous version,
+                        //     alert("link compute error" + preIndex + " "
+                        //         + newSegment[k].segID);
+                        // }
                     }
                 }
             }// End of Segments  for-loop

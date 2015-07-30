@@ -479,7 +479,7 @@
                                                      console.log(that.allSegmentsInCurrentRev);
 
                                                      console.log(revs);
-                                                     //that.firstRevisionSegments = that.allSegmentsInCurrentRev;
+                                                     // that.firstRevisionSegments = that.allSegmentsInCurrentRev;
                                                      that.firstChangeAfterFirstRevision = true;
                                                     //console.log(revs2);
                                                     //segsInPrevRev = that.tempConstructSegmentsForCurrentRev;
@@ -610,8 +610,8 @@
                         console.log("Belong to index: " + segmentLocation);
                         console.log(effectedSegment);
 
-
                         if (author === effectedSegment.segmentID.author){
+                        // if (author === effectedSegment.segmentID.author && that.revID === effectedSegment.segmentID.revID){
                             console.log("same author");
                             //if (that.revID === effectedSegment.segmentID.revID){
                                 var strInBelongTo = effectedSegment.segmentID.segStr;
@@ -839,12 +839,12 @@
 
 
                             var strInBelongTo = effectedSegmentOfDelete.segmentID.segStr;
-                            console.log("before delete: " + strInBelongTo);
+                            //console.log("before delete: " + strInBelongTo);
                             console.log("delete from:" + (deleteStartIndex-effectedSegmentOfDelete.locationBasedOnLength[0]) + "to: " + (deleteStartIndex- effectedSegmentOfDelete.locationBasedOnLength[0]+1));
                             strInBelongTo = strInBelongTo.substring(0, deleteStartIndex-effectedSegmentOfDelete.locationBasedOnLength[0])+strInBelongTo.substring(deleteStartIndex- effectedSegmentOfDelete.locationBasedOnLength[0]+1);
 
                             result[deleteSegmentLocation].segStr = strInBelongTo;
-                            console.log("after delete: " + result[deleteSegmentLocation].segStr);
+                            //console.log("after delete: " + result[deleteSegmentLocation].segStr);
 
                         }
 
