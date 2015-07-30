@@ -380,7 +380,7 @@
 
                                         //if (soFar <= 135){
                                         that.constructForDocuviz(command, authorId, that.revID, that.currentSegID, segsInPrevRev, that.prevStr, that.pleaseContinue);
-                                        console.log(revs);
+                                        //console.log(revs);
                                         //};
 
                                         //console.log("SoFar: " + soFar);
@@ -523,9 +523,9 @@
                         for (var i = 0; i < segmentsArray.length; i++) {
 
                             if (i === 0) {
-                                result.push(that.findParentSegmentHelper([0,segmentsArray[i].segStr.length], segmentsArray[i]));
+                                result.push(that.findParentSegmentHelper([0,segmentsArray[i].segStr.length+1], segmentsArray[i]));
                             } else {
-                                result.push(that.findParentSegmentHelper([result[locationSoFar].locationBasedOnLength[1]+1,(result[locationSoFar].locationBasedOnLength[1] + segmentsArray[i].segStr.length + 1)], segmentsArray[i]));
+                                result.push(that.findParentSegmentHelper([result[locationSoFar].locationBasedOnLength[1],(result[locationSoFar].locationBasedOnLength[1] + segmentsArray[i].segStr.length + 1)], segmentsArray[i]));
                                 locationSoFar += 1;
                             };
                         };
