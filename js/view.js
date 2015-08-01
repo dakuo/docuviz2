@@ -640,13 +640,12 @@
 
 
 
-
             _.each(data, function(rev, index) {
                 var segStartIndex = 0;
                 var soFarSegmentsLength = 0;
 
                 svg.selectAll(".bar").data(rev.revSegments).enter()
-                    .append("rect")
+                    .append("svg:rect")
                     .attr("x", function(d, i) {
                         return x(index);
                     })
@@ -665,7 +664,8 @@
                     .style("fill", function(d) {
                         //return d[0].color;
                         return d.authorColor;
-                    });
+                    })
+                    .append("svg:title").text(function(d) { return d.segStr; });
             });
 
         // compute link 
