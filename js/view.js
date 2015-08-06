@@ -1,4 +1,4 @@
-// Authorviz Annotations
+// Docuviz Annotations
 // _____________________________
 //
 // BB: means Black Box. When you see this, it means you don't need to care about what goes inside the methods. It is because the method name is self-explanatory and inside is complex. The methods do what they supposed to do
@@ -7,20 +7,20 @@
 
 
 
-;
-(function() {
-    'use strict';
+// ;
+// (function() {
+//    'use strict';
 
     // Reserve the "$" character to only be use as a call to to jQuery
     // e.g. instead of writing "jQuery.someMethods", you can write "$.someMethods"
-    var $ = jQuery.noConflict();
+    var $ = jQuery.noConflict()
 
     // If authorviz is already exist, use it. Otherwise make a new object
-    var authorviz = authorviz || {};
+    window.docuviz = window.docuviz || {}
 
 
     // Add new properties to the existing object's properties
-    $.extend(authorviz, {
+    $.extend(window.docuviz, {
         // Store each author object in the document
         // Each author object will have a unique ID, color, and name
         authors: [],
@@ -130,7 +130,7 @@
                         revisionNumber = raw[raw.length - 1][raw[raw.length - 1].length - 1][3];
 
                     that.setRevisionNumber(revisionNumber);
-                    $('.js-authorviz-btn').removeClass('is-disabled');
+                    //$('.js-authorviz-btn').removeClass('is-disabled');
                     $('.js-docuviz-btn').removeClass('is-disabled');
 
                     that.authors = that.parseAuthors(raw[2]);
@@ -334,23 +334,23 @@
 
         // Bind Click Event onto the Authorviz Button
         addListenerToAuthorvizBtn: function() {
-            var that = this;
+            // var that = this;
 
-            // When the button is click, show the app and disable this button
-            $(document).on('click', '.js-authorviz-btn', function() {
-                var changelogUrl = null;
-                $('.js-result').html('')
-                // Make the App Visible to user
-                $('.js-authorviz').removeClass('hideVisually');
-                //$('.js-progress-bar').removeClass('hideVisually');
+            // // When the button is click, show the app and disable this button
+            // $(document).on('click', '.js-authorviz-btn', function() {
+            //     var changelogUrl = null;
+            //     $('.js-result').html('')
+            //     // Make the App Visible to user
+            //     $('.js-authorviz').removeClass('hideVisually');
+            //     //$('.js-progress-bar').removeClass('hideVisually');
 
 
-                changelogUrl = that.getChangelogUrl(location.href);
-                that.getChangelog(changelogUrl, 'authorviz');
+            //     changelogUrl = that.getChangelogUrl(location.href);
+            //     that.getChangelog(changelogUrl, 'authorviz');
 
-                // Remove the click event from Authorviz button
-               // $(document).off('click', '.js-authorviz-btn');
-            });
+            //     // Remove the click event from Authorviz button
+            //    // $(document).off('click', '.js-authorviz-btn');
+            // });
         },
 
 
@@ -371,8 +371,8 @@
                 changelogUrl = that.getChangelogUrlForDocuviz(location.href);
                 that.getChangelog(changelogUrl, 'docuviz');
 
-                // Remove the click event from Docuviz button
-               // $(document).off('click', '.js-docuviz-btn');
+                //Remove the click event from Docuviz button
+                $(document).off('click', '.js-docuviz-btn');
             });
         },
 
@@ -396,7 +396,7 @@
 
             $('body').prepend(html);
 
-            this.renderAuthorvizBtn();
+            this.renderDocuvizBtn();
 
             // Update Document Title
             $('.js-doc-title').text(this.getDocTitle());
@@ -404,14 +404,14 @@
         },
 
 
-        renderAuthorvizBtn: function() {
+        renderDocuvizBtn: function() {
             var btnGroup = $('#docs-titlebar-share-client-button').prev();
 
             // js-authorviz: feature btn
             // js-revision-number: revision number
-            $('<div class="goog-inline-block js-authorviz-btn is-disabled"><div role="button" class="goog-inline-block jfk-button jfk-button-standard docs-titlebar-button jfk-button-clear-outline" aria-disabled="false" aria-pressed="false" tabindex="0" data-tooltip="Visualize Document" aria-label="Visualize Document" value="undefined" style="-webkit-user-select: none;">Visualize Document (<span class="js-revision-number">loading</span> revisions)</div><div id="docs-docos-caret" style="display: none" class="docos-enable-new-header"><div class="docs-docos-caret-outer"></div><div class="docs-docos-caret-inner"></div></div></div><div class="goog-inline-block js-docuviz-btn is-disabled"><div role="button" class="goog-inline-block jfk-button jfk-button-standard docs-titlebar-button jfk-button-clear-outline" aria-disabled="false" aria-pressed="false" tabindex="0" data-tooltip="Docuviz" aria-label="Docuviz" value="undefined" style="-webkit-user-select: none;">Docuviz</div><div id="docs-docos-caret" style="display: none" class="docos-enable-new-header"><div class="docs-docos-caret-outer"></div><div class="docs-docos-caret-inner"></div></div></div>').prependTo(btnGroup);
-
-            this.addListenerToAuthorvizBtn();
+           // $('<div class="goog-inline-block js-authorviz-btn is-disabled"><div role="button" class="goog-inline-block jfk-button jfk-button-standard docs-titlebar-button jfk-button-clear-outline" aria-disabled="false" aria-pressed="false" tabindex="0" data-tooltip="Visualize Document" aria-label="Visualize Document" value="undefined" style="-webkit-user-select: none;">Visualize Document (<span class="js-revision-number">loading</span> revisions)</div><div id="docs-docos-caret" style="display: none" class="docos-enable-new-header"><div class="docs-docos-caret-outer"></div><div class="docs-docos-caret-inner"></div></div></div><div class="goog-inline-block js-docuviz-btn is-disabled"><div role="button" class="goog-inline-block jfk-button jfk-button-standard docs-titlebar-button jfk-button-clear-outline" aria-disabled="false" aria-pressed="false" tabindex="0" data-tooltip="Docuviz" aria-label="Docuviz" value="undefined" style="-webkit-user-select: none;">Docuviz</div><div id="docs-docos-caret" style="display: none" class="docos-enable-new-header"><div class="docs-docos-caret-outer"></div><div class="docs-docos-caret-inner"></div></div></div>').prependTo(btnGroup);
+            $('<div class="goog-inline-block js-docuviz-btn is-disabled"><div role="button" class="goog-inline-block jfk-button jfk-button-standard docs-titlebar-button jfk-button-clear-outline" aria-disabled="false" aria-pressed="false" tabindex="0" data-tooltip="Docuviz" aria-label="Docuviz" value="undefined" style="-webkit-user-select: none;">Docuviz (<span class="js-revision-number">loading</span> revisions)</div><div id="docs-docos-caret" style="display: none" class="docos-enable-new-header"><div class="docs-docos-caret-outer"></div><div class="docs-docos-caret-inner"></div></div></div>').prependTo(btnGroup);
+            //this.addListenerToAuthorvizBtn();
             this.addListenerToDocuvizBtn();
         },
 
@@ -464,6 +464,7 @@
             $('.js-left-panel').append(html);
 
             $(document).on('click', '.js-close', function() {
+                //$('.js-result').addClass('hideVisually');
                 $('.js-authorviz').addClass('hideVisually');
 
                 // $(document).on('click', '.js-authorviz-btn', function() {
@@ -471,10 +472,11 @@
                 //     $('.js-authorviz').removeClass('hideVisually');
                 // });
 
-                // $(document).on('click', '.js-docuviz-btn', function() {
-                //     // Show App
-                //     $('.js-authorviz').removeClass('hideVisually');
-                // });
+                $(document).on('click', '.js-docuviz-btn', function() {
+                    // Show App
+                    $('.js-authorviz').removeClass('hideVisually');
+                    //$('.js-result').removeClass('hideVisually');
+                });
 
 
             });
@@ -506,7 +508,8 @@
 
 
         renderResultPanelForDocuviz: function(chars, revData) {
-
+            var initial_render_revision_amount = 100;
+            var rendered_revision_counter_end = initial_render_revision_amount;
 
             var margin = {
                     top: 160,
@@ -514,6 +517,7 @@
                     bottom: 20,
                     left: 60
                 },
+
                 width = 1280 - margin.left - margin.right,
                 height = 500 - margin.top - margin.bottom;
 
@@ -523,13 +527,18 @@
                 var timeRev = new Date(val[1].timestamp2);
                 var parseTime = timeRev.toISOString();
                 var parseDate = new Date(parseTime);
-                //var dayDate = parseDate.toLocaleString();
                 return {
                     revLength: val[0],
                     revAuthor: val[2],
                     revTime: parseDate,
                     revSegments: val[3],
                 }
+            });
+
+
+            var dateArray = data.map(function(eachRevision){
+                return eachRevision.revTime;
+
             });
 
             var authorsColors = [];
@@ -545,10 +554,96 @@
 
             console.log(data);
 
+            /**
+            * Timescale
+            **/
+            $('.js-result').append('<section class="chart-component"></section>')
+            $('.chart-component').append('<section class="chart__controller"></section>')
+            $('.chart__controller').append("<div class='controller__btn-wrap'></div>")
+            $('.controller__btn-wrap').append('<button class="btn btn-primary" id="equal-distance-btn">Equal Distance</button>');
+            $('.controller__btn-wrap').append('<button class="btn btn-primary" id="time-scaled-btn">Time Scaled</button>');
 
+
+
+            /**
+            * Slider
+            **/
+            $('.chart__controller').append("<div class='slider-bar-wrap'></div>")
+            var slider = $('.slider-bar-wrap').append("<div id='slider'></div>")//.attr("id","slider");
+            var revision_index_label = $('.slider-bar-wrap').append("<label for='revision_index'></label>")//.attr("for","revision_index");
+            var revision_index = $('.slider-bar-wrap').append("<input id='revision_index'></input>")//.attr("id","revision_index");
+
+
+            /**
+            * Slider to interact with historyflow
+            **/
+            $("#slider").slider({
+                range: true,
+                min: 1,
+                max: data.length,
+                values: [ 1, data.length > initial_render_revision_amount ? initial_render_revision_amount : data.length ],
+                slide: function( event, ui ) {
+                    $( "#revision_index" ).val( "Revision: " + ui.values[ 0 ] + " - Revision: " + ui.values[ 1 ] );
+                    
+                    /*
+                    ** Interact with the filter
+                    */
+                    //docuviz.transitionFilter(ui.values[ 0 ] , ui.values[ 1 ] , data);
+                    
+                }
+            });
+            
+            /*
+            ** Slider label
+            */
+            $( "#revision_index" ).attr("style","height:26px;width:180px;").val( "Revision " + $( "#slider" ).slider( "values", 0 ) +
+                   " to Revision " + $( "#slider" ).slider( "values", 1 ) );
+
+
+
+            this.drawEqualDistance(data,margin,width,height,barHeight,authorsColors);
+
+            var timeScaledGraph = null;
+
+            var equalDistanceGraph = $('svg').html();
+            document.getElementById('equal-distance-btn').onclick = function() {
+                $('svg').html(equalDistanceGraph);
+                //$('.js-result').append(equalDistanceGraph);
+                //docuviz.drawEqualDistance(data,margin,width,height,barHeight,authorsColors);
+            };
+
+
+            // this.renderPath(chars, data);
+
+            document.getElementById('time-scaled-btn').onclick = function() {
+
+                if (timeScaledGraph === null){
+                    $('svg').remove();
+                    docuviz.drawTimeScaled(data,margin,width,height,barHeight,authorsColors);
+                    timeScaledGraph = $('svg').html();
+                }
+
+                else{
+                    $('svg').html(timeScaledGraph);
+                }
+
+
+            };
+
+
+
+        },
+
+
+
+        drawEqualDistance: function(data,margin,width,height,barHeight,authorsColors){
 
 
             var x = d3.scale.ordinal().domain(d3.range(data.length)).rangeRoundBands([0, width], 0.5);
+            // var x = d3.time.scale();
+            // x.domain(dateArray);
+            // x.range(data.length);
+
             var y = d3.scale.linear()
                 .range([0, height]);
 
@@ -629,8 +724,7 @@
                     .attr("y", function(d, i) {
                         return (i * (barHeight + 1)) - 120;
                     })
-
-                .attr("width", x.rangeBand())
+                    .attr("width", x.rangeBand())
                     .attr("height", barHeight)
                     .style("fill", function(d, i) {
                         return d;
@@ -830,24 +924,611 @@
                     return d[1].authorColor;
             })
             .attr("opacity", 0.8);
+
+        },
+
+
+        drawTimeScaled: function(data,margin,width,height,barHeight,authorsColors){
+                var svg = d3.select($('.js-result')[0]).append("svg")
+                    .attr("width", width + margin.left + margin.right)
+                    .attr("height", height + margin.top + margin.bottom)
+                    .append("g")
+                    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+
+
+                var minDate = data[0].revTime,maxDate = data[(data.length-1)].revTime;
+                var x = d3.time.scale().domain([minDate, maxDate])
+                .range([ 0, width - margin.left - margin.right ]);
+                var barWidth = 5;
+                var y = d3.scale.linear()
+                    .range([0, height]);
+
+                y.domain([0, d3.max(data, function(d) {
+                    return d.revLength;
+                })]);
+
+                var xAxis = d3.svg.axis()
+                        .scale(x)
+                        .orient("top")
+                        .tickFormat('');
+
+                var yAxis = d3.svg.axis()
+                    .scale(y)
+                    .orient("left");
+
+
+                svg.append("g")
+                    .attr("class", "x axis")
+                    .attr("transform", "translate(0," + 10 + ")")
+                    .call(xAxis)
+                    .attr("fill","none");
+
+                svg.append("g")
+                    .attr("class", "y axis")
+                    .call(yAxis)
+                    .attr("shape-rendering","crispEdges")
+                    .append("text")
+                    .attr("transform", "translate(" + 0 + "," + (height - 100) + ")" + "rotate(-90)")
+                    .attr("y", 6)
+                    .attr("dy", ".71em")
+                    .style("text-anchor", "end")
+                    .text("Revision Length");
+
+
+                // Draw time label:
+
+                var time_label = svg.selectAll("time_label").data(data).enter()
+                    .append("text")
+                    .attr("class", "time_label")
+                    .attr("x", 80)
+                    .attr("y", function(d, i) {
+                        return x(d.revTime);
+                    })
+                    .attr("font-family", "sans-serif")
+                    .attr("font-size", "10px")
+                    .attr("fill", "black")
+                    .html(
+                        function(d) {
+                            return d.revTime.toString().substring(4, 10) + " " + d.revTime.toString().substring(16, 21);
+                        })
+                    .attr("transform", "translate(20," + 15 + ") rotate(-90)");
+
+
+
+                // Draw author legends:
+
+                for (var index = 0; index < authorsColors.length; index++) {
+                    var currentColors = authorsColors[index][0];
+                    //deal with multi author
+                    svg.selectAll("authorLabel_" + index).data(authorsColors[index]).enter().append("rect")
+                        .attr("class", "author_label")
+                        .attr("x", function() {
+                            return x(data[index].revTime);
+                        })
+                        .attr("y", function(d, i) {
+                            return (i * (barHeight + 1)) - 120;
+                        })
+                        .attr("width", 8)
+                        .attr("height", barHeight)
+                        .style("fill", function(d, i) {
+                            return d;
+                        })
+                        .attr("transform", "translate(16," + (6 * barHeight) + ")");
+                }
+
+
+
+                _.each(data, function(rev, index) {
+                    var segStartIndex = 0;
+                    var soFarSegmentsLength = 0;
+
+                    svg.selectAll(".bar").data(rev.revSegments).enter()
+                        .append("svg:rect")
+                        .attr("x", function(d, i) {
+                            return x(data[index].revTime)-5;
+                        })
+                        .attr("y", function(d, i) {
+                            segStartIndex = y(soFarSegmentsLength);
+                            //soFarSegmentsLength = soFarSegmentsLength + d[1].length;
+                            soFarSegmentsLength = soFarSegmentsLength + d.segLength;
+                            return segStartIndex;
+                        })
+                        .attr("width", 10)
+                        .attr("height", function(d, i) {
+                            //console.log(d[1].length);
+                            //return y(d[1].length);
+                            return y(d.segLength);
+                        })
+                        .attr("transform", "translate(20,0)")
+                        .style("fill", function(d) {
+                            //return d[0].color;
+                            return d.authorColor;
+                        })
+                        .append("svg:title").text(function(d) { return d.segStr; });
+                });
+
+
+
+                // compute link 
+                var link = [], preSegment = [], newSegment = [], preIndex = -1;
+
+
+
+                // var locateSegmentWithID = function(segmentsArray, segID) {
+                //     if (segmentsArray.length === 0){
+                //         return -1;
+                //     }
+                //     else {
+                //         _.each(segmentsArray, function(eachSegment, index){
+                //             if (eachSegment.segID === segID){ 
+                //                 return index;
+                //             }
+                //         });
+                //         return -1;
+                //     }
+                // };
+
+                for (var j = 0; j < data.length - 1; j++) {
+                    link[j] = [];//link[j] represent the link between revision j and j+1
+                    preSegment = data[j].revSegments; //revision j segments
+                    newSegment = data[j + 1].revSegments; //revision j+1 segments
+                    //iterate revision j+1 segments to find father segment (segmentId) or it own(-1) in the previous revision
+                    for (var k = 0; k < newSegment.length; k++) {
+                        // If fatherSegmentIndex<0, it is not a child segment, either has a link to itself, or no link
+                        if (newSegment[k].parentSegID < 0) {
+
+                            //preIndex = preSegment.indexOf(newSegment[k]);
+                            if (preSegment.length != 0){
+                                _.each(preSegment, function(eachSegment, index){                          
+                                    if (eachSegment.segID === newSegment[k].segID){ 
+                                        console.log("found");
+                                        // preIndex = index;
+                                        link[j].push([ eachSegment, newSegment[k] ]);
+                                    }
+                                });
+                            }
+                            // //preIndex = -1 means that the segment is not in the previous revision
+                            // if (preIndex != -1) {
+                            //     link[j].push([ preSegment[preIndex], newSegment[k] ]);
+                            // } else {
+                            //     //No link
+                            // }
+                        } 
+                        else {
+                            // fatherSegmentIndex>0 it's a child segment, need to calculate the offset and position
+                            if (preSegment.length != 0){
+                                _.each(preSegment, function(eachSegment, index){
+                                    if (eachSegment.segID === newSegment[k].segID){ 
+                                        link[j].push([ eachSegment, newSegment[k] ]);
+                                        
+                                    }
+                                    else if (eachSegment.segID === newSegment[k].parentSegID){
+                                        preIndex = index;
+                                    }
+                                });
+                            }                 
+                            //If preindex != -1 means, the father is in previous revision, so link the fathter segment and child segment
+                            if (preIndex != -1) {
+                                link[j].push([ preSegment[preIndex], newSegment[k] ]);
+                                preIndex = -1;
+                            }
+                            else {
+                                // if (preSegment.length != 0){
+                                //     _.each(preSegment, function(eachSegment, index){
+                                //         if (eachSegment.segID === newSegment[k].segID){ 
+                                //             preIndex = index;
+                                //         }
+                                //     });
+                                // }
+                                // if (preIndex != -1) {
+                                //     link[j]
+                                //     .push([ preSegment[preIndex], newSegment[k] ]);
+                                // } else {
+                                //     // means it has a father, but it's not in previous version,
+                                //     alert("link compute error" + preIndex + " "
+                                //         + newSegment[k].segID);
+                                // }
+                            }
+                        }
+                    }// End of Segments  for-loop
+                    // If there's no link at all, put a empty link for visualize reason
+                    if (link[j].length == 0) {
+                        link[j].push([ -1, -1 ]);
+                    }
+                }// End of revision for-loop to compute the links
+
+
+                // Link rectangles
+                var linkGroups = svg.selectAll("linkGroup").data(link).enter()
+                    .append("g")
+                    .attr("class", "linkGroup");
+                // For d
+                var linkRevisionIndex = -1;
+                // For rev
+                var linkRevisionIndex2 = -1;
+
+                linkGroups
+                    .selectAll("link")
+                    .data(function(d) {
+                        return d;
+                    })
+                    .enter()
+                    .append("path")
+                    .attr("class", "link")
+                    .attr(
+                        "d",
+                        function(d, i) {
+                            if (i == 0) {
+                                linkRevisionIndex++;
+                                accumulateSegLength1 = 0;
+                                accumulateSegLength2 = 0;
+                            }
+                            // If d[1] = -1 means it has only an empty link (-1,-1)
+                            if (d[1] == -1) {
+                                return "";
+                            } else {
+                                var x0 = x(data[linkRevisionIndex].revTime);
+                                var tempSegments1 = data[linkRevisionIndex].revSegments;
+                                var tempSegments2 = data[linkRevisionIndex + 1].revSegments;
+
+                                var index1 = tempSegments1.indexOf(d[0]);
+                                var index2 = tempSegments2.indexOf(d[1]);
+
+                                var accumulateSegLength1 = 0, accumulateSegLength2 = 0;
+
+                                for (var q = 0; q < index1; q++) {
+                                    accumulateSegLength1 += tempSegments1[q].segLength;
+                                }
+                                for (var q = 0; q < index2; q++) {
+                                    accumulateSegLength2 += tempSegments2[q].segLength;
+                                }
+
+                                if (d[1].segID === d[0].segID) {
+                                    var y0 = y(accumulateSegLength1);
+                                } else {
+                                    var y0 = y(accumulateSegLength1
+                                        + d[1].offset);
+                                }
+                                var y1 = y(accumulateSegLength2);
+
+                                var x1 = x(data[linkRevisionIndex+1].revTime);
+                                var dy = y(d[1].segLength);
+
+                                return "M " + x0 + "," + y0 + " " + x0
+                                + "," + (y0 + dy) + " " + x1 + ","
+                                + (y1 + dy) + " " + x1 + "," + y1
+                                + "Z";
+                            }
+                    })
+                    .attr("rev", function(d, i){
+                        if (i == 0) {
+                            linkRevisionIndex2++;
+                        }
+                        return linkRevisionIndex2;
+                    })
+                    .attr("fill", function(d, i) {
+                        if (d[1] != -1)
+                            return d[1].authorColor;
+                    })
+                    .attr("opacity", 0.75)
+                    .attr("transform", "translate(20,0)");
+      
+        },
+
+
+        transitionFilter: function (revision_start_index,revision_end_index, revisions) {
+
+            function filterRevisionArray(value,index) {
+              return (index >= revision_start_index-1) && (index <= revision_end_index-1);
+            }
+            //revisions = data;//full_revisions.filter(filterRevisionArray);
+            var revisions = revisons.filter(filterRevisionArray);
             
+            xScale.domain( d3.range(revision_start_index - 1, revision_end_index, 1 ));
+            // xScale.domain([revision_start_index,revision_end_index]);
+            yScale.domain([ 0, d3.max(revisions, function(d) {return d.revisionLength;}) ]);
+
+            /*
+            ** A few clean-up works
+            */
+
+            // clear legend text
+            d3.selectAll(".legend_text").remove(); 
+            // clear y-axis
+            d3.selectAll(".axis").remove();
+            // clear y-axis ending tick
+            d3.selectAll(".ending_tick").remove();
 
 
+            if (revision_end_index <= rendered_revision_counter_end) 
+            {
+                    // only resize the display
 
+                    // resize the segments, and author_label
+                    d3.selectAll(".segment,.author_label")
+                        .attr("opacity", function(d, i, j){
+                            var rev = $(this).attr("rev");
+                            // show these revisions
+                            if(rev >= (revision_start_index - 1) && rev<= ( revision_end_index - 1 )){
+                                return 1;
+                            }
+                            // dont show these revisions
+                            else{
+                                return 0; // push it to 0 inch wide
+                            }   
+                        })
+                        // .transition()
+                        // .duration(250)
+                        // .delay(function(d, i) { return $(this).attr("rev") * 10; })
+                        .attr("x", function(d, i, j) { 
+                            var rev = $(this).attr("rev");
+                            // show these revisions
+                            if(rev >= (revision_start_index - 1) && rev<= ( revision_end_index - 1 )){
+                                return xScale( rev );
+                            }
+                            // don't show these revisions
+                            else{
+                                
+                            }
+                        })
+                        // .transition()
+                        .attr("width", function(d, i, j){
+                            var rev = $(this).attr("rev");
+                            // show these revisions
+                            if(rev >= (revision_start_index - 1) && rev<= ( revision_end_index - 1 )){
+                                return xScale.rangeBand();
+                            }
+                            // dont show these revisions
+                            else{
+                                 return 0;
+                            }
+                        });
 
+                    // TODO Adjust segments Height and Y position
+                    d3.selectAll(".segment")
+                        // .attr("y", )
+                        .attr("height", function(d) { return yScale( $(this).attr("segment_length") ); });
 
-            // this.renderPath(chars, data);
+                    // resize the links
+                    var link_d_pattern = /(M\s)(\d+\.?\d*)(,\d+\.?\d*\s)(\d+\.?\d*)(,\d+\.?\d*\s)(\d+\.?\d*)(,\d+\.?\d*\s)(\d+\.?\d*)(,\d+\.?\d*Z)/;
+                    d3.selectAll(".link")
+                        // .transition()
+                        // .duration(750)
+                        // .delay(function(d, i) { return $(this).attr("rev") * 10; })
+                        .attr("opacity", function(d, i, j) { 
+                            var rev = $(this).attr("rev");
+                            // show these revisions
+                            if(rev >= (revision_start_index - 1) && rev< ( revision_end_index - 1 )){
+                                return 0.8;
+                            }
+                            // dont show these revisions
+                            else{
+                                return 0; 
+                            }
+                        })
+                        .attr("d",
+                            function(d, i) {
+                                var rev = $(this).attr("rev")
+
+                                if(rev >= (revision_start_index - 1) && rev< ( revision_end_index - 1 )){
+                                    // If d[1] = -1 means it has only an empty link (-1,-1)
+                                    if (d[1] == -1) {
+                                        return "";
+                                    } else {
+                                        old_d = $(this).attr("d");
+                                        rev = $(this).attr("rev");
+                                        x0 = xScale(rev) + + xScale.rangeBand();
+                                        x1 = x0 + xScale.rangeBand();
+                                        new_d = old_d.replace(link_d_pattern, "$1" + x0 + "$3" + x0 + "$5" + x1 + "$7" + x1 + "$9");
+                                        return new_d;
+                                    }
+                                }
+                                else{
+                                    return $(this).attr("d");
+                                }
+                            }
+                        );
+
+                    // resize the time_label
+                    d3.selectAll(".time_label")
+                        .attr("opacity", function(d, i, j){
+                            var rev = $(this).attr("rev");
+                            // show these revisions
+                            if(rev >= (revision_start_index - 1) && rev<= ( revision_end_index - 1 )){
+                                return 1;
+                            }
+                            // dont show these revisions
+                            else{
+                                return 0; 
+                            }   
+                        })
+                        // .transition()
+                        // .duration(250)
+                        // .delay(function(d, i) { return $(this).attr("rev") * 10; })
+                        .attr("y", function(d, i, j) { 
+                            var rev = $(this).attr("rev");
+                            // show these revisions
+                            if(rev >= (revision_start_index - 1) && rev<= ( revision_end_index - 1 )){
+                                return xScale( rev );
+                            }
+                            // don't show these revisions
+                            else{
+                                
+                            }
+                        });
+
+                    // resize yAxis
+                    yAxis = d3.svg.axis().scale(yScale).orient("right").ticks(10).tickFormat(d3.format("d"));
+                    svg.append("g").attr("class", "axis").attr("transform",
+                        "translate( 0 ," + chart_margin.top + ")")
+                    .call(yAxis);
+
+                    // re-calculate the yAxis ending tick
+                    svg.append("text").attr("class","ending_tick").attr("transform",
+                        "translate( 9," + (height-chart_margin.bottom + 4) + ")").text(d3.max(revisions, function(d) {
+                            return d.revisionLength;
+                        }));
+
+                    // re-calculate author contribution in the final revision
+                    // TODO
+                    for (var i=0; i< authors.length; i++){
+                        authorContribution[i]=0;
+                    }
+                    revisions[revisions.length-1].segments.forEach(function(element){
+                        authorContribution[segments[element].authorId] += segments[element].segmentLength;
+                    });
+
+                    legendText = svg.selectAll("authorText").data(authors).enter()
+                    .append("text").attr("class", "legend_text").attr("x", 40*4 + 10).attr("y", function(d, i) {
+                        return i * (barHeight*4 + 5);
+                    })
+                    .attr("font-family", "sans-serif").attr("font-size", "38px")
+                    .attr("fill", "black").text(
+                        function(d, i) {
+                            return d + " " + authorContribution[i];
+                        })
+                    .attr(
+                        "transform",
+                        "translate(" + (chart_margin.left )
+                            + "," + (height - chart_margin.bottom + (barHeight*4 ) ) + ")");
+            }
+            // need to render the un-rendered slices before resize the display
+            else
+            {   
+                /*
+                ** TODO
+                ** render the new revision slices
+                *
+                renderHistoryFlow(rendered_revision_counter_end + 1, revision_end_index);
+                // change the counter
+                rendered_revision_counter_end = revision_end_index;
+                /*
+                ** resize the segments, and author_label
+                */
+                d3.selectAll(".segment,.author_label")
+                    .attr("opacity", function(d, i, j){
+                        var rev = $(this).attr("rev");
+                        // show these revisions
+                        if(rev >= (revision_start_index - 1) && rev<= ( revision_end_index - 1 )){
+                            return 1;
+                        }
+                        // dont show these revisions
+                        else{
+                            return 0; // push it to 0 inch wide
+                        }   
+                    })
+                    // .transition()
+                    // .duration(250)
+                    // .delay(function(d, i) { return $(this).attr("rev") * 10; })
+                    .attr("x", function(d, i, j) { 
+                        var rev = $(this).attr("rev");
+                        // show these revisions
+                        if(rev >= (revision_start_index - 1) && rev<= ( revision_end_index - 1 )){
+                            return xScale( rev );
+                        }
+                        // don't show these revisions
+                        else{
+                            
+                        }
+                    })
+                    // .transition()
+                    .attr("width", function(d, i, j){
+                        var rev = $(this).attr("rev");
+                        // show these revisions
+                        if(rev >= (revision_start_index - 1) && rev<= ( revision_end_index - 1 )){
+                            return xScale.rangeBand();
+                        }
+                        // dont show these revisions
+                        else{
+                             return 0;
+                        }
+                    });
+                    //.attr("y", function(d) { return yScale(d.length); });
+
+                /*
+                ** resize the link
+                */
+                var link_d_pattern = /(M\s)(\d+\.?\d*)(,\d+\.?\d*\s)(\d+\.?\d*)(,\d+\.?\d*\s)(\d+\.?\d*)(,\d+\.?\d*\s)(\d+\.?\d*)(,\d+\.?\d*Z)/;
+                d3.selectAll(".link")
+                    // .transition()
+                    // .duration(750)
+                    // .delay(function(d, i) { return $(this).attr("rev") * 10; })
+                    .attr("opacity", function(d, i, j) { 
+                        var rev = $(this).attr("rev");
+                        // show these revisions
+                        if(rev >= (revision_start_index - 1) && rev< ( revision_end_index - 1 )){
+                            return 0.8;
+                        }
+                        // dont show these revisions
+                        else{
+                            return 0; 
+                        }
+                    })
+                    .attr("d",
+                        function(d, i) {
+                            var rev = $(this).attr("rev")
+
+                            if(rev >= (revision_start_index - 1) && rev< ( revision_end_index - 1 )){
+                                // If d[1] = -1 means it has only an empty link (-1,-1)
+                                if (d[1] == -1) {
+                                    return "";
+                                } else {
+                                    old_d = $(this).attr("d");
+                                    rev = $(this).attr("rev");
+                                    x0 = xScale(rev) + + xScale.rangeBand();
+                                    x1 = x0 + xScale.rangeBand();
+                                    new_d = old_d.replace(link_d_pattern, "$1" + x0 + "$3" + x0 + "$5" + x1 + "$7" + x1 + "$9");
+                                    return new_d;
+                                }
+                            }
+                            else{
+                                return $(this).attr("d");
+                            }
+                        }
+                    );
+
+                /*
+                ** resize the time_label
+                */
+                d3.selectAll(".time_label")
+                    .attr("opacity", function(d, i, j){
+                        var rev = $(this).attr("rev");
+                        // show these revisions
+                        if(rev >= (revision_start_index - 1) && rev<= ( revision_end_index - 1 )){
+                            return 1;
+                        }
+                        // dont show these revisions
+                        else{
+                            return 0; 
+                        }   
+                    })
+                    // .transition()
+                    // .duration(250)
+                    // .delay(function(d, i) { return $(this).attr("rev") * 10; })
+                    .attr("y", function(d, i, j) { 
+                        var rev = $(this).attr("rev");
+                        // show these revisions
+                        if(rev >= (revision_start_index - 1) && rev<= ( revision_end_index - 1 )){
+                            return xScale( rev );
+                        }
+                        // don't show these revisions
+                        else{
+                            
+                        }
+                    });
+            }
         },
 
 
 
 
 
-    });
+    })
 
 
     // When Google Doc is finished loading, initialize authorViz app
-    authorviz.init();
+    docuviz.init();
 
 
     // These methods are provided by Chrome API
@@ -856,21 +1537,21 @@
         function(request, sender, sendResponse) {
             switch (request.msg) {
                 case 'progress':
-                    authorviz.renderProgressBar(request.soFar, request.outOf);
+                    window.docuviz.renderProgressBar(request.soFar, request.outOf);
                     sendResponse('done');
                     break;
 
                 case 'render':
-                    authorviz.renderResultPanel(request.html);
+                    docuviz.renderResultPanel(request.html);
                     sendResponse('end');
                     break;
 
                 case 'renderDocuviz': // this is when the Docuviz button is pressed
-                    authorviz.renderResultPanelForDocuviz(request.chars, request.revData);
+                    window.docuviz.renderResultPanelForDocuviz(request.chars, request.revData);
                     sendResponse('end');
                     break;
 
                 default:
             }
-        });
-}());
+    });
+// }());
