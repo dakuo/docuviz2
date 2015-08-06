@@ -54,7 +54,7 @@ html, body {
 }
 
 .l-half--top {
-  bottom: 70%;
+  bottom: 88%;
 }
 
 .l-half--right {
@@ -62,7 +62,7 @@ html, body {
 }
 
 .l-half--bottom {
-  top: 20%;
+  top: 12%;
 }
 
 
@@ -76,7 +76,7 @@ html, body {
 
     .aligner-item {
       position:  absolute;
-      top:       15%;
+      top:       9%;
       left:      0;
       -webkit-transform: translate(0, -50%);
       -ms-transform: translate(0, -50%);
@@ -195,14 +195,14 @@ html, body {
 }
 
 .authorviz__intro {
-  height: 200px;
+  height: 150px;
   padding: 0 30px;
     
 }
 
 
 .authorivz__doc-title {
-  font-size: 36px;
+  font-size: 24px;
   text-transform: uppercase;
   color: white;
     position: relative;
@@ -212,7 +212,7 @@ html, body {
 
 
 .authorviz__author {
-  max-height: 200px;
+  max-height: 150px;
   margin: 0 auto;
 }
 

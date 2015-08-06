@@ -134,7 +134,7 @@
                     $('.js-docuviz-btn').removeClass('is-disabled');
 
                     that.authors = that.parseAuthors(raw[2]);
-                    that.parseTimestampsAuthors(raw[2])
+                    that.parseTimestampsAuthors(raw[2], that.authors);
 
                 }
             })
@@ -181,13 +181,13 @@
             // [a,b,c,[d]]
             rawData = _.flatten(rawData, true);
 
-
+            var color = d3.scale.category10();
             // _.each loops through the rawData and do something for each value
-            _.each(rawData, function(val) {
+            _.each(rawData, function(val, index) {
                 //val[2] = Name
                 //val[3] = Color
                 //val[4] = ID
-                rawAuthors.push(Author(val[2], val[3], val[4]));
+                rawAuthors.push(Author(val[2], color(index), val[4]));
                 authorId.push(val[4]);
             });
 
@@ -207,7 +207,7 @@
 
 
         // ** BB
-        parseTimestampsAuthors: function(data) {
+        parseTimestampsAuthors: function(data, authors) {
             var that = this,
                 rawData,
                 i,
@@ -252,10 +252,13 @@
 
             // find authors related to timestamps array:
             _.each(rawData, function(val) {
-
                 var array = [];
-                _.each(val, function(val2) {
-                        array.push(author(val2[2], val2[3], val2[4])); //to return author name use val2[2], return author id use val2[4]   
+                _.each(val, function(val2, index) {
+                        var authorColor = _.find(authors, function(eachAuthor){
+                            return val2[4] === eachAuthor.id;
+
+                        });
+                        array.push(author(val2[2], authorColor.color, val2[4])); //to return author name use val2[2], return author id use val2[4]   
                     }
 
                 )
@@ -513,13 +516,16 @@
 
             var margin = {
                     top: 160,
-                    right: 20,
+                    right: 60,
                     bottom: 20,
                     left: 60
                 },
 
-                width = 1280 - margin.left - margin.right,
-                height = 500 - margin.top - margin.bottom;
+                // width = 1280 - margin.left - margin.right,
+                // height = 600 - margin.top - margin.bottom;
+                width = $(window).width() - margin.left - margin.right - 150,
+                height = $(window).height() - margin.top - margin.bottom - ($(window).height()/10 * 2);
+
 
             var barHeight = 10; // author bar height
 
