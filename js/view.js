@@ -67,7 +67,7 @@
 
         // Set Revision Number to corresponded elements
         setRevisionNumber: function(num) {
-            $('.js-revision-number').add('.js-revision-out-of').text(num);
+            $('.js-revision-number-docuviz').add('.js-revision-out-of-docuviz').text(num);
         },
 
 
@@ -100,7 +100,8 @@
             }
 
             historyUrl = http + '/revisions/history?id=' + this.getDocId() + "&token=" + token + "&start=1&end=-1&zoom_level=0";
-
+            console.log("historyUrl is at: ");
+            console.log(historyUrl);
             return historyUrl;
         },
 
@@ -272,31 +273,25 @@
 
 
         getDocTitle: function() {
-            return $('#docs-title-inner').text();
+           // return $('#docs-title-inner').text();
+           // Updated version on Aug 11, 2015:
+           return $('.docs-title-input').val();
         },
 
 
         getRevisionNumber: function() {
-            return $('.js-revision-number').text();
+            return $('.js-revision-number-docuviz').text();
         },
 
 
         // Construct an URL to retrieve Changelog Data
         // ** BB
-        getChangelogUrl: function() {
-            var regmatch = location.href.match(/^(https:\/\/docs\.google\.com.*?\/document\/d\/)/),
-                baseUrl = regmatch[1],
-                loadUrl = baseUrl + this.getDocId() + "/revisions/load?id=" + this.getDocId() + "&start=1&end=" + parseInt(('' + this.getRevisionNumber()).replace(/,/g, '')) + "&token=" + this.getToken();
-            console.log('got changelogURL: ' + loadUrl);
-            return loadUrl;
-        },
-
 
         getChangelogUrlForDocuviz: function() {
             var regmatch = location.href.match(/^(https:\/\/docs\.google\.com.*?\/document\/d\/)/),
                 baseUrl = regmatch[1],
                 loadUrl = baseUrl + this.getDocId() + "/revisions/load?id=" + this.getDocId() + "&start=1&end=" + parseInt(('' + this.getRevisionNumber()).replace(/,/g, '')) + "&token=" + this.getToken();
-            console.log('got changelogURL: ' + loadUrl);
+            console.log('got changelogURL for Docuviz: ' + loadUrl);
             return loadUrl;
         },
 
@@ -335,28 +330,6 @@
             });
         },
 
-        // Bind Click Event onto the Authorviz Button
-        addListenerToAuthorvizBtn: function() {
-            // var that = this;
-
-            // // When the button is click, show the app and disable this button
-            // $(document).on('click', '.js-authorviz-btn', function() {
-            //     var changelogUrl = null;
-            //     $('.js-result').html('')
-            //     // Make the App Visible to user
-            //     $('.js-authorviz').removeClass('hideVisually');
-            //     //$('.js-progress-bar').removeClass('hideVisually');
-
-
-            //     changelogUrl = that.getChangelogUrl(location.href);
-            //     that.getChangelog(changelogUrl, 'authorviz');
-
-            //     // Remove the click event from Authorviz button
-            //    // $(document).off('click', '.js-authorviz-btn');
-            // });
-        },
-
-
 
         // Bind Click Event onto the Docuviz Button
         addListenerToDocuvizBtn: function() {
@@ -365,9 +338,9 @@
             // When the button is click, show the app and disable this button
             $(document).on('click', '.js-docuviz-btn', function() {
                 var changelogUrl = null;
-                $('.js-result').html('')
+                $('.js-result-docuviz').html('')
                 // Make the App Visible to user
-                $('.js-authorviz').removeClass('hideVisually');
+                $('.js-docuviz').removeClass('hideVisually');
                // $('.js-progress-bar').removeClass('hideVisually');
                 console.log('got docuviz');
 
@@ -395,14 +368,14 @@
             // js-result: The result panel
             // js-left-panel: Left Panel
 
-            var html = '<div class="authorviz js-authorviz hideVisually"><div class="authorviz__layout"><div class="l-half l-half--top authorviz__wrap--top"><div class="aligner txt-c js-left-panel" style="height: 100%"><div class="aligner-item authorviz__intro"><div class="aligner-item aligner-item-top"><h3 class="authorivz__doc-title js-doc-title">Final Paper</h3><div class="js-author authorviz__author"></div></div><div class="aligner-item js-progress-bar"><div class="authorviz__progress-bar"><div class="authorviz__progress-bar-item js-progress-so-far"></div></div><p class="authorviz__loading-text">Loading <span class="js-revision-so-far">0</span>/<span class="js-revision-out-of">?</span> revisions</p></div></div></div></div><div class="l-half l-half--bottom authorviz__wrap--bottom"><div class="authoviz__box js-result"></div></div></div></div>';
+            var html = '<div class="docuviz js-docuviz hideVisually"><div class="docuviz__layout"><div class="l-half-docuviz l-half--top-docuviz docuviz__wrap--top"><div class="aligner-docuviz txt-c js-left-panel-docuviz" style="height: 100%"><div class="aligner-item-docuviz docuviz__intro"><div class="aligner-item aligner-item-top-docuviz"><h3 class="docuviz__doc-title js-doc-title-docuviz">Final Paper</h3><div class="js-author-docuviz docuviz__author"></div></div><div class="aligner-item-docuviz js-progress-bar-docuviz"><div class="docuviz__progress-bar"><div class="docuviz__progress-bar-item js-progress-so-far-docuviz"></div></div><p class="docuviz__loading-text">Loading <span class="js-revision-so-far-docuviz">0</span>/<span class="js-revision-out-of-docuviz">?</span> revisions</p></div></div></div></div><div class="l-half-docuviz l-half--bottom-docuviz docuviz__wrap--bottom"><div class="docuviz__box js-result-docuviz"></div></div></div></div>';
 
             $('body').prepend(html);
 
             this.renderDocuvizBtn();
 
             // Update Document Title
-            $('.js-doc-title').text(this.getDocTitle());
+            $('.js-doc-title-docuviz').text(this.getDocTitle());
 
         },
 
@@ -413,7 +386,7 @@
             // js-authorviz: feature btn
             // js-revision-number: revision number
            // $('<div class="goog-inline-block js-authorviz-btn is-disabled"><div role="button" class="goog-inline-block jfk-button jfk-button-standard docs-titlebar-button jfk-button-clear-outline" aria-disabled="false" aria-pressed="false" tabindex="0" data-tooltip="Visualize Document" aria-label="Visualize Document" value="undefined" style="-webkit-user-select: none;">Visualize Document (<span class="js-revision-number">loading</span> revisions)</div><div id="docs-docos-caret" style="display: none" class="docos-enable-new-header"><div class="docs-docos-caret-outer"></div><div class="docs-docos-caret-inner"></div></div></div><div class="goog-inline-block js-docuviz-btn is-disabled"><div role="button" class="goog-inline-block jfk-button jfk-button-standard docs-titlebar-button jfk-button-clear-outline" aria-disabled="false" aria-pressed="false" tabindex="0" data-tooltip="Docuviz" aria-label="Docuviz" value="undefined" style="-webkit-user-select: none;">Docuviz</div><div id="docs-docos-caret" style="display: none" class="docos-enable-new-header"><div class="docs-docos-caret-outer"></div><div class="docs-docos-caret-inner"></div></div></div>').prependTo(btnGroup);
-            $('<div class="goog-inline-block js-docuviz-btn is-disabled"><div role="button" class="goog-inline-block jfk-button jfk-button-standard docs-titlebar-button jfk-button-clear-outline" aria-disabled="false" aria-pressed="false" tabindex="0" data-tooltip="Docuviz" aria-label="Docuviz" value="undefined" style="-webkit-user-select: none;">Docuviz (<span class="js-revision-number">loading</span> revisions)</div><div id="docs-docos-caret" style="display: none" class="docos-enable-new-header"><div class="docs-docos-caret-outer"></div><div class="docs-docos-caret-inner"></div></div></div>').prependTo(btnGroup);
+            $('<div class="goog-inline-block js-docuviz-btn is-disabled"><div role="button" class="goog-inline-block jfk-button jfk-button-standard docs-titlebar-button jfk-button-clear-outline" aria-disabled="false" aria-pressed="false" tabindex="0" data-tooltip="Docuviz" aria-label="Docuviz" value="undefined" style="-webkit-user-select: none;">Docuviz (<span class="js-revision-number-docuviz">loading</span> revisions)</div><div id="docs-docos-caret" style="display: none" class="docos-enable-new-header"><div class="docs-docos-caret-outer"></div><div class="docs-docos-caret-inner"></div></div></div>').prependTo(btnGroup);
             //this.addListenerToAuthorvizBtn();
             this.addListenerToDocuvizBtn();
         },
@@ -433,16 +406,16 @@
             outOf = this.getRevisionNumber();
             progressSoFar = (soFar / outOf) * 100;
 
-            $('.js-progress-so-far').css("width", progressSoFar + '%');
-            $('.js-revision-so-far').text(soFar);
+            $('.js-progress-so-far-docuviz').css("width", progressSoFar + '%');
+            $('.js-revision-so-far-docuviz').text(soFar);
 
             // When progress bar is fully loaded, do something
             if (progressSoFar === 100) {
                 this.loaded = true;
                 this.renderCloseBtn();
                 this.renderPrintBtn();
-                $('.js-progress-bar').addClass('hideVisually');
-                $('.js-author').html(this.renderAuthorName());
+                $('.js-progress-bar-docuviz').addClass('hideVisually');
+                $('.js-author-docuviz').html(this.renderAuthorName());
             }
         },
 
@@ -461,23 +434,19 @@
 
 
         renderCloseBtn: function() {
-            var html = '<button class="btn btn-primary js-close authorviz__close-btn">Close</button>',
+            var html = '<button class="btn-docuviz btn-primary js-close-docuviz docuviz__close-btn">Close</button>',
                 that = this;
 
-            $('.js-left-panel').append(html);
+            $('.js-left-panel-docuviz').append(html);
 
-            $(document).on('click', '.js-close', function() {
+            $(document).on('click', '.js-close-docuviz', function() {
                 //$('.js-result').addClass('hideVisually');
-                $('.js-authorviz').addClass('hideVisually');
+                $('.js-docuviz').addClass('hideVisually');
 
-                // $(document).on('click', '.js-authorviz-btn', function() {
-                //     // Show App
-                //     $('.js-authorviz').removeClass('hideVisually');
-                // });
 
                 $(document).on('click', '.js-docuviz-btn', function() {
                     // Show App
-                    $('.js-authorviz').removeClass('hideVisually');
+                    $('.js-docuviz').removeClass('hideVisually');
                     //$('.js-result').removeClass('hideVisually');
                 });
 
@@ -487,15 +456,17 @@
 
 
         renderPrintBtn: function() {
-            var html = '<button class="btn btn-primary-alt js-print authorviz__print-btn">Print</button>',
+            var html = '<button class="btn-docuviz btn-primary-alt js-print-docuviz docuviz__print-btn">Print</button>',
                 that = this;
 
-            $('.js-left-panel').append(html);
+            $('.js-left-panel-docuviz').append(html);
 
-            $(document).on('click', '.js-print', function() {
-                var printContent = $('.js-result');
+            $(document).on('click', '.js-print-docuviz', function() {
+                // $("svg").height(900);
+                // $("svg").width(800);
+                var printContent = $('.js-result-docuviz');
                 var printWindow = window.open('', '', 'left=0,top=0,width=800,height=900,toolbar=0,scrollbars=0,status=0');
-                printWindow.document.write($('.js-author').html() + printContent.html());
+                printWindow.document.write($('.js-author-docuviz').html() + printContent.html());
                 console.log(printContent.html());
                 printWindow.document.close();
                 printWindow.focus();
@@ -506,13 +477,15 @@
 
 
         renderResultPanel: function(html) {
-            $('.js-result').html(html);
+            $('.js-result-docuviz').html(html);
         },
 
 
         renderResultPanelForDocuviz: function(chars, revData) {
             var initial_render_revision_amount = 100;
             var rendered_revision_counter_end = initial_render_revision_amount;
+
+
 
             var margin = {
                     top: 160,
@@ -563,7 +536,7 @@
             /**
             * Timescale
             **/
-            $('.js-result').append('<section class="chart-component"></section>')
+            $('.js-result-docuviz').append('<section class="chart-component"></section>')
             $('.chart-component').append('<section class="chart__controller"></section>')
             $('.chart__controller').append("<div class='controller__btn-wrap'></div>")
             $('.controller__btn-wrap').append('<button class="btn btn-primary" id="equal-distance-btn">Equal Distance</button>');
@@ -580,6 +553,9 @@
             var revision_index = $('.slider-bar-wrap').append("<input id='revision_index'></input>")//.attr("id","revision_index");
 
 
+            var beginRev = 1;
+            var endRev = data.length;
+            var currentChartType = 'equalDistance';
             /**
             * Slider to interact with historyflow
             **/
@@ -590,11 +566,22 @@
                 values: [ 1, data.length > initial_render_revision_amount ? initial_render_revision_amount : data.length ],
                 slide: function( event, ui ) {
                     $( "#revision_index" ).val( "Revision: " + ui.values[ 0 ] + " - Revision: " + ui.values[ 1 ] );
-                    
                     /*
                     ** Interact with the filter
                     */
                     //docuviz.transitionFilter(ui.values[ 0 ] , ui.values[ 1 ] , data);
+                    beginRev = ui.values[0];
+                    endRev = ui.values[1];
+
+                    if (currentChartType==='equalDistance'){
+                        $('svg').remove();
+                        docuviz.drawEqualDistance(data,margin,width,height,barHeight,authorsColors, beginRev, endRev);
+                    }
+
+                    else{
+                        $('svg').remove();
+                        docuviz.drawTimeScaled(data,margin,width,height,barHeight,authorsColors, beginRev, endRev);     
+                    }
                     
                 }
             });
@@ -602,20 +589,22 @@
             /*
             ** Slider label
             */
-            $( "#revision_index" ).attr("style","height:26px;width:180px;").val( "Revision " + $( "#slider" ).slider( "values", 0 ) +
+            $( "#revision_index" ).attr("style","height:26px;width:185px;").val( "Revision " + $( "#slider" ).slider( "values", 0 ) +
                    " to Revision " + $( "#slider" ).slider( "values", 1 ) );
 
 
 
-            this.drawEqualDistance(data,margin,width,height,barHeight,authorsColors);
+            this.drawEqualDistance(data,margin,width,height,barHeight,authorsColors, beginRev, endRev);
 
             var timeScaledGraph = null;
 
             var equalDistanceGraph = $('svg').html();
             document.getElementById('equal-distance-btn').onclick = function() {
-                $('svg').html(equalDistanceGraph);
+                //$('svg').html(equalDistanceGraph);
+                currentChartType = 'equalDistance';
                 //$('.js-result').append(equalDistanceGraph);
-                //docuviz.drawEqualDistance(data,margin,width,height,barHeight,authorsColors);
+                $('svg').remove();
+                docuviz.drawEqualDistance(data,margin,width,height,barHeight,authorsColors, beginRev, endRev);
             };
 
 
@@ -625,12 +614,18 @@
 
                 if (timeScaledGraph === null){
                     $('svg').remove();
-                    docuviz.drawTimeScaled(data,margin,width,height,barHeight,authorsColors);
+                    currentChartType = 'timeScaled';
+                    docuviz.drawTimeScaled(data,margin,width,height,barHeight,authorsColors, beginRev, endRev);
                     timeScaledGraph = $('svg').html();
                 }
 
                 else{
-                    $('svg').html(timeScaledGraph);
+                    $('svg').remove();
+                    currentChartType = 'timeScaled';
+                    docuviz.drawTimeScaled(data,margin,width,height,barHeight,authorsColors, beginRev, endRev);
+                    timeScaledGraph = $('svg').html();
+
+                    //$('svg').html(timeScaledGraph);
                 }
 
 
@@ -642,13 +637,24 @@
 
 
 
-        drawEqualDistance: function(data,margin,width,height,barHeight,authorsColors){
+        drawEqualDistance: function(data,margin,width,height,barHeight,authorsColors, beginRev, endRev){
+            function filterRevisionArray(value,index) {
+              return (index >= beginRev-1) && (index <= endRev-1);
+            }
+            var data = data.filter(filterRevisionArray);
 
+            //var data = data.slice(beginRev-1,endRev);
+            //var authorsColors = authorsColors.slice(beginRev-1, endRev);
+            var authorsColors = authorsColors.filter(filterRevisionArray);
 
             var x = d3.scale.ordinal().domain(d3.range(data.length)).rangeRoundBands([0, width], 0.5);
             // var x = d3.time.scale();
             // x.domain(dateArray);
             // x.range(data.length);
+
+            
+            
+
 
             var y = d3.scale.linear()
                 .range([0, height]);
@@ -669,7 +675,7 @@
                 .orient("left");
 
 
-            var svg = d3.select($('.js-result')[0]).append("svg")
+            var svg = d3.select($('.js-result-docuviz')[0]).append("svg")
                 .attr("width", width + margin.left + margin.right)
                 .attr("height", height + margin.top + margin.bottom)
                 .append("g")
@@ -772,21 +778,6 @@
         var link = [], preSegment = [], newSegment = [], preIndex = -1;
 
 
-
-        // var locateSegmentWithID = function(segmentsArray, segID) {
-        //     if (segmentsArray.length === 0){
-        //         return -1;
-        //     }
-        //     else {
-        //         _.each(segmentsArray, function(eachSegment, index){
-        //             if (eachSegment.segID === segID){ 
-        //                 return index;
-        //             }
-        //         });
-        //         return -1;
-        //     }
-        // };
-
         for (var j = 0; j < data.length - 1; j++) {
             link[j] = [];//link[j] represent the link between revision j and j+1
             preSegment = data[j].revSegments; //revision j segments
@@ -806,12 +797,7 @@
                             }
                         });
                     }
-                    // //preIndex = -1 means that the segment is not in the previous revision
-                    // if (preIndex != -1) {
-                    //     link[j].push([ preSegment[preIndex], newSegment[k] ]);
-                    // } else {
-                    //     //No link
-                    // }
+
                 } 
                 else {
                     // fatherSegmentIndex>0 it's a child segment, need to calculate the offset and position
@@ -832,21 +818,7 @@
                         preIndex = -1;
                     }
                     else {
-                        // if (preSegment.length != 0){
-                        //     _.each(preSegment, function(eachSegment, index){
-                        //         if (eachSegment.segID === newSegment[k].segID){ 
-                        //             preIndex = index;
-                        //         }
-                        //     });
-                        // }
-                        // if (preIndex != -1) {
-                        //     link[j]
-                        //     .push([ preSegment[preIndex], newSegment[k] ]);
-                        // } else {
-                        //     // means it has a father, but it's not in previous version,
-                        //     alert("link compute error" + preIndex + " "
-                        //         + newSegment[k].segID);
-                        // }
+
                     }
                 }
             }// End of Segments  for-loop
@@ -934,8 +906,16 @@
         },
 
 
-        drawTimeScaled: function(data,margin,width,height,barHeight,authorsColors){
-                var svg = d3.select($('.js-result')[0]).append("svg")
+        drawTimeScaled: function(data,margin,width,height,barHeight,authorsColors, beginRev, endRev){
+
+                function filterRevisionArray(value,index) {
+                  return (index >= beginRev-1) && (index <= endRev-1);
+                }
+                var data = data.filter(filterRevisionArray);
+                var authorsColors = authorsColors.filter(filterRevisionArray);
+
+
+                var svg = d3.select($('.js-result-docuviz')[0]).append("svg")
                     .attr("width", width + margin.left + margin.right)
                     .attr("height", height + margin.top + margin.bottom)
                     .append("g")
@@ -1060,21 +1040,6 @@
                 var link = [], preSegment = [], newSegment = [], preIndex = -1;
 
 
-
-                // var locateSegmentWithID = function(segmentsArray, segID) {
-                //     if (segmentsArray.length === 0){
-                //         return -1;
-                //     }
-                //     else {
-                //         _.each(segmentsArray, function(eachSegment, index){
-                //             if (eachSegment.segID === segID){ 
-                //                 return index;
-                //             }
-                //         });
-                //         return -1;
-                //     }
-                // };
-
                 for (var j = 0; j < data.length - 1; j++) {
                     link[j] = [];//link[j] represent the link between revision j and j+1
                     preSegment = data[j].revSegments; //revision j segments
@@ -1094,12 +1059,7 @@
                                     }
                                 });
                             }
-                            // //preIndex = -1 means that the segment is not in the previous revision
-                            // if (preIndex != -1) {
-                            //     link[j].push([ preSegment[preIndex], newSegment[k] ]);
-                            // } else {
-                            //     //No link
-                            // }
+
                         } 
                         else {
                             // fatherSegmentIndex>0 it's a child segment, need to calculate the offset and position
@@ -1120,21 +1080,7 @@
                                 preIndex = -1;
                             }
                             else {
-                                // if (preSegment.length != 0){
-                                //     _.each(preSegment, function(eachSegment, index){
-                                //         if (eachSegment.segID === newSegment[k].segID){ 
-                                //             preIndex = index;
-                                //         }
-                                //     });
-                                // }
-                                // if (preIndex != -1) {
-                                //     link[j]
-                                //     .push([ preSegment[preIndex], newSegment[k] ]);
-                                // } else {
-                                //     // means it has a father, but it's not in previous version,
-                                //     alert("link compute error" + preIndex + " "
-                                //         + newSegment[k].segID);
-                                // }
+
                             }
                         }
                     }// End of Segments  for-loop
@@ -1221,314 +1167,6 @@
                     .attr("transform", "translate(20,0)");
       
         },
-
-
-        transitionFilter: function (revision_start_index,revision_end_index, revisions) {
-
-            function filterRevisionArray(value,index) {
-              return (index >= revision_start_index-1) && (index <= revision_end_index-1);
-            }
-            //revisions = data;//full_revisions.filter(filterRevisionArray);
-            var revisions = revisons.filter(filterRevisionArray);
-            
-            xScale.domain( d3.range(revision_start_index - 1, revision_end_index, 1 ));
-            // xScale.domain([revision_start_index,revision_end_index]);
-            yScale.domain([ 0, d3.max(revisions, function(d) {return d.revisionLength;}) ]);
-
-            /*
-            ** A few clean-up works
-            */
-
-            // clear legend text
-            d3.selectAll(".legend_text").remove(); 
-            // clear y-axis
-            d3.selectAll(".axis").remove();
-            // clear y-axis ending tick
-            d3.selectAll(".ending_tick").remove();
-
-
-            if (revision_end_index <= rendered_revision_counter_end) 
-            {
-                    // only resize the display
-
-                    // resize the segments, and author_label
-                    d3.selectAll(".segment,.author_label")
-                        .attr("opacity", function(d, i, j){
-                            var rev = $(this).attr("rev");
-                            // show these revisions
-                            if(rev >= (revision_start_index - 1) && rev<= ( revision_end_index - 1 )){
-                                return 1;
-                            }
-                            // dont show these revisions
-                            else{
-                                return 0; // push it to 0 inch wide
-                            }   
-                        })
-                        // .transition()
-                        // .duration(250)
-                        // .delay(function(d, i) { return $(this).attr("rev") * 10; })
-                        .attr("x", function(d, i, j) { 
-                            var rev = $(this).attr("rev");
-                            // show these revisions
-                            if(rev >= (revision_start_index - 1) && rev<= ( revision_end_index - 1 )){
-                                return xScale( rev );
-                            }
-                            // don't show these revisions
-                            else{
-                                
-                            }
-                        })
-                        // .transition()
-                        .attr("width", function(d, i, j){
-                            var rev = $(this).attr("rev");
-                            // show these revisions
-                            if(rev >= (revision_start_index - 1) && rev<= ( revision_end_index - 1 )){
-                                return xScale.rangeBand();
-                            }
-                            // dont show these revisions
-                            else{
-                                 return 0;
-                            }
-                        });
-
-                    // TODO Adjust segments Height and Y position
-                    d3.selectAll(".segment")
-                        // .attr("y", )
-                        .attr("height", function(d) { return yScale( $(this).attr("segment_length") ); });
-
-                    // resize the links
-                    var link_d_pattern = /(M\s)(\d+\.?\d*)(,\d+\.?\d*\s)(\d+\.?\d*)(,\d+\.?\d*\s)(\d+\.?\d*)(,\d+\.?\d*\s)(\d+\.?\d*)(,\d+\.?\d*Z)/;
-                    d3.selectAll(".link")
-                        // .transition()
-                        // .duration(750)
-                        // .delay(function(d, i) { return $(this).attr("rev") * 10; })
-                        .attr("opacity", function(d, i, j) { 
-                            var rev = $(this).attr("rev");
-                            // show these revisions
-                            if(rev >= (revision_start_index - 1) && rev< ( revision_end_index - 1 )){
-                                return 0.8;
-                            }
-                            // dont show these revisions
-                            else{
-                                return 0; 
-                            }
-                        })
-                        .attr("d",
-                            function(d, i) {
-                                var rev = $(this).attr("rev")
-
-                                if(rev >= (revision_start_index - 1) && rev< ( revision_end_index - 1 )){
-                                    // If d[1] = -1 means it has only an empty link (-1,-1)
-                                    if (d[1] == -1) {
-                                        return "";
-                                    } else {
-                                        old_d = $(this).attr("d");
-                                        rev = $(this).attr("rev");
-                                        x0 = xScale(rev) + + xScale.rangeBand();
-                                        x1 = x0 + xScale.rangeBand();
-                                        new_d = old_d.replace(link_d_pattern, "$1" + x0 + "$3" + x0 + "$5" + x1 + "$7" + x1 + "$9");
-                                        return new_d;
-                                    }
-                                }
-                                else{
-                                    return $(this).attr("d");
-                                }
-                            }
-                        );
-
-                    // resize the time_label
-                    d3.selectAll(".time_label")
-                        .attr("opacity", function(d, i, j){
-                            var rev = $(this).attr("rev");
-                            // show these revisions
-                            if(rev >= (revision_start_index - 1) && rev<= ( revision_end_index - 1 )){
-                                return 1;
-                            }
-                            // dont show these revisions
-                            else{
-                                return 0; 
-                            }   
-                        })
-                        // .transition()
-                        // .duration(250)
-                        // .delay(function(d, i) { return $(this).attr("rev") * 10; })
-                        .attr("y", function(d, i, j) { 
-                            var rev = $(this).attr("rev");
-                            // show these revisions
-                            if(rev >= (revision_start_index - 1) && rev<= ( revision_end_index - 1 )){
-                                return xScale( rev );
-                            }
-                            // don't show these revisions
-                            else{
-                                
-                            }
-                        });
-
-                    // resize yAxis
-                    yAxis = d3.svg.axis().scale(yScale).orient("right").ticks(10).tickFormat(d3.format("d"));
-                    svg.append("g").attr("class", "axis").attr("transform",
-                        "translate( 0 ," + chart_margin.top + ")")
-                    .call(yAxis);
-
-                    // re-calculate the yAxis ending tick
-                    svg.append("text").attr("class","ending_tick").attr("transform",
-                        "translate( 9," + (height-chart_margin.bottom + 4) + ")").text(d3.max(revisions, function(d) {
-                            return d.revisionLength;
-                        }));
-
-                    // re-calculate author contribution in the final revision
-                    // TODO
-                    for (var i=0; i< authors.length; i++){
-                        authorContribution[i]=0;
-                    }
-                    revisions[revisions.length-1].segments.forEach(function(element){
-                        authorContribution[segments[element].authorId] += segments[element].segmentLength;
-                    });
-
-                    legendText = svg.selectAll("authorText").data(authors).enter()
-                    .append("text").attr("class", "legend_text").attr("x", 40*4 + 10).attr("y", function(d, i) {
-                        return i * (barHeight*4 + 5);
-                    })
-                    .attr("font-family", "sans-serif").attr("font-size", "38px")
-                    .attr("fill", "black").text(
-                        function(d, i) {
-                            return d + " " + authorContribution[i];
-                        })
-                    .attr(
-                        "transform",
-                        "translate(" + (chart_margin.left )
-                            + "," + (height - chart_margin.bottom + (barHeight*4 ) ) + ")");
-            }
-            // need to render the un-rendered slices before resize the display
-            else
-            {   
-                /*
-                ** TODO
-                ** render the new revision slices
-                *
-                renderHistoryFlow(rendered_revision_counter_end + 1, revision_end_index);
-                // change the counter
-                rendered_revision_counter_end = revision_end_index;
-                /*
-                ** resize the segments, and author_label
-                */
-                d3.selectAll(".segment,.author_label")
-                    .attr("opacity", function(d, i, j){
-                        var rev = $(this).attr("rev");
-                        // show these revisions
-                        if(rev >= (revision_start_index - 1) && rev<= ( revision_end_index - 1 )){
-                            return 1;
-                        }
-                        // dont show these revisions
-                        else{
-                            return 0; // push it to 0 inch wide
-                        }   
-                    })
-                    // .transition()
-                    // .duration(250)
-                    // .delay(function(d, i) { return $(this).attr("rev") * 10; })
-                    .attr("x", function(d, i, j) { 
-                        var rev = $(this).attr("rev");
-                        // show these revisions
-                        if(rev >= (revision_start_index - 1) && rev<= ( revision_end_index - 1 )){
-                            return xScale( rev );
-                        }
-                        // don't show these revisions
-                        else{
-                            
-                        }
-                    })
-                    // .transition()
-                    .attr("width", function(d, i, j){
-                        var rev = $(this).attr("rev");
-                        // show these revisions
-                        if(rev >= (revision_start_index - 1) && rev<= ( revision_end_index - 1 )){
-                            return xScale.rangeBand();
-                        }
-                        // dont show these revisions
-                        else{
-                             return 0;
-                        }
-                    });
-                    //.attr("y", function(d) { return yScale(d.length); });
-
-                /*
-                ** resize the link
-                */
-                var link_d_pattern = /(M\s)(\d+\.?\d*)(,\d+\.?\d*\s)(\d+\.?\d*)(,\d+\.?\d*\s)(\d+\.?\d*)(,\d+\.?\d*\s)(\d+\.?\d*)(,\d+\.?\d*Z)/;
-                d3.selectAll(".link")
-                    // .transition()
-                    // .duration(750)
-                    // .delay(function(d, i) { return $(this).attr("rev") * 10; })
-                    .attr("opacity", function(d, i, j) { 
-                        var rev = $(this).attr("rev");
-                        // show these revisions
-                        if(rev >= (revision_start_index - 1) && rev< ( revision_end_index - 1 )){
-                            return 0.8;
-                        }
-                        // dont show these revisions
-                        else{
-                            return 0; 
-                        }
-                    })
-                    .attr("d",
-                        function(d, i) {
-                            var rev = $(this).attr("rev")
-
-                            if(rev >= (revision_start_index - 1) && rev< ( revision_end_index - 1 )){
-                                // If d[1] = -1 means it has only an empty link (-1,-1)
-                                if (d[1] == -1) {
-                                    return "";
-                                } else {
-                                    old_d = $(this).attr("d");
-                                    rev = $(this).attr("rev");
-                                    x0 = xScale(rev) + + xScale.rangeBand();
-                                    x1 = x0 + xScale.rangeBand();
-                                    new_d = old_d.replace(link_d_pattern, "$1" + x0 + "$3" + x0 + "$5" + x1 + "$7" + x1 + "$9");
-                                    return new_d;
-                                }
-                            }
-                            else{
-                                return $(this).attr("d");
-                            }
-                        }
-                    );
-
-                /*
-                ** resize the time_label
-                */
-                d3.selectAll(".time_label")
-                    .attr("opacity", function(d, i, j){
-                        var rev = $(this).attr("rev");
-                        // show these revisions
-                        if(rev >= (revision_start_index - 1) && rev<= ( revision_end_index - 1 )){
-                            return 1;
-                        }
-                        // dont show these revisions
-                        else{
-                            return 0; 
-                        }   
-                    })
-                    // .transition()
-                    // .duration(250)
-                    // .delay(function(d, i) { return $(this).attr("rev") * 10; })
-                    .attr("y", function(d, i, j) { 
-                        var rev = $(this).attr("rev");
-                        // show these revisions
-                        if(rev >= (revision_start_index - 1) && rev<= ( revision_end_index - 1 )){
-                            return xScale( rev );
-                        }
-                        // don't show these revisions
-                        else{
-                            
-                        }
-                    });
-            }
-        },
-
-
-
-
 
     })
 

@@ -1,6 +1,6 @@
 /*
  * ==========================================================================
- * Authorviz
+ * docuviz
  ==========================================================================
  */
 
@@ -10,7 +10,7 @@ html, body {
   height: 100%;
 }
 
-.authorviz * {
+.docuviz * {
   box-sizing: border-box;
   font-family: Consolas, sans-serif;
   font-size: 12px;
@@ -41,7 +41,7 @@ html, body {
 
 
 /* Layout */
-.l-half {
+.l-half-docuviz {
   position: fixed;
   top: 0;
   height: 100%;
@@ -49,19 +49,19 @@ html, body {
   z-index: 100000;
 }
 
-.l-half--left {
+.l-half--left-docuviz {
   left: 0;
 }
 
-.l-half--top {
+.l-half--top-docuviz {
   bottom: 88%;
 }
 
-.l-half--right {
+.l-half--right-docuviz {
   right: 0;
 }
 
-.l-half--bottom {
+.l-half--bottom-docuviz {
   top: 12%;
 }
 
@@ -69,12 +69,12 @@ html, body {
 
 
 /* Object */
-.aligner {
+.aligner-docuviz {
   position: relative;
   height: 400px;
 }
 
-    .aligner-item {
+    .aligner-item-docuviz {
       position:  absolute;
       top:       9%;
       left:      0;
@@ -85,12 +85,12 @@ html, body {
       height:    auto;
     }
 
-    .aligner-item-top {
+    .aligner-item-top-docuviz {
       top:       0;
       transform: translate(0, 0);
     }
 
-    .aligner-item-bottom {
+    .aligner-item-bottom-docuviz {
       top:       auto;
       bottom:    0;
       transform: translate(0, 0);
@@ -98,7 +98,7 @@ html, body {
 
 
 /* Button */
-.btn {
+.btn-docuviz {
   /* STRUCTURE */
   display: inline-block;
   margin: 0;
@@ -159,32 +159,32 @@ html, body {
 
 
 /* Component */
-.authorviz, .authorviz__layout {
+.docuviz, .docuviz__layout {
   position: fixed;
   z-index: 50000;
 }
 
 
-.authorviz__wrap--left {
+.docuviz__wrap--left {
     background: rgba(32,38,47,0.95);
 /*    background: white;*/
 }
 
-.authorviz__wrap--top {
+.docuviz__wrap--top {
     background: rgba(32,38,47,0.95);
 /*    background: white;*/
 }
 
-.authorviz__wrap--right {
+.docuviz__wrap--right {
   background: white;
 }
 
-.authorviz__wrap--bottom {
+.docuviz__wrap--bottom {
   background: white;
 }
 
 
-.authoviz__box {
+.docuviz__box {
   position: relative;
   padding: 10px 20px;
   margin: 10px auto;
@@ -194,14 +194,14 @@ html, body {
   z-index: ;
 }
 
-.authorviz__intro {
+.docuviz__intro {
   height: 150px;
   padding: 0 30px;
     
 }
 
 
-.authorivz__doc-title {
+.docuviz__doc-title {
   font-size: 24px;
   text-transform: uppercase;
   color: white;
@@ -211,20 +211,20 @@ html, body {
 }
 
 
-.authorviz__author {
+.docuviz__author {
   max-height: 150px;
   margin: 0 auto;
 }
 
 
-.authorviz__close-btn {
+.docuviz__close-btn {
   position: absolute;
   top: 30px;
   right: 30px;
 }
 
 
-.authorviz__print-btn {
+.docuviz__print-btn {
   position: absolute;
   top: 30px;
   right: 140px;
@@ -233,7 +233,7 @@ html, body {
 
 
 /* Progress Bar */
-.authorviz__progress-bar {
+.docuviz__progress-bar {
   position: relative;
     bottom: 0px;
     top: 65px;
@@ -244,7 +244,7 @@ html, body {
   background: #555;
 }
 
-    .authorviz__progress-bar-item {
+    .docuviz__progress-bar-item {
       position: absolute;
       top: 0px;
       left: 0;
@@ -253,7 +253,7 @@ html, body {
       background: #4BAD7A;
     }
 
-.authorviz__loading-text {
+.docuviz__loading-text {
   color: #999;
     position: relative;
     top: 70px;
