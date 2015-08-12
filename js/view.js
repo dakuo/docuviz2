@@ -463,7 +463,7 @@
 
             $(document).on('click', '.js-print-docuviz', function() {
                  //$("svg").attr('viewBox','0 100 1600 800');
-                 var newWidth = parseInt($("svg").attr("width"));
+                 var newWidth = parseInt($("svg").attr("width")) + parseInt(50);
                  $("svg")[0].setAttribute('viewBox','0 0 ' + newWidth + ' 640');
                  //$("svg")[0].setAttribute('preserveAspectRatio','true');
                 // $("svg").width(800);

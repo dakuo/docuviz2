@@ -785,14 +785,14 @@
 
                                 if (strAfter.length > 0){
                                     that.currentSegID += 1;
-                                    if (that.revID ===1){
-                                        var segAfter = that.constructSegment(effectedSegmentOfDeleteStart.segmentID.author, strAfter, that.currentSegID, effectedSegmentOfDeleteStart.segmentID.parentSegID, deleteEndIndex- effectedSegmentOfDeleteStart.locationBasedOnLength[0]+1 , that.revID,effectedSegmentOfDeleteStart.locationBasedOnLength[0], deleteStartIndex-1, "from delete Before when start != end");
+                                    // if (that.revID ===1){
+                                    //     var segAfter = that.constructSegment(effectedSegmentOfDeleteStart.segmentID.author, strAfter, that.currentSegID, effectedSegmentOfDeleteStart.segmentID.parentSegID, deleteEndIndex- effectedSegmentOfDeleteStart.locationBasedOnLength[0]+1 , that.revID,effectedSegmentOfDeleteStart.locationBasedOnLength[0], deleteStartIndex-1, "from delete Before when start != end");
 
-                                    }
-                                    else{
+                                    // }
+                                    // else{
                                         var segAfter = that.constructSegment(effectedSegmentOfDeleteStart.segmentID.author, strAfter, that.currentSegID, effectedSegmentOfDeleteStart.segmentID.segID, deleteEndIndex- effectedSegmentOfDeleteStart.locationBasedOnLength[0]+1 , that.revID,effectedSegmentOfDeleteStart.locationBasedOnLength[0], deleteStartIndex-1, "from delete Before when start != end");
                                        
-                                    }
+                                    //}
                                     result.insert(segAfter, deleteStartSegmentLocation);
                                 } 
 
