@@ -643,9 +643,7 @@
 
 
                                     if (effectedSegment.segmentID.permanent === true) {
-                                        console.log("reach before in " + that.revID);
                                         var segBefore = that.constructSegment(effectedSegment.segmentID.author, strBeforeStartIndex, that.currentSegID, effectedSegment.segmentID.segID, 0, that.revID,effectedSegment.locationBasedOnLength[0],startIndex - effectedSegment.locationBasedOnLength[0], "from buildSegment Before in author !=  segment author when permanent = true", false);
-                                        console.log(segBefore);
                                     }
 
                                     else {
@@ -664,15 +662,10 @@
                                         that.currentSegID += 1;
                                         // calculate offset in here
                                         var offSet = startIndex- effectedSegment.locationBasedOnLength[0];
-                                        // console.log("revID: " + that.revID + " segID: " + that.currentSegID);
-                                        // console.log("off set: " + offSet);
-                                        // console.log("effectedSegment offset: " + effectedSegment.segmentID.offset);
-                                        // console.log("effectedSegment segID: " + effectedSegment.segmentID.segID);
+
 
                                          if (effectedSegment.segmentID.permanent === true){
-                                            console.log("reach after in " + that.revID);
                                              var segAfter = that.constructSegment(effectedSegment.segmentID.author, strAfterStartIndex, that.currentSegID, effectedSegment.segmentID.segID, offSet, that.revID,startIndex+entry.length, effectedSegment.locationBasedOnLength[1] + entry.length, "from buildSegment After in author !=  segment author when permanent = true", false);
-                                             console.log(segAfter);
                                          }
 
                                          else{ 
@@ -765,7 +758,6 @@
                             strInBelongTo = strInBelongTo.substring(0, deleteStartIndex-effectedSegmentOfDelete.locationBasedOnLength[0])+strInBelongTo.substring(deleteStartIndex- effectedSegmentOfDelete.locationBasedOnLength[0]+1);
 
                             result[deleteSegmentLocation].segStr = strInBelongTo;
-                            //result[deleteSegmentLocation].permanent = false;
                             //console.log("after delete: " + result[deleteSegmentLocation].segStr);
 
                         }
@@ -807,14 +799,15 @@
                                 if (strAfter.length > 0){
                                     that.currentSegID += 1;
 
-                                     //if (effectedSegmentOfDeleteStart.segmentID.permanent === true){
+                                     if (effectedSegmentOfDeleteStart.segmentID.permanent === true){
                                         var segAfter = that.constructSegment(effectedSegmentOfDeleteStart.segmentID.author, strAfter, that.currentSegID, effectedSegmentOfDeleteStart.segmentID.segID, deleteEndIndex- effectedSegmentOfDeleteStart.locationBasedOnLength[0]+1 , that.revID,effectedSegmentOfDeleteStart.locationBasedOnLength[0], deleteStartIndex-1, "from delete Before when start != end within segment", false);
                                        
-                                    // }
-                                    // else {
-                                    //     var segAfter = that.constructSegment(effectedSegmentOfDeleteStart.segmentID.author, strAfter, that.currentSegID, effectedSegmentOfDeleteStart.segmentID.parentSegID, deleteEndIndex- effectedSegmentOfDeleteStart.locationBasedOnLength[0]+1 + effectedSegmentOfDeleteStart.segmentID.offset, that.revID,effectedSegmentOfDeleteStart.locationBasedOnLength[0], deleteStartIndex-1, "from delete Before when start != end", false);
+                                     }
+                                    else {
+                                        var segAfter = that.constructSegment(effectedSegmentOfDeleteStart.segmentID.author, strAfter, that.currentSegID, effectedSegmentOfDeleteStart.segmentID.parentSegID, deleteEndIndex- effectedSegmentOfDeleteStart.locationBasedOnLength[0]+1 + effectedSegmentOfDeleteStart.segmentID.offset, that.revID,effectedSegmentOfDeleteStart.locationBasedOnLength[0], deleteStartIndex-1, "from delete Before when start != end", false);
+                                       // var segAfter = that.constructSegment(effectedSegmentOfDeleteStart.segmentID.author, strAfter, that.currentSegID, effectedSegmentOfDeleteStart.segmentID.segID, deleteEndIndex- effectedSegmentOfDeleteStart.locationBasedOnLength[0]+1 , that.revID,effectedSegmentOfDeleteStart.locationBasedOnLength[0], deleteStartIndex-1, "from delete Before when start != end within segment", false);
 
-                                    // }
+                                    }
 
                                     result.insert(segAfter, deleteStartSegmentLocation);
                                 } 
@@ -822,14 +815,16 @@
 
                                 if (strBefore.length > 0){
                                     that.currentSegID +=1;
-                                    //if (effectedSegmentOfDeleteStart.segmentID.permanent === true){
+                                    if (effectedSegmentOfDeleteStart.segmentID.permanent === true){
                                         var segBefore = that.constructSegment(effectedSegmentOfDeleteStart.segmentID.author, strBefore, that.currentSegID, effectedSegmentOfDeleteStart.segmentID.segID, 0, that.revID,effectedSegmentOfDeleteStart.locationBasedOnLength[0], deleteStartIndex-1, "from delete Before when start != end within segment", false);
 
-                                    // }
+                                    }
 
-                                    // else{
-                                    //     var segBefore = that.constructSegment(effectedSegmentOfDeleteStart.segmentID.author, strBefore, that.currentSegID, effectedSegmentOfDeleteStart.segmentID.parentSegID, effectedSegmentOfDeleteStart.segmentID.offset, that.revID,effectedSegmentOfDeleteStart.locationBasedOnLength[0], deleteStartIndex-1, "from delete Before when start != end", false);
-                                    // }
+                                    else{
+                                        var segBefore = that.constructSegment(effectedSegmentOfDeleteStart.segmentID.author, strBefore, that.currentSegID, effectedSegmentOfDeleteStart.segmentID.parentSegID, effectedSegmentOfDeleteStart.segmentID.offset, that.revID,effectedSegmentOfDeleteStart.locationBasedOnLength[0], deleteStartIndex-1, "from delete Before when start != end", false);
+                                        //var segBefore = that.constructSegment(effectedSegmentOfDeleteStart.segmentID.author, strBefore, that.currentSegID, effectedSegmentOfDeleteStart.segmentID.segID, 0, that.revID,effectedSegmentOfDeleteStart.locationBasedOnLength[0], deleteStartIndex-1, "from delete Before when start != end within segment", false);
+                                   
+                                    }
                                     result.insert(segBefore, deleteStartSegmentLocation);
                                 }
 
@@ -856,23 +851,28 @@
 
                                 if (strInBelongToDeleteEnd.length > 0){
                                     that.currentSegID += 1;
-                                    //if (effectedSegmentOfDeleteEnd.segmentID.permanent === true){
+                                    if (effectedSegmentOfDeleteEnd.segmentID.permanent === true){
                                         var segAfter = that.constructSegment(effectedSegmentOfDeleteEnd.segmentID.author, strInBelongToDeleteEnd, that.currentSegID, effectedSegmentOfDeleteEnd.segmentID.segID, deleteEndIndex- effectedSegmentOfDeleteEnd.locationBasedOnLength[0]+1 , that.revID, deleteEndIndex+1, effectedSegmentOfDeleteEnd.locationBasedOnLength[1], "from delete AFTER when start != end", false);
-                                    //  }
-                                    // else{
-                                    //     var segAfter = that.constructSegment(effectedSegmentOfDeleteEnd.segmentID.author, strInBelongToDeleteEnd, that.currentSegID, effectedSegmentOfDeleteEnd.segmentID.parentSegID, deleteEndIndex- effectedSegmentOfDeleteEnd.locationBasedOnLength[0]+1 + effectedSegmentOfDeleteEnd.segmentID.offset, that.revID, deleteEndIndex+1, effectedSegmentOfDeleteEnd.locationBasedOnLength[1], "from delete AFTER when start != end", false);
-                                    // }
+                                     }
+                                    else{
+                                        var segAfter = that.constructSegment(effectedSegmentOfDeleteEnd.segmentID.author, strInBelongToDeleteEnd, that.currentSegID, effectedSegmentOfDeleteEnd.segmentID.parentSegID, deleteEndIndex- effectedSegmentOfDeleteEnd.locationBasedOnLength[0]+1 + effectedSegmentOfDeleteEnd.segmentID.offset, that.revID, deleteEndIndex+1, effectedSegmentOfDeleteEnd.locationBasedOnLength[1], "from delete AFTER when start != end", false);
+                                       // var segAfter = that.constructSegment(effectedSegmentOfDeleteEnd.segmentID.author, strInBelongToDeleteEnd, that.currentSegID, effectedSegmentOfDeleteEnd.segmentID.segID, deleteEndIndex- effectedSegmentOfDeleteEnd.locationBasedOnLength[0]+1 , that.revID, deleteEndIndex+1, effectedSegmentOfDeleteEnd.locationBasedOnLength[1], "from delete AFTER when start != end", false);
+                                   
+                                    }
                                     result.insert(segAfter,deleteStartSegmentLocation);
                                 }
 
                                 if (strInBelongToDeleteStart.length > 0){
                                     that.currentSegID += 1;
-                                   // if (effectedSegmentOfDeleteStart.segmentID.permanent === true){
+                                    if (effectedSegmentOfDeleteStart.segmentID.permanent === true){
                                         var segBefore = that.constructSegment(effectedSegmentOfDeleteStart.segmentID.author, strInBelongToDeleteStart, that.currentSegID, effectedSegmentOfDeleteStart.segmentID.segID, 0, that.revID,effectedSegmentOfDeleteStart.locationBasedOnLength[0], deleteStartIndex-1, "from delete Before when start != end", false);
-                                   //   }
-                                   // else {
-                                   //      var segBefore = that.constructSegment(effectedSegmentOfDeleteStart.segmentID.author, strInBelongToDeleteStart, that.currentSegID, effectedSegmentOfDeleteStart.segmentID.parentSegID, effectedSegmentOfDeleteStart.segmentID.offset, that.revID,effectedSegmentOfDeleteStart.locationBasedOnLength[0], deleteStartIndex-1, "from delete Before when start != end", false);
-                                   //  }
+                                     }
+                                   else {
+                                        var segBefore = that.constructSegment(effectedSegmentOfDeleteStart.segmentID.author, strInBelongToDeleteStart, that.currentSegID, effectedSegmentOfDeleteStart.segmentID.parentSegID, effectedSegmentOfDeleteStart.segmentID.offset, that.revID,effectedSegmentOfDeleteStart.locationBasedOnLength[0], deleteStartIndex-1, "from delete Before when start != end", false);
+                                       // var segBefore = that.constructSegment(effectedSegmentOfDeleteStart.segmentID.author, strInBelongToDeleteStart, that.currentSegID, effectedSegmentOfDeleteStart.segmentID.segID, 0, that.revID,effectedSegmentOfDeleteStart.locationBasedOnLength[0], deleteStartIndex-1, "from delete Before when start != end", false);
+
+                                    
+                                    }
 
                                     result.insert(segBefore,deleteStartSegmentLocation);
                                 }
