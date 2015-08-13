@@ -757,6 +757,7 @@
                                 strInBelongTo = strInBelongTo.substring(0, deleteStartIndex-effectedSegmentOfDelete.locationBasedOnLength[0])+strInBelongTo.substring(deleteStartIndex- effectedSegmentOfDelete.locationBasedOnLength[0]+1);
 
                                 result[deleteSegmentLocation].segStr = strInBelongTo;
+                               // result[deleteSegmentLocation].permanent = false;
                                 //console.log("after delete: " + result[deleteSegmentLocation].segStr);
 
                             }

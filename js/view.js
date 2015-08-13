@@ -463,8 +463,8 @@
 
             $(document).on('click', '.js-print-docuviz', function() {
                  //$("svg").attr('viewBox','0 100 1600 800');
-                 var newWidth = parseInt($("svg").attr("width")) + parseInt(50);
-                 $("svg")[0].setAttribute('viewBox','0 0 ' + newWidth + ' 640');
+                 //var newWidth = parseInt($("svg").attr("width")) + parseInt(100);
+                 $("svg")[0].setAttribute('viewBox','0 0 1000 600');
                  //$("svg")[0].setAttribute('preserveAspectRatio','true');
                 // $("svg").width(800);
                 // var chartComponent = $('.chart-component')
@@ -475,7 +475,7 @@
 
 
                 var printWindow = window.open('', '', 'left=0,top=0,width=900,height=900,toolbar=0,scrollbars=0,status=0');
-                printWindow.document.write($('.js-author-docuviz').html() + '<svg width=' + newWidth + ' height=680>' + printContent.html() +'<svg>');
+                printWindow.document.write($('.js-author-docuviz').html() + '<svg width=1200 height=600>' + printContent.html() +'<svg>');
                 //console.log(printContent.html());
                 $("svg")[0].removeAttribute('viewBox');
                 //$('.js-result-docuviz').prepend(chartComponent.html());
@@ -506,10 +506,10 @@
                     left: 60
                 },
 
-                // width = 1280 - margin.left - margin.right,
-                // height = 600 - margin.top - margin.bottom;
-                width = $(window).width() - margin.left - margin.right - 150,
-                height = $(window).height() - margin.top - margin.bottom - ($(window).height()/10 * 2);
+                 width = 1280 - margin.left - margin.right,
+                 height = 600 - margin.top - margin.bottom;
+                //width = $(window).width() - margin.left - margin.right - 150,
+                //height = $(window).height() - margin.top - margin.bottom - ($(window).height()/10 * 2);
 
 
             var barHeight = 10; // author bar height
