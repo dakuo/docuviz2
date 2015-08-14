@@ -182,13 +182,14 @@
             // [a,b,c,[d]]
             rawData = _.flatten(rawData, true);
 
-            var color = d3.scale.category10();
+
+            //var color = d3.scale.category10();
             // _.each loops through the rawData and do something for each value
             _.each(rawData, function(val, index) {
                 //val[2] = Name
                 //val[3] = Color
                 //val[4] = ID
-                rawAuthors.push(Author(val[2], color(index), val[4]));
+                rawAuthors.push(Author(val[2], val[3], val[4]));
                 authorId.push(val[4]);
             });
 
@@ -198,6 +199,18 @@
                 authors.push(_.findWhere(rawAuthors, {
                     id: val
                 }));
+            });
+            console.log("authors: ");
+            console.log(authors);
+            var color10 = d3.scale.category10();
+            _.each(authors, function(val, index){
+                if (val.id === undefined) { // handle anonymous user which ID is undefined
+                    val.name = "Anonymous";
+                    val.color = "#7F7F7F";
+                }
+                else{
+                    val.color = color10(index);
+                }
             });
 
             return authors;
@@ -236,38 +249,77 @@
 
 
             rawData = data;
+            console.log(rawData);
 
 
             _.each(rawData, function(val) {
-                //timestamps.push(timeStamp(val[4], val[5]));
-                that.timestamps.push((timeStamp(val[4], val[5])));
-                //timestamps.push(val[5]);
+                var authorsArray = [];
+                _.each(val[1], function(eachAuthor){
+                    
+                    var authorColor = _.find(authors, function(val){
+                        return eachAuthor[4] === val.id;
+                    });
 
-            });
+                    authorsArray.push(author(eachAuthor[2], authorColor.color, eachAuthor[4])); 
+                });
 
+                if (val[6] != null ){
 
-            rawData = _.map(data, function(val) {
-                return val[1];
-            });
+                    _.each(val[6], function(eachElement, index){
+                        that.timestamps.push(eachElement[2]);
+                        that.authorsTimestamp.push(authorsArray);
 
+                    });
 
-            // find authors related to timestamps array:
-            _.each(rawData, function(val) {
-                var array = [];
-                _.each(val, function(val2, index) {
-                        var authorColor = _.find(authors, function(eachAuthor){
-                            return val2[4] === eachAuthor.id;
-
-                        });
-                        array.push(author(val2[2], authorColor.color, val2[4])); //to return author name use val2[2], return author id use val2[4]   
+                    if (val[6][val[6].length-1][2] != val[5]){ // handle the case where the history doesn't inlude the orginal time
+                        that.timestamps.push(val[5]);
+                        that.authorsTimestamp.push(authorsArray);
                     }
 
-                )
 
-                that.authorsTimestamp.push(array);
-                array = [];
+                }
+                else{
+
+                     that.timestamps.push(val[5]);
+                     that.authorsTimestamp.push(authorsArray);
+                }
+
+                authorsArray =  [];
+                
+                //that.timestamps.push((timeStamp(val[4], val[5])));
+                //that.timestamps.push(val[5]);
 
             });
+
+            // console.log(that.timestamps);
+
+
+            // rawData = _.map(data, function(val) {
+            //     return val[1];
+            // });
+
+            // console.log(rawData);
+
+            // find authors related to timestamps array:
+            // _.each(rawData, function(val) {
+            //     var array = [];
+            //     _.each(val, function(val2, index) {
+            //             var authorColor = _.find(authors, function(eachAuthor){
+            //                 return val2[4] === eachAuthor.id;
+            //             });
+
+            //             array.push(author(val2[2], authorColor.color, val2[4])); //to return author name use val2[2], return author id use val2[4]   
+            //         }
+
+            //     )
+
+            //     that.authorsTimestamp.push(array);
+            //     array = [];
+
+            // });
+
+
+           // console.log(that.authorsTimestamp);
 
         },
 
@@ -506,16 +558,16 @@
                     left: 60
                 },
 
-                 width = 1280 - margin.left - margin.right,
-                 height = 600 - margin.top - margin.bottom;
-                //width = $(window).width() - margin.left - margin.right - 150,
-                //height = $(window).height() - margin.top - margin.bottom - ($(window).height()/10 * 2);
+                // width = 1280 - margin.left - margin.right,
+                // height = 600 - margin.top - margin.bottom;
+                width = $(window).width() - margin.left - margin.right - 150,
+                height = $(window).height() - margin.top - margin.bottom - ($(window).height()/10 * 2);
 
 
             var barHeight = 10; // author bar height
 
             var data = _.map(revData, function(val) {
-                var timeRev = new Date(val[1].timestamp2);
+                var timeRev = new Date(val[1]);
                 var parseTime = timeRev.toISOString();
                 var parseDate = new Date(parseTime);
                 return {
@@ -578,25 +630,36 @@
                 values: [ 1, data.length > initial_render_revision_amount ? initial_render_revision_amount : data.length ],
                 slide: function( event, ui ) {
                     $( "#revision_index" ).val( "Revision: " + ui.values[ 0 ] + " - Revision: " + ui.values[ 1 ] );
-                    /*
-                    ** Interact with the filter
-                    */
-                    //docuviz.transitionFilter(ui.values[ 0 ] , ui.values[ 1 ] , data);
-                    beginRev = ui.values[0];
-                    endRev = ui.values[1];
 
-                    if (currentChartType==='equalDistance'){
-                        $('svg').remove();
-                        docuviz.drawEqualDistance(data,margin,width,height,barHeight,authorsColors, beginRev, endRev);
-                    }
+                    setTimeout(function() { sliderMethod(event, ui.values[0], ui.values[1]); }, 200); // delay trigger for 0.2s
 
-                    else{
-                        $('svg').remove();
-                        docuviz.drawTimeScaled(data,margin,width,height,barHeight,authorsColors, beginRev, endRev);     
-                    }
+
                     
                 }
             });
+
+
+            function sliderMethod(event,beginRev, endRev){
+
+                
+                /*
+                ** Interact with the filter
+                */
+                //docuviz.transitionFilter(ui.values[ 0 ] , ui.values[ 1 ] , data);
+                // beginRev = ui.values[0];
+                // endRev = ui.values[1];
+
+
+                if (currentChartType==='equalDistance'){
+                    $('svg').remove();
+                    docuviz.drawEqualDistance(data,margin,width,height,barHeight,authorsColors, beginRev, endRev);
+                }
+
+                else{
+                    $('svg').remove();
+                    docuviz.drawTimeScaled(data,margin,width,height,barHeight,authorsColors, beginRev, endRev);     
+                }
+            }
             
             /*
             ** Slider label
@@ -783,29 +846,28 @@
                         //return d[0].color;
                         return d.authorColor;
                     })
-                    .append("svg:title").text(function(d) { return d.segStr; });
+                    .append("svg:title").text(function(d,i) { return d.segStr + ' - Seg ID: ' + d.segID + ' - parentSegID: ' + d.parentSegID + ' - offset: ' + d.offset + ' - index: ' + i; });
             });
 
         // compute link 
-        var link = [], preSegment = [], newSegment = [], preIndex = -1;
+        var link = [], preSegments = [], newSegments = [], preIndex = -1;
 
 
         for (var j = 0; j < data.length - 1; j++) {
             link[j] = [];//link[j] represent the link between revision j and j+1
-            preSegment = data[j].revSegments; //revision j segments
-            newSegment = data[j + 1].revSegments; //revision j+1 segments
+            preSegments = data[j].revSegments; //revision j segments
+            newSegments = data[j + 1].revSegments; //revision j+1 segments
             //iterate revision j+1 segments to find father segment (segmentId) or it own(-1) in the previous revision
-            for (var k = 0; k < newSegment.length; k++) {
+            for (var k = 0; k < newSegments.length; k++) {
                 // If fatherSegmentIndex<0, it is not a child segment, either has a link to itself, or no link
-                if (newSegment[k].parentSegID < 0) {
+                if (newSegments[k].parentSegID < 0) {
 
-                    //preIndex = preSegment.indexOf(newSegment[k]);
-                    if (preSegment.length != 0){
-                        _.each(preSegment, function(eachSegment, index){                          
-                            if (eachSegment.segID === newSegment[k].segID){ 
-                                console.log("found");
+                    //preIndex = preSegment.indexOf(newSegments[k]);
+                    if (preSegments.length != 0){
+                        _.each(preSegments, function(eachSegment, index){                          
+                            if (eachSegment.segID === newSegments[k].segID){ 
                                 // preIndex = index;
-                                link[j].push([ eachSegment, newSegment[k] ]);
+                                link[j].push([ eachSegment, newSegments[k] ]);
                             }
                         });
                     }
@@ -813,20 +875,24 @@
                 } 
                 else {
                     // fatherSegmentIndex>0 it's a child segment, need to calculate the offset and position
-                    if (preSegment.length != 0){
-                        _.each(preSegment, function(eachSegment, index){
-                            if (eachSegment.segID === newSegment[k].segID){ 
-                                link[j].push([ eachSegment, newSegment[k] ]);
+                    if (preSegments.length != 0){
+                        _.each(preSegments, function(eachSegment, index){
+                            if (eachSegment.segID === newSegments[k].segID){ 
+                                link[j].push([ eachSegment, newSegments[k] ]);
                                 
                             }
-                            else if (eachSegment.segID === newSegment[k].parentSegID){
-                                preIndex = index;
+                            else if (eachSegment.segID === newSegments[k].parentSegID){
+                                    preIndex = index;
+                                
+                            }
+                            else{
+
                             }
                         });
                     }                 
                     //If preindex != -1 means, the father is in previous revision, so link the fathter segment and child segment
                     if (preIndex != -1) {
-                        link[j].push([ preSegment[preIndex], newSegment[k] ]);
+                        link[j].push([ preSegments[preIndex], newSegments[k] ]);
                         preIndex = -1;
                     }
                     else {
@@ -895,7 +961,7 @@
                         var y1 = y(accumulateSegLength2);
 
                         var x1 = x0 + x.rangeBand();
-                        var dy = y(d[1].segLength);
+                        var dy = y(Math.min(d[0].segLength, d[1].segLength));
 
                         return "M " + x0 + "," + y0 + " " + x0
                         + "," + (y0 + dy) + " " + x1 + ","
@@ -1049,25 +1115,25 @@
 
 
                 // compute link 
-                var link = [], preSegment = [], newSegment = [], preIndex = -1;
+                var link = [], preSegments = [], newSegments = [], preIndex = -1;
 
 
                 for (var j = 0; j < data.length - 1; j++) {
                     link[j] = [];//link[j] represent the link between revision j and j+1
-                    preSegment = data[j].revSegments; //revision j segments
-                    newSegment = data[j + 1].revSegments; //revision j+1 segments
+                    preSegments = data[j].revSegments; //revision j segments
+                    newSegments = data[j + 1].revSegments; //revision j+1 segments
                     //iterate revision j+1 segments to find father segment (segmentId) or it own(-1) in the previous revision
-                    for (var k = 0; k < newSegment.length; k++) {
+                    for (var k = 0; k < newSegments.length; k++) {
                         // If fatherSegmentIndex<0, it is not a child segment, either has a link to itself, or no link
-                        if (newSegment[k].parentSegID < 0) {
+                        if (newSegments[k].parentSegID < 0) {
 
-                            //preIndex = preSegment.indexOf(newSegment[k]);
-                            if (preSegment.length != 0){
-                                _.each(preSegment, function(eachSegment, index){                          
-                                    if (eachSegment.segID === newSegment[k].segID){ 
+                            //preIndex = preSegments.indexOf(newSegments[k]);
+                            if (preSegments.length != 0){
+                                _.each(preSegments, function(eachSegment, index){                          
+                                    if (eachSegment.segID === newSegments[k].segID){ 
                                         console.log("found");
                                         // preIndex = index;
-                                        link[j].push([ eachSegment, newSegment[k] ]);
+                                        link[j].push([ eachSegment, newSegments[k] ]);
                                     }
                                 });
                             }
@@ -1075,20 +1141,20 @@
                         } 
                         else {
                             // fatherSegmentIndex>0 it's a child segment, need to calculate the offset and position
-                            if (preSegment.length != 0){
-                                _.each(preSegment, function(eachSegment, index){
-                                    if (eachSegment.segID === newSegment[k].segID){ 
-                                        link[j].push([ eachSegment, newSegment[k] ]);
+                            if (preSegments.length != 0){
+                                _.each(preSegments, function(eachSegment, index){
+                                    if (eachSegment.segID === newSegments[k].segID){ 
+                                        link[j].push([ eachSegment, newSegments[k] ]);
                                         
                                     }
-                                    else if (eachSegment.segID === newSegment[k].parentSegID){
+                                    else if (eachSegment.segID === newSegments[k].parentSegID){
                                         preIndex = index;
                                     }
                                 });
                             }                 
                             //If preindex != -1 means, the father is in previous revision, so link the fathter segment and child segment
                             if (preIndex != -1) {
-                                link[j].push([ preSegment[preIndex], newSegment[k] ]);
+                                link[j].push([ preSegments[preIndex], newSegments[k] ]);
                                 preIndex = -1;
                             }
                             else {
@@ -1157,7 +1223,7 @@
                                 var y1 = y(accumulateSegLength2);
 
                                 var x1 = x(data[linkRevisionIndex+1].revTime);
-                                var dy = y(d[1].segLength);
+                                var dy = y(Math.min(d[0].segLength, d[1].segLength));
 
                                 return "M " + x0 + "," + y0 + " " + x0
                                 + "," + (y0 + dy) + " " + x1 + ","
