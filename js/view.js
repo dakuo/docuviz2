@@ -121,7 +121,7 @@ $.extend(window.docuviz, {
             // If the call success, turn the result DATA into JSON object and get the important information (Revision number & authors data)
             success: function(data) {
                 var raw = jQuery.parseJSON(data.substring(4)),
-                    revisionNumber = raw[raw.length - 1][raw[raw.length - 1].length - 1][3];
+                    revisionNumber = raw[2][raw[2].length - 1][3];
 
                 that.setRevisionNumber(revisionNumber);
                 //$('.js-authorviz-btn').removeClass('is-disabled');
@@ -393,7 +393,7 @@ $.extend(window.docuviz, {
 
         // js-authorviz: feature btn
         // js-revision-number: revision number
-        $('<div class="goog-inline-block js-docuviz-btn is-disabled"><div role="button" class="goog-inline-block jfk-button jfk-button-standard docs-titlebar-button jfk-button-clear-outline" aria-disabled="false" aria-pressed="false" tabindex="0" data-tooltip="Docuviz" aria-label="Docuviz" value="undefined" style="-webkit-user-select: none;">Docuviz (<span class="js-revision-number-docuviz">loading</span> revisions)</div><div id="docs-docos-caret" style="display: none" class="docos-enable-new-header"><div class="docs-docos-caret-outer"></div><div class="docs-docos-caret-inner"></div></div></div>').prependTo(btnGroup);
+        $('<div class="goog-inline-block js-docuviz-btn is-disabled"><div role="button" class="goog-inline-block jfk-button jfk-button-standard docs-titlebar-button jfk-button-clear-outline" aria-disabled="false" aria-pressed="false" tabindex="0" data-tooltip="Docuviz" aria-label="Docuviz" value="undefined" style="-webkit-user-select: none;">DocuViz (<span class="js-revision-number-docuviz">loading</span> revisions)</div><div id="docs-docos-caret" style="display: none" class="docos-enable-new-header"><div class="docs-docos-caret-outer"></div><div class="docs-docos-caret-inner"></div></div></div>').prependTo(btnGroup);
         this.addListenerToDocuvizBtn();
     },
 
@@ -470,13 +470,14 @@ $.extend(window.docuviz, {
         $(document).on('click', '.js-print-docuviz', function() {
             //$("svg").attr('viewBox','0 100 1600 800');
             //var newWidth = parseInt($("svg").attr("width")) + parseInt(100);
-            $("svg")[0].setAttribute('viewBox', '0 0 1000 600');
+            $("svg")[0].setAttribute('viewBox', '0 0 1000 800');
             var printContent = $('.js-result-docuviz svg');
 
 
 
             var printWindow = window.open('', '', 'left=0,top=0,width=900,height=900,toolbar=0,scrollbars=0,status=0');
-            printWindow.document.write($('.js-author-docuviz').html() + '<svg width=1200 height=600>' + printContent.html() + '<svg>');
+            // printWindow.document.write($('.js-author-docuviz').html() + '<svg width=1200 height=600>' + printContent.html() + '<svg>');
+            printWindow.document.write($('.js-doc-title-docuviz').html() + '</br>' + $('.js-author-docuviz').html() + '</br>' + '<svg width=1200 height=800>' + printContent.html() + '<svg>');
             //console.log(printContent.html());
             $("svg")[0].removeAttribute('viewBox');
             //$('.js-result-docuviz').prepend(chartComponent.html());
@@ -501,14 +502,14 @@ $.extend(window.docuviz, {
 
 
         var margin = {
-                top: 160,
+                top: 150,
                 right: 60,
-                bottom: 20,
+                bottom: 280,
                 left: 60
             },
 
             width = 1280 - margin.left - margin.right,
-            height = 600 - margin.top - margin.bottom;
+            height = 800 - margin.top - margin.bottom;
 
         // width and height values below are for vizsualization that can scale for any screen resolution:
         //width = $(window).width() - margin.left - margin.right - 150,
@@ -526,6 +527,7 @@ $.extend(window.docuviz, {
                 revAuthor: val[2],
                 revTime: parseDate,
                 revSegments: val[3],
+                revContribution: val[4]
             }
         });
 
@@ -701,7 +703,21 @@ $.extend(window.docuviz, {
             .append("g")
             .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-
+/*
+        var revTotalText = svg.selectAll("authorText").data(data[data.length-1].revContribution).enter()
+        .append("text").attr("class", "legend_text").attr("x", 40*2 + 10).attr("y", function(d, i) {
+            return i * (barHeight + 5);
+        })
+        .attr("font-family", "sans-serif").attr("font-size", "13px")
+        .attr("fill", "black").text(
+            function(d, i) {
+                return d.author.name + " " + d.contributionLength;
+            })
+        .attr(
+            "transform",
+            "translate(" + (margin.left - 80)
+                + "," + (height - margin.bottom + (barHeight*4 ) + 259 ) + ")");
+*/
 
         svg.append("g")
             .attr("class", "x axis")
@@ -718,7 +734,15 @@ $.extend(window.docuviz, {
             .attr("y", 6)
             .attr("dy", ".71em")
             .style("text-anchor", "end")
-            .text("Revision Length");
+            .text("Rev Length (characters)");
+
+        // show the revision's total length, Nov 02, 2015 by Dakuo
+        // the yAxis ending tick
+        svg.append("text").attr("class","ending_tick").attr("transform",
+            "translate(-43," + (height+15) + ")").text(d3.max(data, function(d) {
+                return d.revLength+1;
+            }));
+
 
         // Draw time label:
 
@@ -761,6 +785,38 @@ $.extend(window.docuviz, {
                 .attr("transform", "translate(0," + (6 * barHeight) + ")");
         }
 
+        // Draw Revision Contributions:
+        // text:
+        legendText = svg.selectAll("authorText").data(data[data.length-1].revContribution).enter()
+        .append("text").attr("class", "legend_text").attr("x", 40*2 + 10).attr("y", function(d, i) {
+            return i * (barHeight + 5);
+        })
+        .attr("font-family", "sans-serif").attr("font-size", "13px")
+        .attr("fill", "black").text(
+            function(d, i) {
+                return d.author.name + " " + d.contributionLength;
+            })
+        .attr(
+            "transform",
+            "translate(" + (margin.left - 80)
+                + "," + (height - margin.bottom + (barHeight*4 ) + 259 ) + ")");
+        // rectangle:
+        svg.selectAll("authorRectangle").data(data[data.length-1].revContribution).enter()
+        .append("rect")
+        .attr("class", "author_label")
+        .attr("x", 40*2 + 10)
+        .attr("y", function(d, i) {
+            return i * (barHeight + 5);
+        })
+        .attr("width", 35)
+        .attr("height", barHeight)
+        .style("fill",  function(d,i){
+            return d.author.color;
+        })
+        .attr(
+            "transform",
+            "translate(" + (margin.left - 120)
+                + "," + (height - margin.bottom + (barHeight*4 )+ 250 ) + ")");
 
 
         _.each(data, function(rev, index) {
@@ -983,8 +1039,15 @@ $.extend(window.docuviz, {
             .text("Revision Length");
 
 
-        // Draw time label:
+        // show the revision's total length, Nov 02, 2015 by Dakuo
+        // the yAxis ending tick
+        svg.append("text").attr("class","ending_tick").attr("transform",
+            "translate(-40," + height + ")").text(d3.max(data, function(d) {
+                return d.revLength;
+            }));
 
+
+        // Draw time label:
         var time_label = svg.selectAll("time_label").data(data).enter()
             .append("text")
             .attr("class", "time_label")
@@ -1024,6 +1087,39 @@ $.extend(window.docuviz, {
                 .attr("transform", "translate(16," + (6 * barHeight) + ")");
         }
 
+
+        // Draw Revision Contributions:
+        // text:
+        legendText = svg.selectAll("authorText").data(data[data.length-1].revContribution).enter()
+        .append("text").attr("class", "legend_text").attr("x", 40*2 + 10).attr("y", function(d, i) {
+            return i * (barHeight + 5);
+        })
+        .attr("font-family", "sans-serif").attr("font-size", "13px")
+        .attr("fill", "black").text(
+            function(d, i) {
+                return d.author.name + " " + d.contributionLength;
+            })
+        .attr(
+            "transform",
+            "translate(" + (margin.left - 80)
+                + "," + (height - margin.bottom + (barHeight*4 ) + 259 ) + ")");
+        // rectangle:
+        svg.selectAll("authorRectangle").data(data[data.length-1].revContribution).enter()
+        .append("rect")
+        .attr("class", "author_label")
+        .attr("x", 40*2 + 10)
+        .attr("y", function(d, i) {
+            return i * (barHeight + 5);
+        })
+        .attr("width", 35)
+        .attr("height", barHeight)
+        .style("fill",  function(d,i){
+            return d.author.color;
+        })
+        .attr(
+            "transform",
+            "translate(" + (margin.left - 120)
+                + "," + (height - margin.bottom + (barHeight*4 )+ 250 ) + ")");
 
 
         _.each(data, function(rev, index) {

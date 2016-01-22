@@ -32,7 +32,11 @@ $.extend(window.docuviz, {
 
     // "str" stores all the Character objects from a Google Doc
     str: [],
-
+    allSegmentsInCurrentRev: [],
+    firstRevisionSegments: [],
+    segmentsArray: [],
+    revID: 0,
+    currentSegID: 0,
 
     renderToString: function(chars) {
         return _.reduce(chars, function(memo, obj) {
@@ -44,13 +48,6 @@ $.extend(window.docuviz, {
 
         }, '');
     },
-
-
-    allSegmentsInCurrentRev: [],
-    firstRevisionSegments: [],
-    segmentsArray: [],
-    revID: 0,
-    currentSegID: 0,
 
     // oneSegment is the actual segment that will be passed to the View, it only ontains the information needed
     // to draw Docuviz 
@@ -117,24 +114,22 @@ $.extend(window.docuviz, {
 
         } else if (type === 'is' || type === 'iss') {
             // the first rev
-            if (segsInFirstRev === null) {
-                insertStartIndex = entry.ibi;
+            if (segsInFirstRev.length === 0) {
+                insertStartIndex = entry.ibi - 1;
                 _.each(entry.s, function(character, index) {
                     var charObj = {
                         s: character,
                         aid: authorId
                     };
 
-                    that.str.insert(charObj, (insertStartIndex - 1) + index);
+                    that.str.insert(charObj, insertStartIndex + index);
                 });
 
             }
 
             // calculating the second and following revs
             else {
-
-                insertStartIndex = entry.ibi;
-
+                insertStartIndex = entry.ibi - 1;
                 if (that.firstRevisionSegments.length > 0) {
                     that.allSegmentsInCurrentRev = that.buildSegmentsWhenInsert(entry.s, insertStartIndex, authorId, that.firstRevisionSegments);
                     that.firstRevisionSegments = [];
@@ -142,7 +137,7 @@ $.extend(window.docuviz, {
                 } else {
                     that.allSegmentsInCurrentRev = that.buildSegmentsWhenInsert(entry.s, insertStartIndex, authorId, that.allSegmentsInCurrentRev);
 
-                };
+                }
 
 
                 _.each(entry.s, function(character, index) {
@@ -150,32 +145,25 @@ $.extend(window.docuviz, {
                         s: character,
                         aid: authorId
                     };
-                    that.str.insert(charObj, (insertStartIndex - 1) + index);
+                    that.str.insert(charObj, insertStartIndex  + index);
                 });
 
 
 
             }
-
-
-
         } else if (type === 'ds' || type === 'dss') {
             // the first rev
-            if (segsInFirstRev === null) {
-                deleteStartIndex = entry.si;
-                deleteEndIndex = entry.ei;
-                this.str.delete(deleteStartIndex - 1, deleteEndIndex - 1);
-
+            if (segsInFirstRev.length === 0 && that.revID === 0) {
+                deleteStartIndex = entry.si - 1;
+                deleteEndIndex = entry.ei - 1;
+                that.str.delete(deleteStartIndex, deleteEndIndex);
             }
 
             // calculating the second and following revs, using the segs in previous rev
             else {
-
-                deleteStartIndex = entry.si;
-                deleteEndIndex = entry.ei;
-                this.str.delete(deleteStartIndex - 1, deleteEndIndex - 1);
-
-
+                deleteStartIndex = entry.si - 1;
+                deleteEndIndex = entry.ei - 1;
+                that.str.delete(deleteStartIndex, deleteEndIndex);
 
                 if (that.firstRevisionSegments.length > 0) {
                     that.allSegmentsInCurrentRev = that.buildSegmentsWhenDelete(deleteStartIndex, deleteEndIndex, authorId, that.firstRevisionSegments);
@@ -188,28 +176,55 @@ $.extend(window.docuviz, {
             }
 
         }
+        else {
+        	// all AS etc. types
+        }
 
         return true;
     },
 
+    // calculate the revision's contributions Nov 02, 2015 by Kenny
+    calculateRevContribution: function(revisionData, authors) {
+        var newRevisionData = [];
+        _.each(revisionData, function(eachRevision){
+            var revContribution = []
+            _.each(authors, function(eachAuthor){
+                var sum = 0;
+                _.each(eachRevision[3], function(eachSegment){
+                    if (eachAuthor.color === eachSegment.authorColor){
+                        sum += eachSegment.segLength;
+                    }
+                });
+                revContribution.push({author: eachAuthor, contributionLength: sum});
+            });
 
+            eachRevision.push(revContribution);
+            newRevisionData.push(eachRevision);
+        });
+
+        return newRevisionData;
+    },
 
     buildRevisions: function(vizType, docId, changelog, authors, revTimestamps, revAuthors) {
         // Clear previous revision data
         this.str = [];
+        this.firstRevisionSegments = [];
+        this.currentSegID = 0;
+        this.revID = 0;
+        this.allSegmentsInCurrentRev = [];
+        this.segmentsArray = [];
+
         var that = this,
             soFar = 0,
             editCount = changelog.length,
             html = '',
             command = null,
             authorId = null,
-            revs = [],
-            currentRevID = 0,
-            intervalChangesIndex = [],
-            segsInFirstRev = null,
-            differentAuthor = null;
-        that.currentSegID = 0;
-        that.revID = 0;
+            revsForFrontend = [],
+            //currentRevID = 0,
+            //segsInFirstRev = null,
+            differentAuthor = null,
+            intervalChangesIndex = [];
 
         intervalChangesIndex = this.calculateIntervalChangesIndex(changelog, revTimestamps);
 
@@ -227,7 +242,7 @@ $.extend(window.docuviz, {
 
             // Retrieve the Google Doc Tab and send a message to that Tab's view
             chrome.tabs.query({
-                url: '*://docs.google.com/*/' + docId + '/edit'
+                url: '*://docs.google.com/*/' + docId + '/edit*'
             }, function(tabs) {
                 chrome.tabs.sendMessage(tabs[0].id, {
                     msg: 'progress',
@@ -238,42 +253,36 @@ $.extend(window.docuviz, {
                     // Update progress bar
                     soFar += 1;
 
+                    that.constructForDocuviz(command, authorId, that.revID, that.currentSegID, that.firstRevisionSegments);
 
-                    that.constructForDocuviz(command, authorId, that.revID, that.currentSegID, segsInFirstRev);
+                    
+                    if (that.revID < intervalChangesIndex.length) {
 
-                    // reaching the end of changelog
-                    if (soFar === editCount) {
-                        chrome.tabs.query({
-                            url: '*://docs.google.com/*/' + docId + '/edit'
-                        }, function(tabs) {
-                            chrome.tabs.sendMessage(tabs[0].id, {
-                                msg: 'renderDocuviz',
-                                chars: that.str,
-                                revData: revs
-                            }, function(response) {});
-                        });
-                    };
-                    if (currentRevID < intervalChangesIndex.length) {
-
-                        if (soFar === intervalChangesIndex[currentRevID] + 1) {
-                            // if this is the first revision, at the first cutting point
-                            if (currentRevID === 0) {
-                                that.firstRevisionSegments.push(that.constructSegment(currentAuthor.id, that.renderToString(that.str), that.currentSegID, that.currentSegID, 0, that.revID, 0, that.str.length, 'type', true));
-                                var segments = that.buildSegmentsForOneRevision(that.firstRevisionSegments, authors);
-                                revs.push([that.str.length, revTimestamps[currentRevID], revAuthors[currentRevID], segments]);
-                                currentRevID += 1;
-                                that.revID += 1;
-                                segsInFirstRev = revs[0][3]; // set the segsInFirstRev to the first rev to prepare for the second one
+                        if (soFar === intervalChangesIndex[that.revID] + 1) {
+                            // at the cutting point, first revision
+                            if (that.revID === 0) {
+                            	
+                            	// addressing the empty first segment situation
+                            	var endIndex = 0;
+                            	if (that.str.length != 0){
+                            		endIndex = that.str.length - 1;
+                            	}
+                            	/*
+                            	** constructSegment(author, segStr, segId, parentSegId, offset, revId, beginIndex, endIndex, type//notes for developing, permanent//true or false);
+                            	*/
+                                that.firstRevisionSegments.push(that.constructSegment(currentAuthor.id, that.renderToString(that.str), that.currentSegID, that.currentSegID, 0, that.revID, 0, endIndex, '', true));
+                                var segmentsForFrontend = that.buildSegmentsForOneRevision(that.firstRevisionSegments, authors);
+                                revsForFrontend.push([that.str.length, revTimestamps[that.revID], revAuthors[that.revID], segmentsForFrontend]);
                             }
 
-                            // Other cutting points
+                            // cutting points, other revisions
                             else {
                                 var tempSegments = [];
                                 var segLength = 0;
 
                                 // change all segments'revID to the same revID
                                 _.each(that.allSegmentsInCurrentRev, function(eachSegment) {
-                                    eachSegment.revID = currentRevID;
+                                    eachSegment.revID = that.revID;
                                     eachSegment.permanent = true;
                                     tempSegments.push(eachSegment);
 
@@ -282,21 +291,35 @@ $.extend(window.docuviz, {
                                 that.allSegmentsInCurrentRev = tempSegments;
 
                                 // convert every segments into oneSegment object:
-                                var segments = that.buildSegmentsForOneRevision(that.allSegmentsInCurrentRev, authors);
+                                var segmentsForFrontend = that.buildSegmentsForOneRevision(that.allSegmentsInCurrentRev, authors);
 
-                                revs.push([that.str.length, revTimestamps[currentRevID], revAuthors[currentRevID], segments]);
-
-                                currentRevID += 1;
-                                that.revID += 1;
-                            };
+                                revsForFrontend.push([that.str.length, revTimestamps[that.revID], revAuthors[that.revID], segmentsForFrontend]);
+                            }
+                            that.revID += 1;
 
                         } else {
                             // where we calculate the segments, but not pushing rev
 
-                        };
+                        }
 
-                    };
+                    }
+                    
+                    // reaching the end of changelog
+                    if (soFar === editCount) {
+                        // calculate the revision's contributions, edit Nov 02, 2015 by Kenny
+                        revDataWithContribution = that.calculateRevContribution(revsForFrontend, authors);
 
+                        chrome.tabs.query({
+                            url: '*://docs.google.com/*/' + docId + '/edit*'
+                        }, function(tabs) {
+                            chrome.tabs.sendMessage(tabs[0].id, {
+                                msg: 'renderDocuviz',
+                                chars: that.str,
+                                // calculate the revision's contributions, edit Nov 02, 2015 by Kenny
+                                revData: revDataWithContribution
+                            }, function(response) {});
+                        });
+                    }
 
                     // Callback lets async knows that the sequence is finished can it can start run another entry           
                     callBack();
@@ -315,17 +338,25 @@ $.extend(window.docuviz, {
         for (var i = 0; i < segmentsArray.length; i++) {
 
             if (i === 0) {
-                segsArray.push(that.findBeginAndEndIndexesOfSegsHelper([1, segmentsArray[i].segStr.length], segmentsArray[i]));
+            	var endIndex = 0;
+            	if (segmentsArray[i].segStr.length > 0){
+            		endIndex = segmentsArray[i].segStr.length - 1;
+            	}
+
+                segsArray.push(that.findBeginAndEndIndexesOfSegsHelper([0, endIndex], segmentsArray[i]));
             } else {
-                segsArray.push(that.findBeginAndEndIndexesOfSegsHelper([segsArray[locationSoFar].locationBasedOnLength[1] + 1, (segsArray[locationSoFar].locationBasedOnLength[1] + segmentsArray[i].segStr.length)], segmentsArray[i]));
+            	var endIndex = 0;
+            	if (segsArray[locationSoFar].locationBasedOnLength[1] + segmentsArray[i].segStr.length > 0){
+            		endIndex = segsArray[locationSoFar].locationBasedOnLength[1] + segmentsArray[i].segStr.length - 1;
+            	}
+
+                segsArray.push(that.findBeginAndEndIndexesOfSegsHelper([segsArray[locationSoFar].locationBasedOnLength[1] , endIndex], segmentsArray[i]));
                 locationSoFar += 1;
             };
         };
 
         return segsArray;
     },
-
-
 
     buildSegmentsWhenInsert: function(entry, startIndex, author, segmentsArray) {
 
@@ -358,13 +389,14 @@ $.extend(window.docuviz, {
             } else if (eachSegment.locationBasedOnLength[0] < startIndex && startIndex <= eachSegment.locationBasedOnLength[1]) {
                 segmentLocation = index;
                 effectedSegment = eachSegment;
-            } else {}
+            } else {
+
+            }
 
         });
         if (effectedSegment === null) {
             that.currentSegID += 1;
             var currentSeg = that.constructSegment(author, entry, that.currentSegID, that.currentSegID, 0, that.revID, startIndex, startIndex + entry.length - 1, "middle part where author != prev author", false);
-
             segsArray.insert(currentSeg, locationBased.length);
         } else {
 
@@ -550,8 +582,8 @@ $.extend(window.docuviz, {
 
                     segsArray.insert(segBefore, deleteStartSegmentLocation);
                 }
-            };
-        };
+            }
+        }
 
         return segsArray;
 
