@@ -428,16 +428,15 @@ $.extend(window.docuviz, {
 	            		segmentLocation = index;
 	            		return eachSegment;
 	            	}
-	            	else {
+	            	else if ( (segmentsArray[index-1].permanentFlag === false) && (segmentsArray[index-1].authorId === authorId) ) {
 	            		segmentLocation = (index - 1);
 	            		return segmentsArray[index-1];
 	            	}
+	            	else {
+	            		// will never happen
+	            	}
 	            	
 	            } 
-	            // else if (startIndex === (eachSegment.endIndex + 1) ) {
-	            // 	segmentLocation = index;
-	            // 	return eachSegment;
-	            // }  
 	            else {
 	            	// do nothing, keep looking
 	            }
