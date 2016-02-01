@@ -49,9 +49,9 @@ $.extend(window.docuviz, {
         }, '');
     },
 
-    // oneSegment is the actual segment that will be passed to the View, it only ontains the information needed
+    // constructSegmentForFrontend is the actual segment that will be passed to the View, it only contains the information needed
     // to draw Docuviz 
-    oneSegment: function(authorColor, segID, parentSegID, offset, segStr, segLength, revID) {
+    constructSegmentForFrontend: function(authorColor, segID, parentSegID, offset, segStr, segLength, revID) {
         return {
             authorColor: authorColor,
             segID: segID,
@@ -64,32 +64,22 @@ $.extend(window.docuviz, {
     },
 
     // constructSegment is a segment object that has more information for constructing inside model.js 
-    constructSegment: function(author, segStr, segID, parentSegID, offset, revID, beginIndex, endIndex, type, permanent) {
+    constructSegment: function(authorId, segStr, segID, parentSegID, offset, revID, startIndex, endIndex, type, permanentFlag) {
         return {
-            author: author,
+            authorId: authorId,
             segStr: segStr,
             segID: segID,
             parentSegID: parentSegID,
             offset: offset,
             revID: revID,
-            beginIndex: beginIndex,
+            startIndex: startIndex,
             endIndex: endIndex,
             type: type,
-            permanent: permanent
+            permanentFlag: permanentFlag
         };
     },
 
-
-    // need to change this to findBeginAndEndIndexOfSegsHelper
-    findBeginAndEndIndexesOfSegsHelper: function(locationBasedOnLength, segment) {
-        return {
-            locationBasedOnLength: locationBasedOnLength, // [begin index of seg, end index of seg]
-            segment: segment // "Construct Segment" object
-        };
-    },
-
-
-    constructForDocuviz: function(entry, authorId, currentRevID, currentSegID, segsInFirstRev) {
+    analyzeEachEditInChangelog: function(entry, authorId, currentRevID, currentSegID, segsInFirstRev) {
         var that = this,
             type = entry.ty,
             insertStartIndex = null,
@@ -98,21 +88,23 @@ $.extend(window.docuviz, {
 
         if (type === 'mlti') {
             _.each(entry.mts, function(ent) {
-                that.constructForDocuviz(ent, authorId, currentRevID, currentSegID, segsInFirstRev);
+                that.analyzeEachEditInChangelog(ent, authorId, currentRevID, currentSegID, segsInFirstRev);
             });
         } else if (type === 'rplc') {
             _.each(entry.snapshot, function(ent) {
-                that.constructForDocuviz(ent, authorId, currentRevID, currentSegID, segsInFirstRev);
+                that.analyzeEachEditInChangelog(ent, authorId, currentRevID, currentSegID, segsInFirstRev);
             });
 
         } else if (type === 'rvrt') {
             that.str = [];
             that.allSegmentsInCurrentRev = [];
             _.each(entry.snapshot, function(ent) {
-                that.constructForDocuviz(ent, authorId, currentRevID, currentSegID, segsInFirstRev);
+                that.analyzeEachEditInChangelog(ent, authorId, currentRevID, currentSegID, segsInFirstRev);
             });
 
         } else if (type === 'is' || type === 'iss') {
+
+        	/*
             // the first rev
             if (segsInFirstRev.length === 0) {
                 insertStartIndex = entry.ibi - 1;
@@ -147,11 +139,21 @@ $.extend(window.docuviz, {
                     };
                     that.str.insert(charObj, insertStartIndex  + index);
                 });
-
-
-
             }
+            */
+            insertStartIndex = entry.ibi - 1;
+            that.allSegmentsInCurrentRev = that.buildSegmentsWhenInsert(entry.s, insertStartIndex, authorId, that.allSegmentsInCurrentRev);
+            _.each(entry.s, function(character, index) {
+                var charObj = {
+                    s: character,
+                    aid: authorId
+                };
+                that.str.insert(charObj, insertStartIndex  + index);
+            });
+
+
         } else if (type === 'ds' || type === 'dss') {
+        	/*
             // the first rev
             if (segsInFirstRev.length === 0 && that.revID === 0) {
                 deleteStartIndex = entry.si - 1;
@@ -174,10 +176,14 @@ $.extend(window.docuviz, {
                 }
 
             }
-
+            */
+            deleteStartIndex = entry.si - 1;
+            deleteEndIndex = entry.ei - 1;
+            that.str.delete(deleteStartIndex, deleteEndIndex);
+            that.allSegmentsInCurrentRev = that.buildSegmentsWhenDelete(deleteStartIndex, deleteEndIndex, authorId, that.allSegmentsInCurrentRev);
         }
         else {
-        	// all AS etc. types
+        	// all other types such as AS (formatting)
         }
 
         return true;
@@ -223,10 +229,15 @@ $.extend(window.docuviz, {
             revsForFrontend = [],
             //currentRevID = 0,
             //segsInFirstRev = null,
-            differentAuthor = null,
-            intervalChangesIndex = [];
+            differentAuthor = null;
 
+        // an array of the cutting index of edits, e.g., [0,21,32] meaning: rev0 has 0, rev1 has 1-21, rev2 has 22-32
+        var intervalChangesIndex = [];
         intervalChangesIndex = this.calculateIntervalChangesIndex(changelog, revTimestamps);
+        if(intervalChangesIndex.length === 0) {
+        	// Something is wrong, we didn't get changelog, or the cutting point
+        	console.log("Check point 1");
+        }
 
         // Async run through each entry in a synchronous sequence.
         async.eachSeries(changelog, function(entry, callBack) {
@@ -244,90 +255,125 @@ $.extend(window.docuviz, {
             chrome.tabs.query({
                 url: '*://docs.google.com/*/' + docId + '/edit*'
             }, function(tabs) {
+
                 chrome.tabs.sendMessage(tabs[0].id, {
                     msg: 'progress',
                     soFar: soFar + 1
                 }, function(response) {
 
+                    that.analyzeEachEditInChangelog(command, authorId, that.revID, that.currentSegID, that.firstRevisionSegments);                    
 
-                    // Update progress bar
-                    soFar += 1;
-
-                    that.constructForDocuviz(command, authorId, that.revID, that.currentSegID, that.firstRevisionSegments);
-
-                    
-                    if (that.revID < intervalChangesIndex.length) {
-
-                        if (soFar === intervalChangesIndex[that.revID] + 1) {
-                            // at the cutting point, first revision
-                            if (that.revID === 0) {
-                            	
-                            	// addressing the empty first segment situation
-                            	var endIndex = 0;
-                            	if (that.str.length != 0){
-                            		endIndex = that.str.length - 1;
-                            	}
-                            	/*
-                            	** constructSegment(author, segStr, segId, parentSegId, offset, revId, beginIndex, endIndex, type//notes for developing, permanent//true or false);
-                            	*/
-                                that.firstRevisionSegments.push(that.constructSegment(currentAuthor.id, that.renderToString(that.str), that.currentSegID, that.currentSegID, 0, that.revID, 0, endIndex, '', true));
-                                var segmentsForFrontend = that.buildSegmentsForOneRevision(that.firstRevisionSegments, authors);
-                                revsForFrontend.push([that.str.length, revTimestamps[that.revID], revAuthors[that.revID], segmentsForFrontend]);
-                            }
-
-                            // cutting points, other revisions
-                            else {
-                                var tempSegments = [];
-                                var segLength = 0;
-
-                                // change all segments'revID to the same revID
-                                _.each(that.allSegmentsInCurrentRev, function(eachSegment) {
-                                    eachSegment.revID = that.revID;
-                                    eachSegment.permanent = true;
-                                    tempSegments.push(eachSegment);
-
-                                });
-
-                                that.allSegmentsInCurrentRev = tempSegments;
-
-                                // convert every segments into oneSegment object:
-                                var segmentsForFrontend = that.buildSegmentsForOneRevision(that.allSegmentsInCurrentRev, authors);
-
-                                revsForFrontend.push([that.str.length, revTimestamps[that.revID], revAuthors[that.revID], segmentsForFrontend]);
-                            }
-                            that.revID += 1;
-
-                        } else {
-                            // where we calculate the segments, but not pushing rev
-
+                    if (soFar === intervalChangesIndex[that.revID] ) {
+                    	/**
+                        // at the cutting point, first revision
+                        if (that.revID === 0) {
+                        	
+                        	// addressing the empty first segment situation
+                        	var revLength = that.str.length;
+                        	if (revLength != 0){
+                        		var endIndex = revLength - 1;
+                        	}
+                        	else{
+                        		var endIndex = 0;
+                        	}
+                        	
+                        	// constructSegment(authorId, segStr, segId, parentSegId, offset, revId, startIndex, endIndex, type//notes for developing, permanentFlag//true or false);
+                        	
+                            that.firstRevisionSegments.push(that.constructSegment(authorId, that.renderToString(that.str), that.currentSegID, that.currentSegID, 0, that.revID, 0, endIndex, '', true));
+                            //BUG: it can only handle 1 author & 1 segment in the first revision
+                            
+                            var segmentsForFrontend = that.buildSegmentsForOneRevision(that.firstRevisionSegments, authors);
+                            revsForFrontend.push([revLength, revTimestamps[that.revID], revAuthors[that.revID], segmentsForFrontend]);
                         }
 
-                    }
-                    
-                    // reaching the end of changelog
-                    if (soFar === editCount) {
-                        // calculate the revision's contributions, edit Nov 02, 2015 by Kenny
-                        revDataWithContribution = that.calculateRevContribution(revsForFrontend, authors);
+                        // cutting points, other revisions
+                        else {
+                            //var tempSegments = [];
+                            
 
-                        chrome.tabs.query({
-                            url: '*://docs.google.com/*/' + docId + '/edit*'
-                        }, function(tabs) {
-                            chrome.tabs.sendMessage(tabs[0].id, {
-                                msg: 'renderDocuviz',
-                                chars: that.str,
-                                // calculate the revision's contributions, edit Nov 02, 2015 by Kenny
-                                revData: revDataWithContribution
-                            }, function(response) {});
+                            // change all segments'revID to the same revID
+                            _.each(that.allSegmentsInCurrentRev, function(eachSegment) {
+                                eachSegment.revID = that.revID;
+                                eachSegment.permanentFlag = true;
+                                //tempSegments.push(eachSegment);
+
+                            });
+
+                            //that.allSegmentsInCurrentRev = tempSegments;
+
+                            var revLength = that.str.length;
+                            // convert every segments into constructSegmentForFrontend object:
+                            var segmentsForFrontend = that.buildSegmentsForOneRevision(that.allSegmentsInCurrentRev, authors);
+
+                            revsForFrontend.push([revLength, revTimestamps[that.revID], revAuthors[that.revID], segmentsForFrontend]);
+                        }
+                        */
+
+                        // change all segments'revID to the same revID
+                        _.each(that.allSegmentsInCurrentRev, function(eachSegment) {
+                            eachSegment.revID = that.revID;
+                            eachSegment.permanentFlag = true;
                         });
+
+                        var revLength = that.str.length;
+                        // convert every segments into constructSegmentForFrontend object:
+                        var segmentsForFrontend = that.buildSegmentsForOneRevision(that.allSegmentsInCurrentRev, authors);
+
+                        revsForFrontend.push([revLength, revTimestamps[that.revID], revAuthors[that.revID], segmentsForFrontend]);
+
+                        // update the current revision id
+                        that.revID += 1;
+
+
+                    } else {
+                        
+
                     }
+
+
+                    // reaching the end of changelog, calculate the contributions and push it to frontend
+                    if (soFar === editCount ) {
+                    	// calculate the revision's contributions, edit Nov 02, 2015 by Kenny
+                    	var revDataWithContribution = that.calculateRevContribution(revsForFrontend, authors);
+
+                    	chrome.tabs.query({
+                    	    url: '*://docs.google.com/*/' + docId + '/edit*'
+                    	}, function(tabs) {
+                    	    chrome.tabs.sendMessage(tabs[0].id, {
+                    	        msg: 'renderDocuviz',
+                    	        chars: that.str,
+                    	        // calculate the revision's contributions, edit Nov 02, 2015 by Kenny
+                    	        revData: revDataWithContribution
+                    	    }, function(response) {});
+                    	});
+                    }
+                    // not finishing
+                    else{
+
+                    }
+
+                    // update soFar
+                    soFar += 1;
 
                     // Callback lets async knows that the sequence is finished can it can start run another entry           
                     callBack();
-                });
+                    
+                }
+                );
+				// End of chrome.tabs.sendMessage function
             });
+			// End of chrome.tabs.query function.
         });
+		// End of async
     },
 
+    // need to change this to findBeginAndEndIndexOfSegsHelper
+    findBeginAndEndIndexesOfSegsHelper: function(locationBasedOnLength, segment) {
+        return {
+            locationBasedOnLength: locationBasedOnLength, // [begin index of seg, end index of seg]
+            segment: segment // "Construct Segment" object
+        };
+    },
 
     // this function takes the current segments array and return aan array of an
     // object that contains: {{[begin index of seg, endindex of seg],[segment]},...}
@@ -358,111 +404,197 @@ $.extend(window.docuviz, {
         return segsArray;
     },
 
-    buildSegmentsWhenInsert: function(entry, startIndex, author, segmentsArray) {
+    // Creating the new segment, breaking the effected old segment if necessary, and updating all the following startIndex and endIndex
+    buildSegmentsWhenInsert: function(entry, startIndex, authorId, segmentsArray) {
 
-        var segmentsBefore = [];
-        var segsArray = segmentsArray;
         var that = this;
-        var locationBased = that.findBeginAndEndIndexesOfSegs(segmentsArray);
 
-
-        var segmentLocation = 0;
         var effectedSegment = null;
-        _.each(locationBased, function(eachSegment, index) {
-            if (startIndex === eachSegment.locationBasedOnLength[0]) {
-                if (index === 0) {
-                    effectedSegment = eachSegment;
-                    segmentLocation = index;
-                } else {
-                    if (locationBased[index - 1].segment.author === author) {
-                        effectedSegment = locationBased[index - 1];
-                        segmentLocation = index - 1;
-                    } else if (author === eachSegment.segment.author) {
-                        effectedSegment = eachSegment;
-                        segmentLocation = index;
-                    } else {
-                        effectedSegment = eachSegment;
-                        segmentLocation = index;
-                    }
-                }
+        var segmentLocation = null;
 
-            } else if (eachSegment.locationBasedOnLength[0] < startIndex && startIndex <= eachSegment.locationBasedOnLength[1]) {
-                segmentLocation = index;
-                effectedSegment = eachSegment;
-            } else {
+        if(segmentsArray != null){
 
-            }
+	        effectedSegment = _.find(segmentsArray, function(eachSegment, index) {
+	        	if (eachSegment.startIndex < startIndex && startIndex <= eachSegment.endIndex) {
+	                segmentLocation = index;
+	                return eachSegment;
+	            }
+	            else if (startIndex === eachSegment.startIndex) {
+	            	if (segmentsArray[index-1].permanentFlag === true){
+	            		segmentLocation = index;
+	            		return eachSegment;
+	            	}
+	            	else if ( (segmentsArray[index-1].permanentFlag === false) && (segmentsArray[index-1].authorId != authorId) ){
+	            		segmentLocation = index;
+	            		return eachSegment;
+	            	}
+	            	else {
+	            		segmentLocation = (index - 1);
+	            		return segmentsArray[index-1];
+	            	}
+	            	
+	            } 
+	            // else if (startIndex === (eachSegment.endIndex + 1) ) {
+	            // 	segmentLocation = index;
+	            // 	return eachSegment;
+	            // }  
+	            else {
+	            	// do nothing, keep looking
+	            }
+	        });
+		}
 
-        });
+        // it should only happen if it's the first revision, first segment
         if (effectedSegment === null) {
             that.currentSegID += 1;
-            var currentSeg = that.constructSegment(author, entry, that.currentSegID, that.currentSegID, 0, that.revID, startIndex, startIndex + entry.length - 1, "middle part where author != prev author", false);
-            segsArray.insert(currentSeg, locationBased.length);
-        } else {
+            var currentSeg = that.constructSegment(authorId, entry, that.currentSegID, that.currentSegID, 0, that.revID, startIndex, startIndex + entry.length - 1, "new segment because of no previous segment", false);
+            segmentsArray.insert(currentSeg, 0);
+        } 
+        // found an effected segment, TODO all need to updates the startIndex and endIndex for each successive segments
+        else {
+        	// not the same author
+            if (authorId != effectedSegment.authorId ) {
+            	that.currentSegID += 1;
+            	var currentSeg = that.constructSegment(authorId, entry, that.currentSegID, that.currentSegID, 0, that.revID, startIndex, startIndex + entry.length - 1, "new segment and found the effected segment", false);
+            	
+            	if(effectedSegment.startIndex === startIndex){
+            		segmentsArray.insert(currentSeg, segmentLocation);
 
-            if (author === effectedSegment.segment.author && (that.revID === effectedSegment.segment.revID)) {
-                var strInBelongTo = effectedSegment.segment.segStr;
-                strInBelongTo = strInBelongTo.insert(startIndex - effectedSegment.locationBasedOnLength[0], entry);
-                segsArray[segmentLocation].segStr = strInBelongTo;
-                segsArray[segmentLocation].permanent = false;
+		    		for (var i = (segmentLocation + 1); i < segmentsArray.length; i++) {
+				    	segmentsArray[i].startIndex += entry.length;
+				    	segmentsArray[i].endIndex += entry.length;
+		    		}
+            	}
+            	else if (startIndex === (effectedSegment.endIndex + 1)){
+            		segmentsArray.insert(currentSeg, (segmentLocation+1) ); // BUG, what if it's the same author as in the next segment
 
-            } else { // when author != effectedSegment.segment.author
-                var strInBelongTo = effectedSegment.segment.segStr;
+		    		for (var i = (segmentLocation + 2); i < segmentsArray.length; i++) {
+				    	segmentsArray[i].startIndex += entry.length;
+				    	segmentsArray[i].endIndex += entry.length;
+		    		}
 
+            	}
+            	else if (effectedSegment.startIndex < startIndex && startIndex <= effectedSegment.endIndex) {
 
-                var strBeforeStartIndex = strInBelongTo.substring(0, startIndex - effectedSegment.locationBasedOnLength[0]);
-                var strAfterStartIndex = strInBelongTo.substring(startIndex - effectedSegment.locationBasedOnLength[0]);
+            		var strBeforeStartIndex = effectedSegment.segStr.substring(0, startIndex - effectedSegment.startIndex);
+            		var strAfterStartIndex = effectedSegment.segStr.substring(startIndex - effectedSegment.startIndex);
 
-                if (strBeforeStartIndex.length > 0) {
+            		// if (strBeforeStartIndex.length > 0) {
 
-                    segsArray.delete(segmentLocation, segmentLocation);
+        		    segmentsArray.delete(segmentLocation, segmentLocation);
 
-                    that.currentSegID += 1;
+        		    that.currentSegID += 1;
+        		    if (effectedSegment.permanentFlag === true) {
+        		        var segBefore = that.constructSegment(effectedSegment.authorId, strBeforeStartIndex, that.currentSegID, effectedSegment.segID, 0, that.revID, effectedSegment.startIndex, (startIndex - 1), "from buildSegmentsWhenInsert Before, authorId !=  effectedSegment.authorId, when permanentFlag = true", false);
+        		    } else {
+        		        var segBefore = that.constructSegment(effectedSegment.authorId, strBeforeStartIndex, that.currentSegID, effectedSegment.parentSegID, effectedSegment.offset, that.revID, effectedSegment.startIndex, (startIndex - 1), "from buildSegmentsWhenInsert Before, authorId !=  effectedSegment.authorId, when permanentFlag = false", false);
+        		    }
 
-                    if (effectedSegment.segment.permanent === true) {
-                        var segBefore = that.constructSegment(effectedSegment.segment.author, strBeforeStartIndex, that.currentSegID, effectedSegment.segment.segID, 0, that.revID, effectedSegment.locationBasedOnLength[0], startIndex - effectedSegment.locationBasedOnLength[0], "from buildSegment Before in author !=  segment author when permanent = true", false);
-                    } else {
-                        var segBefore = that.constructSegment(effectedSegment.segment.author, strBeforeStartIndex, that.currentSegID, effectedSegment.segment.parentSegID, effectedSegment.segment.offset, that.revID, effectedSegment.locationBasedOnLength[0], startIndex - effectedSegment.locationBasedOnLength[0], "from buildSegment Before in author !=  segment author when permanent = false", false);
+        		    segmentsArray.insert(segBefore, segmentLocation)
+            		   
+            		segmentsArray.insert(currentSeg, (segmentLocation + 1) );
+        		    
+        		    that.currentSegID += 1;
 
-                    }
-
-                    segsArray.insert(segBefore, segmentLocation)
-                    that.currentSegID += 1;
-
-
-                    var currentSeg = that.constructSegment(author, entry, that.currentSegID, that.currentSegID, 0, that.revID, startIndex, startIndex + entry.length - 1, "middle part where author != prev author", false);
-
-                    segsArray.insert(currentSeg, segmentLocation + 1);
-
-
-                    if (strAfterStartIndex.length > 0) {
-                        that.currentSegID += 1;
-
-                        var offset = startIndex - effectedSegment.locationBasedOnLength[0];
+        		    var offset = startIndex - effectedSegment.startIndex;
 
 
-                        if (effectedSegment.segment.permanent === true) {
-                            var segAfter = that.constructSegment(effectedSegment.segment.author, strAfterStartIndex, that.currentSegID, effectedSegment.segment.segID, offset, that.revID, startIndex + entry.length, effectedSegment.locationBasedOnLength[1] + entry.length, "from buildSegment After in author !=  segment author when permanent = true", false);
-                        } else {
-                            var segAfter = that.constructSegment(effectedSegment.segment.author, strAfterStartIndex, that.currentSegID, effectedSegment.segment.parentSegID, offset + effectedSegment.segment.offset, that.revID, startIndex + entry.length, effectedSegment.locationBasedOnLength[1] + entry.length, "from buildSegment After in author !=  segment author when permanent = false", false);
-                        }
-                        segsArray.insert(segAfter, segmentLocation + 2);
+    		        if (effectedSegment.permanentFlag === true) {
+    		            var segAfter = that.constructSegment(effectedSegment.authorId, strAfterStartIndex, that.currentSegID, effectedSegment.segID, offset, that.revID, (startIndex + entry.length ), (effectedSegment.endIndex + entry.length), "from buildSegmentsWhenInsert After,  authorId !=  effectedSegment.authorId, when permanentFlag = true", false);
+    		        } else {
+    		            var segAfter = that.constructSegment(effectedSegment.authorId, strAfterStartIndex, that.currentSegID, effectedSegment.parentSegID, offset + effectedSegment.offset, that.revID, (startIndex + entry.length), (effectedSegment.endIndex + entry.length), "from buildSegmentsWhenInsert After, in authorId !=  effectedSegment.authorId when permanentFlag = false", false);
+    		        }
+    		        segmentsArray.insert(segAfter, (segmentLocation + 2) );
 
-                    };
+            		for (var i = (segmentLocation + 3); i < segmentsArray.length; i++) {
+        		    	segmentsArray[i].startIndex += entry.length;
+        		    	segmentsArray[i].endIndex += entry.length;
+            		}
 
-                } else { // handle the case where before Str is blank
-                    that.currentSegID += 1;
-                    var currentSeg = that.constructSegment(author, entry, that.currentSegID, that.currentSegID, 0, that.revID, startIndex, startIndex + entry.length - 1, "middle part where author != prev author", false);
-
-                    segsArray.insert(currentSeg, segmentLocation);
-
-                };
-
+            	}
+            	else{
+            		// shouldn't happen
+            	}
             }
+            // when author === effectedSegment.segment.author
+            else { 
+	        	if(effectedSegment.startIndex === startIndex){
+	        		if (effectedSegment.permanentFlag === true) {
+	        		    that.currentSegID += 1;
+	        		    var currentSeg = that.constructSegment(authorId, entry, that.currentSegID, that.currentSegID, 0, that.revID, startIndex, (startIndex + entry.length - 1), "new segment and found the effected segment", false);
+	        		    segmentsArray.insert(currentSeg, segmentLocation );
+	        		} else {
+	        			effectedSegment.segStr.insert(0, entry);
+	        			effectedSegment.endIndex += entry.length;
+	        		}
+		    		for (var i = (segmentLocation + 1); i < segmentsArray.length; i++) {
+				    	segmentsArray[i].startIndex += entry.length;
+				    	segmentsArray[i].endIndex += entry.length;
+		    		}
+	        	}
+	        	else if (startIndex === (effectedSegment.endIndex + 1)){
+	        		if (effectedSegment.permanentFlag === true) {
+	        		    that.currentSegID += 1;
+	        		    var currentSeg = that.constructSegment(authorId, entry, that.currentSegID, that.currentSegID, 0, that.revID, startIndex, (startIndex + entry.length - 1), "new segment and found the effected segment", false);
+	        		    segmentsArray.insert(currentSeg, (segmentLocation + 1) );
 
+		        		for (var i = (segmentLocation + 2); i < segmentsArray.length; i++) {
+		    		    	segmentsArray[i].startIndex += entry.length;
+		    		    	segmentsArray[i].endIndex += entry.length;
+		        		}
+
+	        		} else {
+	        			effectedSegment.segStr.insert(effectedSegment.segStr.length, entry);
+	        			effectedSegment.endIndex += entry.length;
+
+			    		for (var i = (segmentLocation + 1); i < segmentsArray.length; i++) {
+					    	segmentsArray[i].startIndex += entry.length;
+					    	segmentsArray[i].endIndex += entry.length;
+			    		}
+	        		}
+	        	}
+	        	else if (effectedSegment.startIndex < startIndex && startIndex <= effectedSegment.endIndex) {
+	        		if (effectedSegment.permanentFlag === true) {
+	            		var strBeforeStartIndex = effectedSegment.segStr.substring(0, startIndex - effectedSegment.startIndex);
+	            		var strAfterStartIndex = effectedSegment.segStr.substring(startIndex - effectedSegment.startIndex);
+
+	        		    segmentsArray.delete(segmentLocation, segmentLocation);
+
+	        		    that.currentSegID += 1;
+	        		    var segBefore = that.constructSegment(effectedSegment.authorId, strBeforeStartIndex, that.currentSegID, effectedSegment.segID, 0, that.revID, effectedSegment.startIndex, (startIndex - 1), "from buildSegmentsWhenInsert Before, authorId !=  effectedSegment.authorId, when permanentFlag = true", false);
+	        		    segmentsArray.insert(segBefore, segmentLocation)
+
+	        		    that.currentSegID += 1;
+	        		    var currentSeg = that.constructSegment(authorId, entry, that.currentSegID, that.currentSegID, 0, that.revID, startIndex, (startIndex + entry.length - 1), "new segment and found the effected segment", false);
+	            		segmentsArray.insert(currentSeg, (segmentLocation + 1) );
+	        		    
+	        		    that.currentSegID += 1;
+	        		    var offset = startIndex - effectedSegment.startIndex;
+    		            var segAfter = that.constructSegment(effectedSegment.authorId, strAfterStartIndex, that.currentSegID, effectedSegment.segID, offset, that.revID, (startIndex + entry.length ), (effectedSegment.endIndex + entry.length), "from buildSegmentsWhenInsert After,  authorId !=  effectedSegment.authorId, when permanentFlag = true", false);
+	    		        segmentsArray.insert(segAfter, (segmentLocation + 2) );
+
+	            		for (var i = (segmentLocation + 3); i < segmentsArray.length; i++) {
+	        		    	segmentsArray[i].startIndex += entry.length;
+	        		    	segmentsArray[i].endIndex += entry.length;
+	            		}
+
+	        		} else {
+	        			effectedSegment.segStr.insert( (startIndex - effectedSegment.startIndex), entry);
+	        			effectedSegment.endIndex += entry.length;
+
+			    		for (var i = (segmentLocation + 1); i < segmentsArray.length; i++) {
+					    	segmentsArray[i].startIndex += entry.length;
+					    	segmentsArray[i].endIndex += entry.length;
+			    		}
+	        		}
+	        	}
+	        	else {
+	        		//shouldn't happend
+	        	}
+            }
         }
 
-        return segsArray;
+        return segmentsArray;
 
     },
 
@@ -526,7 +658,7 @@ $.extend(window.docuviz, {
                 if (strAfter.length > 0) {
                     that.currentSegID += 1;
 
-                    if (effectedSegmentOfDeleteStart.segment.permanent === true) {
+                    if (effectedSegmentOfDeleteStart.segment.permanentFlag === true) {
                         var segAfter = that.constructSegment(effectedSegmentOfDeleteStart.segment.author, strAfter, that.currentSegID, effectedSegmentOfDeleteStart.segment.segID, deleteEndIndex - effectedSegmentOfDeleteStart.locationBasedOnLength[0] + 1, that.revID, effectedSegmentOfDeleteStart.locationBasedOnLength[0], deleteStartIndex - 1, "from delete Before when start != end within segment", false);
 
                     } else {
@@ -539,7 +671,7 @@ $.extend(window.docuviz, {
 
                 if (strBefore.length > 0) {
                     that.currentSegID += 1;
-                    if (effectedSegmentOfDeleteStart.segment.permanent === true) {
+                    if (effectedSegmentOfDeleteStart.segment.permanentFlag === true) {
                         var segBefore = that.constructSegment(effectedSegmentOfDeleteStart.segment.author, strBefore, that.currentSegID, effectedSegmentOfDeleteStart.segment.segID, 0, that.revID, effectedSegmentOfDeleteStart.locationBasedOnLength[0], deleteStartIndex - 1, "from delete Before when start != end within segment", false);
 
                     } else {
@@ -561,7 +693,7 @@ $.extend(window.docuviz, {
                 if (strInBelongToDeleteEnd.length > 0) {
                     that.currentSegID += 1;
 
-                    if (effectedSegmentOfDeleteEnd.segment.permanent === true) {
+                    if (effectedSegmentOfDeleteEnd.segment.permanentFlag === true) {
                         var segAfter = that.constructSegment(effectedSegmentOfDeleteEnd.segment.author, strInBelongToDeleteEnd, that.currentSegID, effectedSegmentOfDeleteEnd.segment.segID, deleteEndIndex - effectedSegmentOfDeleteEnd.locationBasedOnLength[0] + 1, that.revID, deleteEndIndex + 1, effectedSegmentOfDeleteEnd.locationBasedOnLength[1], "from delete AFTER when start != end", false);
                     } else {
                         var segAfter = that.constructSegment(effectedSegmentOfDeleteEnd.segment.author, strInBelongToDeleteEnd, that.currentSegID, effectedSegmentOfDeleteEnd.segment.parentSegID, deleteEndIndex - effectedSegmentOfDeleteEnd.locationBasedOnLength[0] + 1 + effectedSegmentOfDeleteEnd.segment.offset, that.revID, deleteEndIndex + 1, effectedSegmentOfDeleteEnd.locationBasedOnLength[1], "from delete AFTER when start != end", false);
@@ -573,7 +705,7 @@ $.extend(window.docuviz, {
                 if (strInBelongToDeleteStart.length > 0) {
                     that.currentSegID += 1;
 
-                    if (effectedSegmentOfDeleteStart.segment.permanent === true) {
+                    if (effectedSegmentOfDeleteStart.segment.permanentFlag === true) {
                         var segBefore = that.constructSegment(effectedSegmentOfDeleteStart.segment.author, strInBelongToDeleteStart, that.currentSegID, effectedSegmentOfDeleteStart.segment.segID, 0, that.revID, effectedSegmentOfDeleteStart.locationBasedOnLength[0], deleteStartIndex - 1, "from delete Before when start != end", false);
                     } else {
                         var segBefore = that.constructSegment(effectedSegmentOfDeleteStart.segment.author, strInBelongToDeleteStart, that.currentSegID, effectedSegmentOfDeleteStart.segment.parentSegID, effectedSegmentOfDeleteStart.segment.offset, that.revID, effectedSegmentOfDeleteStart.locationBasedOnLength[0], deleteStartIndex - 1, "from delete Before when start != end", false);
@@ -589,8 +721,7 @@ $.extend(window.docuviz, {
 
     },
 
-
-
+    // build the segments for frontend for a revision
     buildSegmentsForOneRevision: function(segmentsArray, authors) {
         var segments = [];
         var counter = 0;
@@ -605,11 +736,11 @@ $.extend(window.docuviz, {
                 var authorColor = "#7F7F7F";
 
             }
-            if (currentAuthor != undefined) {
+            else{
                 var authorColor = currentAuthor.color;
             }
 
-            var segment = that.oneSegment(authorColor, eachSegment.segID, eachSegment.parentSegID, eachSegment.offset, eachSegment.segStr, eachSegment.segStr.length, eachSegment.revID);
+            var segment = that.constructSegmentForFrontend(authorColor, eachSegment.segID, eachSegment.parentSegID, eachSegment.offset, eachSegment.segStr, eachSegment.segStr.length, eachSegment.revID);
             segments.push(segment);
         });
 
