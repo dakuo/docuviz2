@@ -601,18 +601,121 @@ $.extend(window.docuviz, {
     buildSegmentsWhenDelete: function(deleteStartIndex, deleteEndIndex, author, segmentsArray) {
         var that = this;
 
+        // var deleteSegmentLocation = null;
+        var effectedSegmentOfDelete = null;
+
+        // delete start === delete end, only deleting 1 character
         if (deleteStartIndex === deleteEndIndex) {
 
-            var deleteSegmentLocation = null;
-            var effectedSegmentOfDelete = null;
             var deleteIndex = deleteStartIndex;
 
             if(segmentsArray != null){
 
                 effectedSegmentOfDelete = _.find(segmentsArray, function(eachSegment, index) {
-                    if (eachSegment.startIndex <= deleteIndex && deleteIndex <= eachSegment.endIndex) {
-                        deleteSegmentLocation = index;
-                        return eachSegment;
+                    if (eachSegment.startIndex === deleteIndex ) {
+                    	if (eachSegment.startIndex === eachSegment.endIndex) {
+                    		// delete the whole segment
+                    		segmentsArray.delete(index, index);
+                    		
+                    	}
+                    	else{
+                    		var strAfterDelete = eachSegment.segStr.substring(deleteIndex - eachSegment.startIndex + 1); // = substring(1)
+
+                    		if (eachSegment.permanentFlag === true) {
+	                    		// delete the old segment from current revision
+	                    		segmentsArray.delete(index, index);
+
+	                    		// create a new segment with offset
+	                    		that.currentSegID += 1;
+	                    		var segAfter  = constructSegment(eachSegment.authorId, strAfterDelete, that.currentSegID, eachSegment.segID, 1, that.revID, eachSegment.startIndex, (eachSegment.endIndex - 1), "", false);
+	                    		segmentsArray.insert(segAfter, index);
+
+                    		}
+                    		else {
+                    			segmentsArray[index].segStr = strAfterDelete;
+                    			segmentsArray[index].endIndex -= 1;
+                    		}
+
+                    	}
+                    	// updates all the following segments's start and end index
+                    	for (var i = (index+1); i <= (segmentsArray.length-1); i++){
+                    	    segmentsArray[i].startIndex -= 1;
+                    	    segmentsArray[i].endIndex -= 1;
+                    	}
+
+                    	return eachSegment;
+                    }
+                    else if (eachSegment.endIndex === deleteIndex ){
+                    	if (eachSegment.startIndex === eachSegment.endIndex) {
+                    		// delete the whole segment
+                    		segmentsArray.delete(index, index);
+                    		
+                    	}
+                    	else{
+                    		var strBeforeDelete = eachSegment.segStr.substring(0, (deleteIndex - eachSegment.startIndex)); // = substring(0,end-1)
+
+                    		if (eachSegment.permanentFlag === true) {
+	                    		// delete the old segment from current revision
+	                    		segmentsArray.delete(index, index);
+
+	                    		// create a new segment with offset
+	                    		that.currentSegID += 1;
+	                    		var segBefore  = constructSegment(eachSegment.authorId, strBeforeDelete, that.currentSegID, eachSegment.segID, 0, that.revID, eachSegment.startIndex, (eachSegment.endIndex - 1), "", false);
+	                    		segmentsArray.insert(segBefore, index);
+
+                    		}
+                    		else {
+                    			segmentsArray[index].segStr = strBeforeDelete;
+                    			segmentsArray[index].endIndex -= 1;
+                    		}
+
+                    	}
+                    	// updates all the following segments's start and end index
+                    	for (var i = (index+1); i <= (segmentsArray.length-1); i++){
+                    	    segmentsArray[i].startIndex -= 1;
+                    	    segmentsArray[i].endIndex -= 1;
+                    	}
+
+                    	return eachSegment;
+
+                    }
+                    else if (eachSegment.startIndex < deleteIndex && deleteIndex < eachSegment.endIndex){
+                		var strBeforeDelete = eachSegment.segStr.substring(0, (deleteIndex - eachSegment.startIndex)); // = substring(0,end-1)
+                		var strAfterDelete = eachSegment.segStr.substring(deleteIndex - eachSegment.startIndex + 1); // = substring(1)
+
+                		if (eachSegment.permanentFlag === true) {
+                    		// delete the old segment from current revision
+                    		segmentsArray.delete(index, index);
+
+                    		// create two new segments, one with offset 0, another with offeset 
+                    		that.currentSegID += 1;
+                    		var segBefore  = constructSegment(eachSegment.authorId, strBeforeDelete, that.currentSegID, eachSegment.segID, 0, that.revID, eachSegment.startIndex, (deleteIndex - 1), "", false);
+                    		segmentsArray.insert(segBefore, index);
+
+                    		// create a new segment with offset
+                    		that.currentSegID += 1;
+                    		var segAfter  = constructSegment(eachSegment.authorId, strAfterDelete, that.currentSegID, eachSegment.segID, (deleteIndex + 1 ), that.revID, deleteIndex, (eachSegment.endIndex - 1), "", false);
+                    		segmentsArray.insert(segAfter, (index+1) );
+
+                    		// updates all the following segments
+                    		for (var i = (index+2); i <= (segmentsArray.length-1); i++){
+                    		    segmentsArray[i].startIndex -= 1;
+                    		    segmentsArray[i].endIndex -= 1;
+                    		}
+
+                		}
+                		else {
+                			segmentsArray[index].segStr = strBeforeDelete + strAfterDelete;
+                			segmentsArray[index].endIndex -= 1;
+
+                			// updates all the following segments
+                			for (var i = (index+1); i <= (segmentsArray.length-1); i++){
+                			    segmentsArray[i].startIndex -= 1;
+                			    segmentsArray[i].endIndex -= 1;
+                			}
+                		}
+                    	return eachSegment;
+
                     }
                     else {
                         // do nothing, keep looking
@@ -621,165 +724,294 @@ $.extend(window.docuviz, {
                 });
                 
                 if (effectedSegmentOfDelete === undefined){ 
-
-                    if (effectedSegmentOfDelete.permanentFlag === false) {
-                        var strInBelongTo = effectedSegmentOfDelete.segStr;
-                        strInBelongTo = strInBelongTo.substring(0, deleteIndex - effectedSegmentOfDelete.startIndex) + strInBelongTo.substring(deleteIndex - effectedSegmentOfDelete.startIndex + 1);
-
-                        segmentsArray[deleteSegmentLocation].segStr = strInBelongTo;
-                        segmentsArray[deleteSegmentLocation].endIndex -= 1;
-
-                        for (var i = (deleteSegmentLocation+1); i <= (segmentsArray.length-1); i++){
-                            segmentsArray[i].startIndex -= 1;
-                            segmentsArray[i].endIndex -= 1;
-                        }
-
-                    }
-
-                    else{ // effectedSegmentOfDelete.permanentFlag === true
-                        // No matter whether the author is the same or different. In this case, we have to break the segment into 2 segments even though only 1 character will be deleted.
-                        // find StrBefore and strAfter:
-                        strBeforeDeleteIndex = effectedSegmentOfDelete.segStr.substring(0, (deleteIndex - effectedSegmentOfDelete.startIndex));
-                        strAferDeleteIndex = effectedSegmentOfDelete.segStr.substring(deleteIndex - effectedSegmentOfDelete.startIndex + 1);
-
-                        segmentsArray.delete(segmentLocation, segmentLocation);
-
-                        that.currentSegID += 1;
-                        var segBefore = constructSegment(effectedSegmentOfDelete.authorId, strBeforeDeleteIndex, that.currentSegID, effectedSegmentOfDelete.segID, 0, that.revID, effectedSegmentOfDelete.startIndex, deleteIndex, "", false);
-                        segmentsArray.insert(segBefore, segmentLocation);
-
-
-                        that.currentSegID += 1;
-                        var segAfter  = constructSegment(effectedSegmentOfDelete.authorId, strAferDeleteIndex, that.currentSegID, effectedSegmentOfDelete.segID, deleteIndex - 1, that.revID, effectedSegmentOfDelete.endIndex-1, "", false);
-                        segmentsArray.insert(segAfter, segmentLocation+1);
-
-                    }
+                    console.log("shouldn't happend, effectedSegmentOfDelete is undefined, buildSegmentsWhenDelete when deleteStartIndex === deleteEndIndex");
                 }
-                else{
-                    console.log("effectedSegmentOfDelete is null when deleteStartIndex === deleteEndIndex");
-                }
-
 
             }
 
             else{
-                console.log("This should never happen in buildSegmentsWhenDelete when deleteStartIndex === deleteEndIndex");
+                console.log("This should never happen, segmentsArray is null,  buildSegmentsWhenDelete when deleteStartIndex === deleteEndIndex");
             }
-
-
-
-
         } 
-        else { // when deleteStartIndex != deleteEndIndex 
+        else { // when deleteStartIndex != deleteEndIndex
 
-            var deleteStartSegmentLocation = null;
-            var effectedSegmentOfDeleteStart = null;
-            var deleteEndSegmentLocation = null;
-            var effectedSegmentOfDeleteEnd = null;
+        	var deleteStartSegmentLocation = null;
+        	var effectedSegmentOfDeleteStart = null;
+        	var deleteEndSegmentLocation = null;
+        	var effectedSegmentOfDeleteEnd = null;
 
-            if(segmentsArray != null){
-
-                effectedSegmentOfDeleteStart = _.find(segmentsArray, function(eachSegment, index) {
-                    if (eachSegment.startIndex <= deleteStartIndex && deleteStartIndex <= eachSegment.endIndex) {
-                        deleteStartSegmentLocation = index;
-                        return eachSegment;
-                    }
-                        
-                    
-                    else {
-                        // do nothing, keep looking
-                    }
-                });
-
-
-                effectedSegmentOfDeleteEnd = _.find(segmentsArray, function(eachSegment, index) {
-                    if (eachSegment.startIndex <= deleteEndIndex && deleteEndIndex <= eachSegment.endIndex) {
-                        deleteEndSegmentLocation = index;
-                        return eachSegment;
-                    }
-                        
-                    else {
-                        // do nothing, keep looking
-                    }
-                });
-
-            }
-
-            else{
-                console.log("This should never happen in buildSegmentsWhenDelete when deleteStartIndex != deleteEndIndex");
-
-            }
+        	if(segmentsArray != null ){
+        		effectedSegmentOfDeleteStart = _.find(segmentsArray, function(eachSegment, index) {
+        		    if (eachSegment.startIndex <= deleteStartIndex && deleteStartIndex <= eachSegment.endIndex) {
+        		        deleteStartSegmentLocation = index;
+        		        return eachSegment;
+        		    }
+        		        
+        		    
+        		    else {
+        		        // do nothing, keep looking
+        		    }
+        		});
 
 
-            if (deleteStartSegmentLocation === deleteEndSegmentLocation) { //within segment
+        		effectedSegmentOfDeleteEnd = _.find(segmentsArray, function(eachSegment, index) {
+        		    if (eachSegment.startIndex <= deleteEndIndex && deleteEndIndex <= eachSegment.endIndex) {
+        		        deleteEndSegmentLocation = index;
+        		        return eachSegment;
+        		    }
+        		        
+        		    else {
+        		        // do nothing, keep looking
+        		    }
+        		});
 
-                var strInBelongTo = effectedSegmentOfDeleteStart.segStr;
-                segmentsArray.delete(deleteStartSegmentLocation, deleteStartSegmentLocation);
-                var strBefore = strInBelongTo.substring(0, deleteStartIndex - effectedSegmentOfDeleteStart.startIndex);
-                var strAfter = strInBelongTo.substring(deleteEndIndex - effectedSegmentOfDeleteStart.startIndex + 1);
+        		// within a segment
+        		if (deleteStartSegmentLocation === deleteEndSegmentLocation) {
+        			
+        			if(deleteStartIndex > effectedSegmentOfDeleteStart.startIndex && deleteEndIndex < effectedSegmentOfDeleteStart.endIndex){
+						var strBeforeDelete = effectedSegmentOfDeleteStart.segStr.substring(0, (deleteStartIndex - effectedSegmentOfDeleteStart.startIndex)); // = substring(0,end-1)
+						var strAfterDelete = effectedSegmentOfDeleteStart.segStr.substring(deleteEndIndex - effectedSegmentOfDeleteStart.startIndex + 1); // = substring(1)
 
-                if (strAfter.length > 0) {
-                    that.currentSegID += 1;
+						if (effectedSegmentOfDeleteStart.permanentFlag === true) {
+				    		// delete the old segment from current revision
+				    		segmentsArray.delete(deleteStartSegmentLocation, deleteStartSegmentLocation);
 
-                    if (effectedSegmentOfDeleteStart.segment.permanentFlag === true) {
-                        var segAfter = that.constructSegment(effectedSegmentOfDeleteStart.segment.author, strAfter, that.currentSegID, effectedSegmentOfDeleteStart.segment.segID, deleteEndIndex - effectedSegmentOfDeleteStart.locationBasedOnLength[0] + 1, that.revID, effectedSegmentOfDeleteStart.locationBasedOnLength[0], deleteStartIndex - 1, "from delete Before when start != end within segment", false);
+				    		// create two new segments, one with offset 0, another with offeset 
+				    		that.currentSegID += 1;
+				    		var segBefore  = constructSegment(effectedSegmentOfDeleteStart.authorId, strBeforeDelete, that.currentSegID, effectedSegmentOfDeleteStart.segID, 0, that.revID, effectedSegmentOfDeleteStart.startIndex, (deleteStartIndex - 1), "", false);
+				    		segmentsArray.insert(segBefore, deleteStartSegmentLocation);
 
-                    } else {
-                        var segAfter = that.constructSegment(effectedSegmentOfDeleteStart.segment.author, strAfter, that.currentSegID, effectedSegmentOfDeleteStart.segment.parentSegID, deleteEndIndex - effectedSegmentOfDeleteStart.locationBasedOnLength[0] + 1 + effectedSegmentOfDeleteStart.segment.offset, that.revID, effectedSegmentOfDeleteStart.locationBasedOnLength[0], deleteStartIndex - 1, "from delete Before when start != end", false);
-                    }
+				    		// create a new segment with offset
+				    		that.currentSegID += 1;
+				    		var segAfter  = constructSegment(effectedSegmentOfDeleteStart.authorId, strAfterDelete, that.currentSegID, effectedSegmentOfDeleteStart.segID, (deleteEndIndex - effectedSegmentOfDeleteStart.startIndex + 1 ), that.revID, deleteStartIndex, (effectedSegmentOfDeleteStart.endIndex - 1 - deleteEndIndex + deleteStartIndex), "", false);
+				    		segmentsArray.insert(segAfter, (deleteStartSegmentLocation+1) );
 
-                    segsArray.insert(segAfter, deleteStartSegmentLocation);
-                }
+				    		// updates all the following segments
+				    		for (var i = (deleteStartSegmentLocation+2); i <= (segmentsArray.length-1); i++){
+				    		    segmentsArray[i].startIndex -= (deleteEndIndex - deleteStartIndex + 1 );
+				    		    segmentsArray[i].endIndex -= (deleteEndIndex - deleteStartIndex + 1 );
+				    		}
+
+						}
+						else {
+							segmentsArray[deleteStartSegmentLocation].segStr = strBeforeDelete + strAfterDelete;
+							segmentsArray[deleteStartSegmentLocation].endIndex -= (deleteEndIndex - deleteStartIndex + 1 );
+
+							// updates all the following segments
+							for (var i = (deleteStartSegmentLocation+1); i <= (segmentsArray.length-1); i++){
+							    segmentsArray[i].startIndex -= (deleteEndIndex - deleteStartIndex + 1 );
+							    segmentsArray[i].endIndex -= (deleteEndIndex - deleteStartIndex + 1 );
+							}
+						}
+        			}
+        			else if (deleteStartIndex === effectedSegmentOfDeleteStart.startIndex && deleteEndIndex < effectedSegmentOfDeleteStart.endIndex){
+						var strAfterDelete = effectedSegmentOfDeleteStart.segStr.substring(deleteEndIndex - effectedSegmentOfDeleteStart.startIndex + 1); // = substring(1)
+
+						if (effectedSegmentOfDeleteStart.permanentFlag === true) {
+				    		// delete the old segment from current revision
+				    		segmentsArray.delete(deleteStartSegmentLocation, deleteStartSegmentLocation);
+
+				    		// create a new segment with offset
+				    		that.currentSegID += 1;
+				    		var segAfter  = constructSegment(effectedSegmentOfDeleteStart.authorId, strAfterDelete, that.currentSegID, effectedSegmentOfDeleteStart.segID, (deleteEndIndex - effectedSegmentOfDeleteStart.startIndex + 1 ), that.revID, deleteStartIndex, (effectedSegmentOfDeleteStart.endIndex - 1 - deleteEndIndex + deleteStartIndex), "", false);
+				    		segmentsArray.insert(segAfter, (deleteStartSegmentLocation) );
+
+				    		// updates all the following segments
+				    		for (var i = (deleteStartSegmentLocation+1); i <= (segmentsArray.length-1); i++){
+				    		    segmentsArray[i].startIndex -= (deleteEndIndex - deleteStartIndex + 1 );
+				    		    segmentsArray[i].endIndex -= (deleteEndIndex - deleteStartIndex + 1 );
+				    		}
+
+						}
+						else {
+							segmentsArray[deleteStartSegmentLocation].segStr = strAfterDelete;
+							segmentsArray[deleteStartSegmentLocation].endIndex -= (deleteEndIndex - deleteStartIndex + 1 );
+
+							// updates all the following segments
+							for (var i = (deleteStartSegmentLocation+1); i <= (segmentsArray.length-1); i++){
+							    segmentsArray[i].startIndex -= (deleteEndIndex - deleteStartIndex + 1 );
+							    segmentsArray[i].endIndex -= (deleteEndIndex - deleteStartIndex + 1 );
+							}
+						}
+        			}
+        			else if(deleteStartIndex > effectedSegmentOfDeleteStart.startIndex && deleteEndIndex === effectedSegmentOfDeleteStart.endIndex){
+						var strBeforeDelete = effectedSegmentOfDeleteStart.segStr.substring(0, (deleteStartIndex - effectedSegmentOfDeleteStart.startIndex)); // = substring(0,end-1)
+						
+						if (effectedSegmentOfDeleteStart.permanentFlag === true) {
+				    		// delete the old segment from current revision
+				    		segmentsArray.delete(deleteStartSegmentLocation, deleteStartSegmentLocation);
+
+				    		// create two new segments, one with offset 0, another with offeset 
+				    		that.currentSegID += 1;
+				    		var segBefore  = constructSegment(effectedSegmentOfDeleteStart.authorId, strBeforeDelete, that.currentSegID, effectedSegmentOfDeleteStart.segID, 0, that.revID, effectedSegmentOfDeleteStart.startIndex, (deleteStartIndex - 1), "", false);
+				    		segmentsArray.insert(segBefore, deleteStartSegmentLocation);
+
+				    		// updates all the following segments
+				    		for (var i = (deleteStartSegmentLocation+1); i <= (segmentsArray.length-1); i++){
+				    		    segmentsArray[i].startIndex -= (deleteEndIndex - deleteStartIndex + 1 );
+				    		    segmentsArray[i].endIndex -= (deleteEndIndex - deleteStartIndex + 1 );
+				    		}
+
+						}
+						else {
+							segmentsArray[deleteStartSegmentLocation].segStr = strBeforeDelete;
+							segmentsArray[deleteStartSegmentLocation].endIndex -= (deleteEndIndex - deleteStartIndex + 1 );
+
+							// updates all the following segments
+							for (var i = (deleteStartSegmentLocation+1); i <= (segmentsArray.length-1); i++){
+							    segmentsArray[i].startIndex -= (deleteEndIndex - deleteStartIndex + 1 );
+							    segmentsArray[i].endIndex -= (deleteEndIndex - deleteStartIndex + 1 );
+							}
+						}
+        			}
+        			else if (deleteStartIndex === effectedSegmentOfDeleteStart.startIndex && deleteEndIndex === effectedSegmentOfDeleteStart.endIndex){
+        				segmentsArray.delete(deleteStartSegmentLocation, deleteStartSegmentLocation);
+        				// updates all the following segments
+        				for (var i = deleteStartSegmentLocation; i <= (segmentsArray.length-1); i++){
+        				    segmentsArray[i].startIndex -= (deleteEndIndex - deleteStartIndex + 1 );
+        				    segmentsArray[i].endIndex -= (deleteEndIndex - deleteStartIndex + 1 );
+        				}
+        			}
+        			else {
+        				console.log("shouldn't happen in buildSegmentsWhenDelete, deleteStartSegmentLocation === deleteEndSegmentLocation");
+        			}
+
+        		}
+        		// not within a segment
+        		else {
+					var strBeforeDelete = effectedSegmentOfDeleteStart.segStr.substring(0, (deleteStartIndex - effectedSegmentOfDeleteStart.startIndex)); // = substring(0,end-1)
+					var strAfterDelete = effectedSegmentOfDeleteEnd.segStr.substring(deleteEndIndex - effectedSegmentOfDeleteEnd.startIndex + 1); // = substring(1)
+
+					if(deleteStartIndex > effectedSegmentOfDeleteStart.startIndex && deleteEndIndex < effectedSegmentOfDeleteEnd.endIndex){
+
+						if (effectedSegmentOfDeleteStart.permanentFlag === true) {
+				    		// delete the old segment from current revision
+				    		segmentsArray.delete(deleteStartSegmentLocation, deleteStartSegmentLocation);
+
+				    		// create a new segment, one with offset 0, another with offeset 
+				    		that.currentSegID += 1;
+				    		var segBefore  = constructSegment(effectedSegmentOfDeleteStart.authorId, strBeforeDelete, that.currentSegID, effectedSegmentOfDeleteStart.segID, 0, that.revID, effectedSegmentOfDeleteStart.startIndex, (deleteStartIndex - 1), "", false);
+				    		segmentsArray.insert(segBefore, deleteStartSegmentLocation);
+
+						}
+						else {
+							segmentsArray[deleteStartSegmentLocation].segStr = strBeforeDelete;
+							segmentsArray[deleteStartSegmentLocation].endIndex = (deleteStartIndex -1 );
+
+						}
+
+						if (effectedSegmentOfDeleteEnd.permanentFlag === true) {
+							// delete the old segment from current revision
+							segmentsArray.delete(deleteEndSegmentLocation, deleteEndSegmentLocation);
+
+				    		// create a new segment with offset
+				    		that.currentSegID += 1;
+				    		var segAfter  = constructSegment(effectedSegmentOfDeleteEnd.authorId, strAfterDelete, that.currentSegID, effectedSegmentOfDeleteEnd.segID, (effectedSegmentOfDeleteEnd - deleteEndIndex), that.revID, deleteStartIndex, (effectedSegmentOfDeleteEnd.endIndex - 1 - deleteEndIndex + deleteStartIndex), "", false);
+				    		segmentsArray.insert(segAfter, deleteEndSegmentLocation );
+
+						}
+						else {
+							segmentsArray[deleteEndSegmentLocation].segStr = strAfterDelete;
+							segmentsArray[deleteEndSegmentLocation].startIndex = deleteStartIndex;
+							segmentsArray[deleteEndSegmentLocation].endIndex = (effectedSegmentOfDeleteEnd.endIndex - 1 - deleteEndIndex + deleteStartIndex);
+						}
+
+						// updates all the following segments
+						for (var i = (deleteEndSegmentLocation+1); i <= (segmentsArray.length-1); i++){
+						    segmentsArray[i].startIndex -= (deleteEndIndex - deleteStartIndex + 1 );
+						    segmentsArray[i].endIndex -= (deleteEndIndex - deleteStartIndex + 1 );
+						}
+
+						if (deleteEndSegmentLocation === (deleteStartSegmentLocation+1)){
+
+						}
+						else{
+							segmentsArray.delete( (deleteStartSegmentLocation+1), (deleteEndSegmentLocation-1));
+						}
+					}
+
+					else if (deleteStartIndex === effectedSegmentOfDeleteStart.startIndex && deleteEndIndex < effectedSegmentOfDeleteEnd.endIndex){
+
+						// segmentsArray.delete(deleteStartSegmentLocation, deleteStartSegmentLocation);
 
 
-                if (strBefore.length > 0) {
-                    that.currentSegID += 1;
-                    if (effectedSegmentOfDeleteStart.segment.permanentFlag === true) {
-                        var segBefore = that.constructSegment(effectedSegmentOfDeleteStart.segment.author, strBefore, that.currentSegID, effectedSegmentOfDeleteStart.segment.segID, 0, that.revID, effectedSegmentOfDeleteStart.locationBasedOnLength[0], deleteStartIndex - 1, "from delete Before when start != end within segment", false);
+						if (effectedSegmentOfDeleteEnd.permanentFlag === true) {
+							// delete the old segment from current revision
+							segmentsArray.delete(deleteEndSegmentLocation, deleteEndSegmentLocation);
 
-                    } else {
-                        var segBefore = that.constructSegment(effectedSegmentOfDeleteStart.segment.author, strBefore, that.currentSegID, effectedSegmentOfDeleteStart.segment.parentSegID, effectedSegmentOfDeleteStart.segment.offset, that.revID, effectedSegmentOfDeleteStart.locationBasedOnLength[0], deleteStartIndex - 1, "from delete Before when start != end", false);
+				    		// create a new segment with offset
+				    		that.currentSegID += 1;
+				    		var segAfter  = constructSegment(effectedSegmentOfDeleteEnd.authorId, strAfterDelete, that.currentSegID, effectedSegmentOfDeleteEnd.segID, (effectedSegmentOfDeleteEnd - deleteEndIndex), that.revID, deleteStartIndex, (effectedSegmentOfDeleteEnd.endIndex - 1 - deleteEndIndex + deleteStartIndex), "", false);
+				    		segmentsArray.insert(segAfter, deleteEndSegmentLocation );
 
-                    }
-                    segsArray.insert(segBefore, deleteStartSegmentLocation);
-                }
+						}
+						else {
+							segmentsArray[deleteEndSegmentLocation].segStr = strAfterDelete;
+							segmentsArray[deleteEndSegmentLocation].startIndex = deleteStartIndex;
+							segmentsArray[deleteEndSegmentLocation].endIndex = (effectedSegmentOfDeleteEnd.endIndex - 1 - deleteEndIndex + deleteStartIndex);
+						}
 
-            }
+						// updates all the following segments
+						for (var i = (deleteEndSegmentLocation+1); i <= (segmentsArray.length-1); i++){
+						    segmentsArray[i].startIndex -= (deleteEndIndex - deleteStartIndex + 1 );
+						    segmentsArray[i].endIndex -= (deleteEndIndex - deleteStartIndex + 1 );
+						}
 
-            else { // delete more than one segment (across segment)                        
-                var strInBelongToDeleteStart = effectedSegmentOfDeleteStart.segment.segStr;
-                strInBelongToDeleteStart = strInBelongToDeleteStart.substring(0, deleteStartIndex - effectedSegmentOfDeleteStart.locationBasedOnLength[0]);
 
-                var strInBelongToDeleteEnd = effectedSegmentOfDeleteEnd.segment.segStr;
-                strInBelongToDeleteEnd = strInBelongToDeleteEnd.substring(deleteEndIndex - effectedSegmentOfDeleteEnd.locationBasedOnLength[0] + 1);
+						segmentsArray.delete( deleteStartSegmentLocation, (deleteEndSegmentLocation-1));
+						
+					}
+					else if (deleteStartIndex > effectedSegmentOfDeleteStart.startIndex && deleteEndIndex === effectedSegmentOfDeleteEnd.endIndex){
+						
+						if (effectedSegmentOfDeleteStart.permanentFlag === true) {
+				    		// delete the old segment from current revision
+				    		segmentsArray.delete(deleteStartSegmentLocation, deleteStartSegmentLocation);
 
-                segsArray.delete(deleteStartSegmentLocation, deleteEndSegmentLocation);
+				    		// create a new segment, one with offset 0, another with offeset 
+				    		that.currentSegID += 1;
+				    		var segBefore  = constructSegment(effectedSegmentOfDeleteStart.authorId, strBeforeDelete, that.currentSegID, effectedSegmentOfDeleteStart.segID, 0, that.revID, effectedSegmentOfDeleteStart.startIndex, (deleteStartIndex - 1), "", false);
+				    		segmentsArray.insert(segBefore, deleteStartSegmentLocation);
 
-                if (strInBelongToDeleteEnd.length > 0) {
-                    that.currentSegID += 1;
+						}
+						else {
+							segmentsArray[deleteStartSegmentLocation].segStr = strBeforeDelete;
+							segmentsArray[deleteStartSegmentLocation].endIndex = (deleteStartIndex -1 );
 
-                    if (effectedSegmentOfDeleteEnd.segment.permanentFlag === true) {
-                        var segAfter = that.constructSegment(effectedSegmentOfDeleteEnd.segment.author, strInBelongToDeleteEnd, that.currentSegID, effectedSegmentOfDeleteEnd.segment.segID, deleteEndIndex - effectedSegmentOfDeleteEnd.locationBasedOnLength[0] + 1, that.revID, deleteEndIndex + 1, effectedSegmentOfDeleteEnd.locationBasedOnLength[1], "from delete AFTER when start != end", false);
-                    } else {
-                        var segAfter = that.constructSegment(effectedSegmentOfDeleteEnd.segment.author, strInBelongToDeleteEnd, that.currentSegID, effectedSegmentOfDeleteEnd.segment.parentSegID, deleteEndIndex - effectedSegmentOfDeleteEnd.locationBasedOnLength[0] + 1 + effectedSegmentOfDeleteEnd.segment.offset, that.revID, deleteEndIndex + 1, effectedSegmentOfDeleteEnd.locationBasedOnLength[1], "from delete AFTER when start != end", false);
+						}
 
-                    }
-                    segsArray.insert(segAfter, deleteStartSegmentLocation);
-                }
+						// updates all the following segments
+						for (var i = (deleteEndSegmentLocation+1); i <= (segmentsArray.length-1); i++){
+						    segmentsArray[i].startIndex -= (deleteEndIndex - deleteStartIndex + 1 );
+						    segmentsArray[i].endIndex -= (deleteEndIndex - deleteStartIndex + 1 );
+						}
 
-                if (strInBelongToDeleteStart.length > 0) {
-                    that.currentSegID += 1;
+						segmentsArray.delete( (deleteStartSegmentLocation+1), deleteEndSegmentLocation);
+						
+					}
+					else if (deleteStartIndex === effectedSegmentOfDeleteStart.startIndex && deleteEndIndex === effectedSegmentOfDeleteEnd.endIndex){
 
-                    if (effectedSegmentOfDeleteStart.segment.permanentFlag === true) {
-                        var segBefore = that.constructSegment(effectedSegmentOfDeleteStart.segment.author, strInBelongToDeleteStart, that.currentSegID, effectedSegmentOfDeleteStart.segment.segID, 0, that.revID, effectedSegmentOfDeleteStart.locationBasedOnLength[0], deleteStartIndex - 1, "from delete Before when start != end", false);
-                    } else {
-                        var segBefore = that.constructSegment(effectedSegmentOfDeleteStart.segment.author, strInBelongToDeleteStart, that.currentSegID, effectedSegmentOfDeleteStart.segment.parentSegID, effectedSegmentOfDeleteStart.segment.offset, that.revID, effectedSegmentOfDeleteStart.locationBasedOnLength[0], deleteStartIndex - 1, "from delete Before when start != end", false);
 
-                    }
+						// updates all the following segments
+						for (var i = (deleteEndSegmentLocation+1); i <= (segmentsArray.length-1); i++){
+						    segmentsArray[i].startIndex -= (deleteEndIndex - deleteStartIndex + 1 );
+						    segmentsArray[i].endIndex -= (deleteEndIndex - deleteStartIndex + 1 );
+						}
 
-                    segsArray.insert(segBefore, deleteStartSegmentLocation);
-                }
-            }
+
+						segmentsArray.delete( (deleteStartSegmentLocation), (deleteEndSegmentLocation));
+						
+					}
+					else {
+						console.log("This should never happen, segmentsArray is null,  buildSegmentsWhenDelete");
+					}
+
+        		}
+
+
+        	}
+        	else{
+        	    console.log("This should never happen, segmentsArray is null,  buildSegmentsWhenDelete when deleteStartIndex === deleteEndIndex");
+        	}
         }
 
         return segmentsArray;
