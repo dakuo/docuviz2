@@ -261,7 +261,7 @@ $.extend(window.docuviz, {
                     soFar: soFar + 1
                 }, function(response) {
 
-                    that.analyzeEachEditInChangelog(command, authorId, that.revID, that.currentSegID, that.firstRevisionSegments);                    
+                    that.analyzeEachEditInChangelog(command, authorId, that.revID, that.currentSegID, that.allSegmentsInCurrentRev);                    
 
                     if (soFar === intervalChangesIndex[that.revID] ) {
                     	/**
@@ -367,42 +367,43 @@ $.extend(window.docuviz, {
 		// End of async
     },
 
-    // need to change this to findBeginAndEndIndexOfSegsHelper
-    findBeginAndEndIndexesOfSegsHelper: function(locationBasedOnLength, segment) {
-        return {
-            locationBasedOnLength: locationBasedOnLength, // [begin index of seg, end index of seg]
-            segment: segment // "Construct Segment" object
-        };
-    },
+    // // need to change this to findBeginAndEndIndexOfSegsHelper
+    // findBeginAndEndIndexesOfSegsHelper: function(locationBasedOnLength, segment) {
+    //     return {
+    //         locationBasedOnLength: locationBasedOnLength, // [begin index of seg, end index of seg]
+    //         segment: segment // "Construct Segment" object
+    //     };
+    // },
 
-    // this function takes the current segments array and return aan array of an
-    // object that contains: {{[begin index of seg, endindex of seg],[segment]},...}
-    findBeginAndEndIndexesOfSegs: function(segmentsArray) {
-        var segsArray = [];
-        var locationSoFar = 0;
-        var that = this;
-        for (var i = 0; i < segmentsArray.length; i++) {
+    // // this function takes the current segments array and return aan array of an
+    // // object that contains: {{[begin index of seg, endindex of seg],[segment]},...}
+    // findBeginAndEndIndexesOfSegs: function(segmentsArray) {
+    //     var segsArray = [];
+    //     var locationSoFar = 0;
+    //     var that = this;
+    //     for (var i = 0; i < segmentsArray.length; i++) {
 
-            if (i === 0) {
-            	var endIndex = 0;
-            	if (segmentsArray[i].segStr.length > 0){
-            		endIndex = segmentsArray[i].segStr.length - 1;
-            	}
+    //         if (i === 0) {
+    //         	var endIndex = 0;
+    //         	if (segmentsArray[i].segStr.length > 0){
+    //         		endIndex = segmentsArray[i].segStr.length - 1;
+    //         	}
 
-                segsArray.push(that.findBeginAndEndIndexesOfSegsHelper([0, endIndex], segmentsArray[i]));
-            } else {
-            	var endIndex = 0;
-            	if (segsArray[locationSoFar].locationBasedOnLength[1] + segmentsArray[i].segStr.length > 0){
-            		endIndex = segsArray[locationSoFar].locationBasedOnLength[1] + segmentsArray[i].segStr.length - 1;
-            	}
+    //             segsArray.push(that.findBeginAndEndIndexesOfSegsHelper([0, endIndex], segmentsArray[i]));
+    //         } else {
+    //         	var endIndex = 0;
+    //         	if (segsArray[locationSoFar].locationBasedOnLength[1] + segmentsArray[i].segStr.length > 0){
+    //         		endIndex = segsArray[locationSoFar].locationBasedOnLength[1] + segmentsArray[i].segStr.length - 1;
+    //         	}
 
-                segsArray.push(that.findBeginAndEndIndexesOfSegsHelper([segsArray[locationSoFar].locationBasedOnLength[1] , endIndex], segmentsArray[i]));
-                locationSoFar += 1;
-            };
-        };
+    //             segsArray.push(that.findBeginAndEndIndexesOfSegsHelper([segsArray[locationSoFar].locationBasedOnLength[1] , endIndex], segmentsArray[i]));
+    //             locationSoFar += 1;
+    //         };
+    //     };
 
-        return segsArray;
-    },
+    //     return segsArray;
+    // },
+
 
     // Creating the new segment, breaking the effected old segment if necessary, and updating all the following startIndex and endIndex
     buildSegmentsWhenInsert: function(entry, startIndex, authorId, segmentsArray) {
@@ -413,7 +414,6 @@ $.extend(window.docuviz, {
         var segmentLocation = null;
 
         if(segmentsArray != null){
-
 	        effectedSegment = _.find(segmentsArray, function(eachSegment, index) {
 	        	if (eachSegment.startIndex < startIndex && startIndex <= eachSegment.endIndex) {
 	                segmentLocation = index;
@@ -444,7 +444,7 @@ $.extend(window.docuviz, {
 		}
 
         // it should only happen if it's the first revision, first segment
-        if (effectedSegment === null) {
+        if (effectedSegment === undefined) {
             that.currentSegID += 1;
             var currentSeg = that.constructSegment(authorId, entry, that.currentSegID, that.currentSegID, 0, that.revID, startIndex, startIndex + entry.length - 1, "new segment because of no previous segment", false);
             segmentsArray.insert(currentSeg, 0);
@@ -619,9 +619,8 @@ $.extend(window.docuviz, {
                     }
 
                 });
-
-
-                if (effectedSegmentOfDelete != null){
+                
+                if (effectedSegmentOfDelete === undefined){ 
 
                     if (effectedSegmentOfDelete.permanentFlag === false) {
                         var strInBelongTo = effectedSegmentOfDelete.segStr;
@@ -630,7 +629,6 @@ $.extend(window.docuviz, {
                         segmentsArray[deleteSegmentLocation].segStr = strInBelongTo;
                         segmentsArray[deleteSegmentLocation].endIndex -= 1;
 
-
                         for (var i = (deleteSegmentLocation+1); i <= (segmentsArray.length-1); i++){
                             segmentsArray[i].startIndex -= 1;
                             segmentsArray[i].endIndex -= 1;
@@ -638,8 +636,22 @@ $.extend(window.docuviz, {
 
                     }
 
-                    else{
-                        
+                    else{ // effectedSegmentOfDelete.permanentFlag === true
+                        // No matter whether the author is the same or different. In this case, we have to break the segment into 2 segments even though only 1 character will be deleted.
+                        // find StrBefore and strAfter:
+                        strBeforeDeleteIndex = effectedSegmentOfDelete.segStr.substring(0, (deleteIndex - effectedSegmentOfDelete.startIndex));
+                        strAferDeleteIndex = effectedSegmentOfDelete.segStr.substring(deleteIndex - effectedSegmentOfDelete.startIndex + 1);
+
+                        segmentsArray.delete(segmentLocation, segmentLocation);
+
+                        that.currentSegID += 1;
+                        var segBefore = constructSegment(effectedSegmentOfDelete.authorId, strBeforeDeleteIndex, that.currentSegID, effectedSegmentOfDelete.segID, 0, that.revID, effectedSegmentOfDelete.startIndex, deleteIndex, "", false);
+                        segmentsArray.insert(segBefore, segmentLocation);
+
+
+                        that.currentSegID += 1;
+                        var segAfter  = constructSegment(effectedSegmentOfDelete.authorId, strAferDeleteIndex, that.currentSegID, effectedSegmentOfDelete.segID, deleteIndex - 1, that.revID, effectedSegmentOfDelete.endIndex-1, "", false);
+                        segmentsArray.insert(segAfter, segmentLocation+1);
 
                     }
                 }
@@ -668,28 +680,12 @@ $.extend(window.docuviz, {
             if(segmentsArray != null){
 
                 effectedSegmentOfDeleteStart = _.find(segmentsArray, function(eachSegment, index) {
-                    if (eachSegment.startIndex < deleteStartIndex && deleteStartIndex <= eachSegment.endIndex) {
+                    if (eachSegment.startIndex <= deleteStartIndex && deleteStartIndex <= eachSegment.endIndex) {
                         deleteStartSegmentLocation = index;
                         return eachSegment;
                     }
-                    else if (deleteStartIndex === eachSegment.startIndex) {
-                        if (segmentsArray[index-1].permanentFlag === true){
-                            deleteStartSegmentLocation = index;
-                            return eachSegment;
-                        }
-                        else if ( (segmentsArray[index-1].permanentFlag === false) && (segmentsArray[index-1].authorId != authorId) ){
-                            deleteStartSegmentLocation = index;
-                            return eachSegment;
-                        }
-                        else if ( (segmentsArray[index-1].permanentFlag === false) && (segmentsArray[index-1].authorId === authorId) ) {
-                            deleteStartSegmentLocation = (index - 1);
-                            return segmentsArray[index-1];
-                        }
-                        else {
-                            // will never happen
-                        }
                         
-                    } 
+                    
                     else {
                         // do nothing, keep looking
                     }
@@ -697,28 +693,11 @@ $.extend(window.docuviz, {
 
 
                 effectedSegmentOfDeleteEnd = _.find(segmentsArray, function(eachSegment, index) {
-                    if (eachSegment.startIndex < deleteEndIndex && deleteEndIndex <= eachSegment.endIndex) {
+                    if (eachSegment.startIndex <= deleteEndIndex && deleteEndIndex <= eachSegment.endIndex) {
                         deleteEndSegmentLocation = index;
                         return eachSegment;
                     }
-                    else if (deleteEndIndex === eachSegment.startIndex) {
-                        if (segmentsArray[index-1].permanentFlag === true){
-                            deleteEndSegmentLocation = index;
-                            return eachSegment;
-                        }
-                        else if ( (segmentsArray[index-1].permanentFlag === false) && (segmentsArray[index-1].authorId != authorId) ){
-                            deleteEndSegmentLocation = index;
-                            return eachSegment;
-                        }
-                        else if ( (segmentsArray[index-1].permanentFlag === false) && (segmentsArray[index-1].authorId === authorId) ) {
-                            deleteEndSegmentLocation = (index - 1);
-                            return segmentsArray[index-1];
-                        }
-                        else {
-                            // will never happen
-                        }
                         
-                    } 
                     else {
                         // do nothing, keep looking
                     }
@@ -735,9 +714,9 @@ $.extend(window.docuviz, {
             if (deleteStartSegmentLocation === deleteEndSegmentLocation) { //within segment
 
                 var strInBelongTo = effectedSegmentOfDeleteStart.segStr;
-                segsArray.delete(deleteStartSegmentLocation, deleteStartSegmentLocation);
-                var strBefore = strInBelongTo.substring(0, deleteStartIndex - effectedSegmentOfDeleteStart.locationBasedOnLength[0]);
-                var strAfter = strInBelongTo.substring(deleteEndIndex - effectedSegmentOfDeleteStart.locationBasedOnLength[0] + 1);
+                segmentsArray.delete(deleteStartSegmentLocation, deleteStartSegmentLocation);
+                var strBefore = strInBelongTo.substring(0, deleteStartIndex - effectedSegmentOfDeleteStart.startIndex);
+                var strAfter = strInBelongTo.substring(deleteEndIndex - effectedSegmentOfDeleteStart.startIndex + 1);
 
                 if (strAfter.length > 0) {
                     that.currentSegID += 1;
