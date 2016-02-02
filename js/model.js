@@ -599,29 +599,49 @@ $.extend(window.docuviz, {
 
 
     buildSegmentsWhenDelete: function(deleteStartIndex, deleteEndIndex, author, segmentsArray) {
-        var segsArray = segmentsArray;
-
         var that = this;
-        var locationBased = that.findBeginAndEndIndexesOfSegs(segmentsArray);
-
 
         if (deleteStartIndex === deleteEndIndex) {
 
-            var deleteSegmentLocation = 0;
+            var deleteSegmentLocation = null;
             var effectedSegmentOfDelete = null;
 
-            _.each(locationBased, function(eachSegment, index) {
-                if (eachSegment.locationBasedOnLength[0] <= deleteStartIndex && deleteStartIndex <= eachSegment.locationBasedOnLength[1]) {
-                    deleteSegmentLocation = index;
-                    effectedSegmentOfDelete = eachSegment;
-                }
-            });
+            if(segmentsArray != null){
+
+                effectedSegmentOfDelete = _.find(segmentsArray, function(eachSegment, index) {
+                    if (eachSegment.startIndex < deleteStartIndex && deleteStartIndex <= eachSegment.endIndex) {
+                        deleteSegmentLocation = index;
+                        return eachSegment;
+                    }
+                    else if (deleteStartIndex === eachSegment.startIndex) {
+                        if (segmentsArray[index-1].permanentFlag === true){
+                            deleteSegmentLocation = index;
+                            return eachSegment;
+                        }
+                        else if ( (segmentsArray[index-1].permanentFlag === false) && (segmentsArray[index-1].authorId != authorId) ){
+                            deleteSegmentLocation = index;
+                            return eachSegment;
+                        }
+                        else if ( (segmentsArray[index-1].permanentFlag === false) && (segmentsArray[index-1].authorId === authorId) ) {
+                            deleteSegmentLocation = (index - 1);
+                            return segmentsArray[index-1];
+                        }
+                        else {
+                            // will never happen
+                        }
+                        
+                    } 
+                    else {
+                        // do nothing, keep looking
+                    }
+                });
+            }
 
 
-            var strInBelongTo = effectedSegmentOfDelete.segment.segStr;
+            var strInBelongTo = effectedSegmentOfDelete.segStr;
             strInBelongTo = strInBelongTo.substring(0, deleteStartIndex - effectedSegmentOfDelete.locationBasedOnLength[0]) + strInBelongTo.substring(deleteStartIndex - effectedSegmentOfDelete.locationBasedOnLength[0] + 1);
 
-            segsArray[deleteSegmentLocation].segStr = strInBelongTo;
+            segmentsArray[deleteSegmentLocation].segStr = strInBelongTo;
 
 
         } else { // when deleteStartIndex != deleteEndIndex 
@@ -631,25 +651,72 @@ $.extend(window.docuviz, {
             var deleteEndSegmentLocation = 0;
             var effectedSegmentOfDeleteEnd = null;
 
-            _.each(locationBased, function(eachSegment, index) {
-                if (eachSegment.locationBasedOnLength[0] <= deleteStartIndex && deleteStartIndex <= eachSegment.locationBasedOnLength[1]) {
-                    deleteStartSegmentLocation = index;
-                    effectedSegmentOfDeleteStart = eachSegment;
-                }
-            });
+            if(segmentsArray != null){
+
+                effectedSegmentOfDeleteStart = _.find(segmentsArray, function(eachSegment, index) {
+                    if (eachSegment.startIndex < deleteStartIndex && deleteStartIndex <= eachSegment.endIndex) {
+                        deleteStartSegmentLocation = index;
+                        return eachSegment;
+                    }
+                    else if (deleteStartIndex === eachSegment.startIndex) {
+                        if (segmentsArray[index-1].permanentFlag === true){
+                            deleteStartSegmentLocation = index;
+                            return eachSegment;
+                        }
+                        else if ( (segmentsArray[index-1].permanentFlag === false) && (segmentsArray[index-1].authorId != authorId) ){
+                            deleteStartSegmentLocation = index;
+                            return eachSegment;
+                        }
+                        else if ( (segmentsArray[index-1].permanentFlag === false) && (segmentsArray[index-1].authorId === authorId) ) {
+                            deleteStartSegmentLocation = (index - 1);
+                            return segmentsArray[index-1];
+                        }
+                        else {
+                            // will never happen
+                        }
+                        
+                    } 
+                    else {
+                        // do nothing, keep looking
+                    }
+                });
 
 
-            _.each(locationBased, function(eachSegment, index) {
-                if (eachSegment.locationBasedOnLength[0] <= deleteEndIndex && deleteEndIndex <= eachSegment.locationBasedOnLength[1]) {
-                    deleteEndSegmentLocation = index;
-                    effectedSegmentOfDeleteEnd = eachSegment;
-                }
-            });
+                effectedSegmentOfDeleteEnd = _.find(segmentsArray, function(eachSegment, index) {
+                    if (eachSegment.startIndex < deleteEndIndex && deleteEndIndex <= eachSegment.endIndex) {
+                        deleteEndSegmentLocation = index;
+                        return eachSegment;
+                    }
+                    else if (deleteEndIndex === eachSegment.startIndex) {
+                        if (segmentsArray[index-1].permanentFlag === true){
+                            deleteEndSegmentLocation = index;
+                            return eachSegment;
+                        }
+                        else if ( (segmentsArray[index-1].permanentFlag === false) && (segmentsArray[index-1].authorId != authorId) ){
+                            deleteEndSegmentLocation = index;
+                            return eachSegment;
+                        }
+                        else if ( (segmentsArray[index-1].permanentFlag === false) && (segmentsArray[index-1].authorId === authorId) ) {
+                            deleteEndSegmentLocation = (index - 1);
+                            return segmentsArray[index-1];
+                        }
+                        else {
+                            // will never happen
+                        }
+                        
+                    } 
+                    else {
+                        // do nothing, keep looking
+                    }
+                });
+
+            }
+
 
 
             if (deleteStartSegmentLocation === deleteEndSegmentLocation) { //within segment
 
-                var strInBelongTo = effectedSegmentOfDeleteStart.segment.segStr;
+                var strInBelongTo = effectedSegmentOfDeleteStart.segStr;
                 segsArray.delete(deleteStartSegmentLocation, deleteStartSegmentLocation);
                 var strBefore = strInBelongTo.substring(0, deleteStartIndex - effectedSegmentOfDeleteStart.locationBasedOnLength[0]);
                 var strAfter = strInBelongTo.substring(deleteEndIndex - effectedSegmentOfDeleteStart.locationBasedOnLength[0] + 1);
