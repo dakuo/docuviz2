@@ -605,50 +605,64 @@ $.extend(window.docuviz, {
 
             var deleteSegmentLocation = null;
             var effectedSegmentOfDelete = null;
+            var deleteIndex = deleteStartIndex;
 
             if(segmentsArray != null){
 
                 effectedSegmentOfDelete = _.find(segmentsArray, function(eachSegment, index) {
-                    if (eachSegment.startIndex < deleteStartIndex && deleteStartIndex <= eachSegment.endIndex) {
+                    if (eachSegment.startIndex <= deleteIndex && deleteIndex <= eachSegment.endIndex) {
                         deleteSegmentLocation = index;
                         return eachSegment;
                     }
-                    else if (deleteStartIndex === eachSegment.startIndex) {
-                        if (segmentsArray[index-1].permanentFlag === true){
-                            deleteSegmentLocation = index;
-                            return eachSegment;
-                        }
-                        else if ( (segmentsArray[index-1].permanentFlag === false) && (segmentsArray[index-1].authorId != authorId) ){
-                            deleteSegmentLocation = index;
-                            return eachSegment;
-                        }
-                        else if ( (segmentsArray[index-1].permanentFlag === false) && (segmentsArray[index-1].authorId === authorId) ) {
-                            deleteSegmentLocation = (index - 1);
-                            return segmentsArray[index-1];
-                        }
-                        else {
-                            // will never happen
-                        }
-                        
-                    } 
                     else {
                         // do nothing, keep looking
                     }
+
                 });
+
+
+                if (effectedSegmentOfDelete != null){
+
+                    if (effectedSegmentOfDelete.permanentFlag === false) {
+                        var strInBelongTo = effectedSegmentOfDelete.segStr;
+                        strInBelongTo = strInBelongTo.substring(0, deleteIndex - effectedSegmentOfDelete.startIndex) + strInBelongTo.substring(deleteIndex - effectedSegmentOfDelete.startIndex + 1);
+
+                        segmentsArray[deleteSegmentLocation].segStr = strInBelongTo;
+                        segmentsArray[deleteSegmentLocation].endIndex -= 1;
+
+
+                        for (var i = (deleteSegmentLocation+1); i <= (segmentsArray.length-1); i++){
+                            segmentsArray[i].startIndex -= 1;
+                            segmentsArray[i].endIndex -= 1;
+                        }
+
+                    }
+
+                    else{
+                        
+
+                    }
+                }
+                else{
+                    console.log("effectedSegmentOfDelete is null when deleteStartIndex === deleteEndIndex");
+                }
+
+
+            }
+
+            else{
+                console.log("This should never happen in buildSegmentsWhenDelete when deleteStartIndex === deleteEndIndex");
             }
 
 
-            var strInBelongTo = effectedSegmentOfDelete.segStr;
-            strInBelongTo = strInBelongTo.substring(0, deleteStartIndex - effectedSegmentOfDelete.locationBasedOnLength[0]) + strInBelongTo.substring(deleteStartIndex - effectedSegmentOfDelete.locationBasedOnLength[0] + 1);
-
-            segmentsArray[deleteSegmentLocation].segStr = strInBelongTo;
 
 
-        } else { // when deleteStartIndex != deleteEndIndex 
+        } 
+        else { // when deleteStartIndex != deleteEndIndex 
 
-            var deleteStartSegmentLocation = 0;
+            var deleteStartSegmentLocation = null;
             var effectedSegmentOfDeleteStart = null;
-            var deleteEndSegmentLocation = 0;
+            var deleteEndSegmentLocation = null;
             var effectedSegmentOfDeleteEnd = null;
 
             if(segmentsArray != null){
@@ -712,6 +726,10 @@ $.extend(window.docuviz, {
 
             }
 
+            else{
+                console.log("This should never happen in buildSegmentsWhenDelete when deleteStartIndex != deleteEndIndex");
+
+            }
 
 
             if (deleteStartSegmentLocation === deleteEndSegmentLocation) { //within segment
@@ -747,7 +765,9 @@ $.extend(window.docuviz, {
                     segsArray.insert(segBefore, deleteStartSegmentLocation);
                 }
 
-            } else { // delete more than one segment (across segment)                        
+            }
+
+            else { // delete more than one segment (across segment)                        
                 var strInBelongToDeleteStart = effectedSegmentOfDeleteStart.segment.segStr;
                 strInBelongToDeleteStart = strInBelongToDeleteStart.substring(0, deleteStartIndex - effectedSegmentOfDeleteStart.locationBasedOnLength[0]);
 
@@ -783,7 +803,7 @@ $.extend(window.docuviz, {
             }
         }
 
-        return segsArray;
+        return segmentsArray;
 
     },
 
