@@ -825,10 +825,10 @@ $.extend(window.docuviz, {
         		}
         		// not within a segment
         		else {
-					var strBeforeDelete = effectedSegmentOfDeleteStart.segStr.substring(0, (deleteStartIndex - effectedSegmentOfDeleteStart.startIndex)); // = substring(0,end-1)
-					var strAfterDelete = effectedSegmentOfDeleteEnd.segStr.substring(deleteEndIndex - effectedSegmentOfDeleteEnd.startIndex + 1); // = substring(1)
-
+					
 					if(deleteStartIndex > effectedSegmentOfDeleteStart.startIndex && deleteEndIndex < effectedSegmentOfDeleteEnd.endIndex){
+						var strBeforeDelete = effectedSegmentOfDeleteStart.segStr.substring(0, (deleteStartIndex - effectedSegmentOfDeleteStart.startIndex)); // = substring(0,end-1)
+						var strAfterDelete = effectedSegmentOfDeleteEnd.segStr.substring(deleteEndIndex - effectedSegmentOfDeleteEnd.startIndex + 1); // = substring(1)
 
 						if (effectedSegmentOfDeleteStart.permanentFlag === true) {
 				    		// delete the old segment from current revision
@@ -880,6 +880,8 @@ $.extend(window.docuviz, {
 
 						// segmentsArray.delete(deleteStartSegmentLocation, deleteStartSegmentLocation);
 
+						//var strBeforeDelete = effectedSegmentOfDeleteStart.segStr.substring(0, (deleteStartIndex - effectedSegmentOfDeleteStart.startIndex)); // = substring(0,end-1)
+						var strAfterDelete = effectedSegmentOfDeleteEnd.segStr.substring(deleteEndIndex - effectedSegmentOfDeleteEnd.startIndex + 1); // = substring(1)
 
 						if (effectedSegmentOfDeleteEnd.permanentFlag === true) {
 							// delete the old segment from current revision
@@ -908,7 +910,9 @@ $.extend(window.docuviz, {
 						
 					}
 					else if (deleteStartIndex > effectedSegmentOfDeleteStart.startIndex && deleteEndIndex === effectedSegmentOfDeleteEnd.endIndex){
-						
+						var strBeforeDelete = effectedSegmentOfDeleteStart.segStr.substring(0, (deleteStartIndex - effectedSegmentOfDeleteStart.startIndex)); // = substring(0,end-1)
+						//var strAfterDelete = effectedSegmentOfDeleteEnd.segStr.substring(deleteEndIndex - effectedSegmentOfDeleteEnd.startIndex + 1); // = substring(1)
+
 						if (effectedSegmentOfDeleteStart.permanentFlag === true) {
 				    		// delete the old segment from current revision
 				    		segmentsArray.delete(deleteStartSegmentLocation, deleteStartSegmentLocation);
