@@ -360,20 +360,26 @@ $.extend(window.docuviz, {
 	                return eachSegment;
 	            }
 	            else if (startIndex === eachSegment.startIndex) {
-	            	if (segmentsArray[index-1].permanentFlag === true){
+	            	if (index === 0 ){
 	            		segmentLocation = index;
 	            		return eachSegment;
-	            	}
-	            	else if ( (segmentsArray[index-1].permanentFlag === false) && (segmentsArray[index-1].authorId != authorId) ){
-	            		segmentLocation = index;
-	            		return eachSegment;
-	            	}
-	            	else if ( (segmentsArray[index-1].permanentFlag === false) && (segmentsArray[index-1].authorId === authorId) ) {
-	            		segmentLocation = (index - 1);
-	            		return segmentsArray[index-1];
 	            	}
 	            	else {
-	            		// will never happen
+	            		if (segmentsArray[index-1].permanentFlag === true){
+	            			segmentLocation = index;
+	            			return eachSegment;
+	            		}
+	            		else if ( (segmentsArray[index-1].permanentFlag === false) && (segmentsArray[index-1].authorId != authorId) ){
+	            			segmentLocation = index;
+	            			return eachSegment;
+	            		}
+	            		else if ( (segmentsArray[index-1].permanentFlag === false) && (segmentsArray[index-1].authorId === authorId) ) {
+	            			segmentLocation = (index - 1);
+	            			return segmentsArray[index-1];
+	            		}
+	            		else {
+	            			// will never happen
+	            		}
 	            	}
 	            	
 	            } 
