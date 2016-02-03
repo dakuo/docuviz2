@@ -51,7 +51,7 @@ $.extend(window.docuviz, {
 
     // constructSegmentForFrontend is the actual segment that will be passed to the View, it only contains the information needed
     // to draw Docuviz 
-    constructSegmentForFrontend: function(authorColor, segID, parentSegID, offset, segStr, segLength, revID) {
+    constructSegmentForFrontend: function(authorColor, segID, parentSegID, offset, segStr, segLength, revID, startIndex, endIndex) {
         return {
             authorColor: authorColor,
             segID: segID,
@@ -59,7 +59,9 @@ $.extend(window.docuviz, {
             offset: offset,
             segStr: segStr,
             segLength: segLength,
-            revID: revID
+            revID: revID,
+            startIndex: startIndex,
+            endIndex: endIndex
         };
     },
 
@@ -204,50 +206,6 @@ $.extend(window.docuviz, {
                     that.analyzeEachEditInChangelog(command, authorId, that.revID, that.currentSegID, that.allSegmentsInCurrentRev);                    
 
                     if (soFar === intervalChangesIndex[that.revID] ) {
-                    	/**
-                        // at the cutting point, first revision
-                        if (that.revID === 0) {
-                        	
-                        	// addressing the empty first segment situation
-                        	var revLength = that.str.length;
-                        	if (revLength != 0){
-                        		var endIndex = revLength - 1;
-                        	}
-                        	else{
-                        		var endIndex = 0;
-                        	}
-                        	
-                        	// constructSegment(authorId, segStr, segId, parentSegId, offset, revId, startIndex, endIndex, type//notes for developing, permanentFlag//true or false);
-                        	
-                            that.firstRevisionSegments.push(that.constructSegment(authorId, that.renderToString(that.str), that.currentSegID, that.currentSegID, 0, that.revID, 0, endIndex, '', true));
-                            //BUG: it can only handle 1 author & 1 segment in the first revision
-                            
-                            var segmentsForFrontend = that.buildSegmentsForOneRevision(that.firstRevisionSegments, authors);
-                            revsForFrontend.push([revLength, revTimestamps[that.revID], revAuthors[that.revID], segmentsForFrontend]);
-                        }
-
-                        // cutting points, other revisions
-                        else {
-                            //var tempSegments = [];
-                            
-
-                            // change all segments'revID to the same revID
-                            _.each(that.allSegmentsInCurrentRev, function(eachSegment) {
-                                eachSegment.revID = that.revID;
-                                eachSegment.permanentFlag = true;
-                                //tempSegments.push(eachSegment);
-
-                            });
-
-                            //that.allSegmentsInCurrentRev = tempSegments;
-
-                            var revLength = that.str.length;
-                            // convert every segments into constructSegmentForFrontend object:
-                            var segmentsForFrontend = that.buildSegmentsForOneRevision(that.allSegmentsInCurrentRev, authors);
-
-                            revsForFrontend.push([revLength, revTimestamps[that.revID], revAuthors[that.revID], segmentsForFrontend]);
-                        }
-                        */
 
                         // change all segments'revID to the same revID
                         _.each(that.allSegmentsInCurrentRev, function(eachSegment) {
@@ -272,7 +230,7 @@ $.extend(window.docuviz, {
 
 
                     // reaching the end of changelog, calculate the contributions and push it to frontend
-                    if (soFar === editCount ) {
+                    if (soFar === (editCount - 1) ) {
                     	// calculate the revision's contributions, edit Nov 02, 2015 by Kenny
                     	var revDataWithContribution = that.calculateRevContribution(revsForFrontend, authors);
 
@@ -383,6 +341,12 @@ $.extend(window.docuviz, {
 	            	}
 	            	
 	            } 
+	            else if (startIndex === (eachSegment.endIndex + 1) ){
+	            	if (eachSegment.permanentFlag === false && eachSegment.authorId === authorId) {
+	            		segmentLocation = index;
+	            		return eachSegment;
+	            	}
+	            }
 	            else {
 	            	// do nothing, keep looking
 	            }
@@ -556,7 +520,8 @@ $.extend(window.docuviz, {
             var deleteIndex = deleteStartIndex;
 
             if(segmentsArray != null){
-
+            	// BUG
+            	
                 effectedSegmentOfDelete = _.find(segmentsArray, function(eachSegment, index) {
                     if (eachSegment.startIndex === deleteIndex ) {
                     	if (eachSegment.startIndex === eachSegment.endIndex) {
@@ -692,8 +657,6 @@ $.extend(window.docuviz, {
         		        deleteStartSegmentLocation = index;
         		        return eachSegment;
         		    }
-        		        
-        		    
         		    else {
         		        // do nothing, keep looking
         		    }
@@ -971,13 +934,12 @@ $.extend(window.docuviz, {
     // build the segments for frontend for a revision
     buildSegmentsForOneRevision: function(segmentsArray, authors) {
         var segments = [];
-        var counter = 0;
         var that = this;
         
         _.each(segmentsArray, function(eachSegment) {
 
             var currentAuthor = _.find(authors, function(eachAuthor) {
-                return eachAuthor.id === eachSegment.author;
+                return eachAuthor.id === eachSegment.authorId;
             });
             if (currentAuthor === undefined) {
                 var authorColor = "#7F7F7F";
@@ -987,7 +949,7 @@ $.extend(window.docuviz, {
                 var authorColor = currentAuthor.color;
             }
 
-            var segment = that.constructSegmentForFrontend(authorColor, eachSegment.segID, eachSegment.parentSegID, eachSegment.offset, eachSegment.segStr, eachSegment.segStr.length, eachSegment.revID);
+            var segment = that.constructSegmentForFrontend(authorColor, eachSegment.segID, eachSegment.parentSegID, eachSegment.offset, eachSegment.segStr, (eachSegment.endIndex - eachSegment.startIndex + 1), eachSegment.revID, eachSegment.startIndex, eachSegment.endIndex);
             segments.push(segment);
         });
 

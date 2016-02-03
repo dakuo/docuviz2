@@ -740,7 +740,7 @@ $.extend(window.docuviz, {
         // the yAxis ending tick
         svg.append("text").attr("class","ending_tick").attr("transform",
             "translate(-43," + (height+15) + ")").text(d3.max(data, function(d) {
-                return d.revLength+1;
+                return d.revLength;
             }));
 
 
@@ -956,13 +956,20 @@ $.extend(window.docuviz, {
 
                         if (d[1].segID === d[0].segID) {
                             var y0 = y(accumulateSegLength1);
-                        } else {
+                        } 
+                        else {
                             var y0 = y(accumulateSegLength1 + d[1].offset);
                         }
                         var y1 = y(accumulateSegLength2);
 
                         var x1 = x0 + x.rangeBand();
-                        var dy = y(Math.min(d[0].segLength, d[1].segLength));
+
+                        if (d[1].segID === d[0].segID) {
+                            var dy = y(Math.min(d[0].segLength, d[1].segLength));
+                        } 
+                        else {
+                            var dy = y(Math.min( (d[0].segLength - d[1].offset), d[1].segLength));
+                        }   
 
                         return "M " + x0 + "," + y0 + " " + x0 + "," + (y0 + dy) + " " + x1 + "," + (y1 + dy) + " " + x1 + "," + y1 + "Z";
                     }
@@ -1264,7 +1271,13 @@ $.extend(window.docuviz, {
                         var y1 = y(accumulateSegLength2);
 
                         var x1 = x(data[linkRevisionIndex + 1].revTime);
-                        var dy = y(Math.min(d[0].segLength, d[1].segLength));
+
+                        if (d[1].segID === d[0].segID) {
+                            var dy = y(Math.min(d[0].segLength, d[1].segLength));
+                        } 
+                        else {
+                            var dy = y(Math.min( (d[0].segLength - d[1].offset), d[1].segLength));
+                        }   
 
                         return "M " + x0 + "," + y0 + " " + x0 + "," + (y0 + dy) + " " + x1 + "," + (y1 + dy) + " " + x1 + "," + y1 + "Z";
                     }
