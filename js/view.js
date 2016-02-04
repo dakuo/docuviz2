@@ -964,12 +964,7 @@ $.extend(window.docuviz, {
 
                         var x1 = x0 + x.rangeBand();
 
-                        if (d[1].segID === d[0].segID) {
-                            var dy = y(Math.min(d[0].segLength, d[1].segLength));
-                        } 
-                        else {
-                            var dy = y(Math.min( (d[0].segLength - d[1].offset), d[1].segLength));
-                        }   
+                        var dy = y(Math.min(d[0].segLength, d[1].segLength));
 
                         return "M " + x0 + "," + y0 + " " + x0 + "," + (y0 + dy) + " " + x1 + "," + (y1 + dy) + " " + x1 + "," + y1 + "Z";
                     }
