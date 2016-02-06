@@ -107,7 +107,7 @@ $.extend(window.docuviz, {
         } else if (type === 'is' || type === 'iss') {
 
             insertStartIndex = entry.ibi - 1;
-            that.allSegmentsInCurrentRev = that.buildSegmentsWhenInsert(entry.s, insertStartIndex, authorId, that.allSegmentsInCurrentRev);
+            that.allSegmentsInCurrentRev = that.buildSegmentsWhenInsert(entry.s, insertStartIndex, authorId, that.allSegmentsInCurrentRev, entry);
             _.each(entry.s, function(character, index) {
                 var charObj = {
                     s: character,
@@ -122,7 +122,7 @@ $.extend(window.docuviz, {
             deleteStartIndex = entry.si - 1;
             deleteEndIndex = entry.ei - 1;
             that.str.delete(deleteStartIndex, deleteEndIndex);
-            that.allSegmentsInCurrentRev = that.buildSegmentsWhenDelete(deleteStartIndex, deleteEndIndex, authorId, that.allSegmentsInCurrentRev);
+            that.allSegmentsInCurrentRev = that.buildSegmentsWhenDelete(deleteStartIndex, deleteEndIndex, authorId, that.allSegmentsInCurrentRev, entry);
         }
         else {
         	// all other types such as AS (formatting)
@@ -221,6 +221,9 @@ $.extend(window.docuviz, {
 
                         revsForFrontend.push([revLength, revTimestamps[that.revID], revAuthors[that.revID], segmentsForFrontend]);
 
+                        // console.log("allSegmentsInCurrentRev for revisionID: " + that.revID);
+                        // console.log(that.allSegmentsInCurrentRev);
+
                         // update the current revision id
                         that.revID += 1;
 
@@ -268,7 +271,7 @@ $.extend(window.docuviz, {
     },
 
     // Creating the new segment, breaking the effected old segment if necessary, and updating all the following startIndex and endIndex
-    buildSegmentsWhenInsert: function(entry, startIndex, authorId, segmentsArray) {
+    buildSegmentsWhenInsert: function(entry, startIndex, authorId, segmentsArray, fullEntry) {
 
         var that = this;
 
@@ -300,16 +303,17 @@ $.extend(window.docuviz, {
 	            			return segmentsArray[index-1];
 	            		}
 	            		else {
-	            			// will never happen
+                            // will never happen
 	            		}
 	            	}
 	            	
 	            } 
-	            else if (startIndex === (eachSegment.endIndex + 1) ){
-	            	if (eachSegment.permanentFlag === false && eachSegment.authorId === authorId) {
+	            else if (startIndex === (eachSegment.endIndex + 1) ){ // this is the important one only happen at the end most segment
+                    //if (eachSegment.permanentFlag === false && eachSegment.authorId === authorId) {
 	            		segmentLocation = index;
 	            		return eachSegment;
-	            	}
+                    //}
+
 	            }
 	            else {
 	            	// do nothing, keep looking
@@ -320,14 +324,22 @@ $.extend(window.docuviz, {
         // it should only happen if it's the first revision, first segment
         if (effectedSegment === undefined) {
             that.currentSegID += 1;
-            var currentSeg = that.constructSegment(authorId, entry, that.currentSegID, that.currentSegID, 0, that.revID, startIndex, startIndex + entry.length - 1, "new segment because of no previous segment", false);
-            segmentsArray.insert(currentSeg, 0);
-            console.log(segmentsArray);
-            console.log("insert segment is undefined. startIndex:" + startIndex);
-            console.log(currentSeg);
-            console.log(currentSeg.startIndex);
+            console.log("---start----")
+            console.log("insert segment is undefined because this is first segment of first revision. startIndex: " + startIndex + " authorId: " + authorId + " length of entry: " + entry.length + ", and the entry is: " + entry + " for that.str.length = " + that.str.length);
+
+            if (entry.length === 0){ // When an author inserts nothing right at the begining, which made the endIndex to be -1. This statement solve that problem, endIndex when be 0.
+                var currentSeg = that.constructSegment(authorId, entry, that.currentSegID, that.currentSegID, 0, that.revID, startIndex, startIndex + entry.length, "new segment because of no previous segment when entry.length === 0", false);
+            }
+            else{
+                var currentSeg = that.constructSegment(authorId, entry, that.currentSegID, that.currentSegID, 0, that.revID, startIndex, startIndex + entry.length-1, "new segment because of no previous segment", false);    
+            }
+
+            segmentsArray.insert(currentSeg,segmentsArray.length);
+
+            console.log("-----end----");
 
         } 
+
         
         else {
         	// not the same author
@@ -399,7 +411,9 @@ $.extend(window.docuviz, {
 	        	if(effectedSegment.startIndex === startIndex){
 	        		if (effectedSegment.permanentFlag === true) {
 	        		    that.currentSegID += 1;
-	        		    var currentSeg = that.constructSegment(authorId, entry, that.currentSegID, that.currentSegID, 0, that.revID, startIndex, (startIndex + entry.length - 1), "new segment and found the effected segment", false);
+
+                        var currentSeg = that.constructSegment(authorId, entry, that.currentSegID, that.currentSegID, 0, that.revID, startIndex, (startIndex + entry.length - 1), "new segment and found the effected segment", false);
+
 	        		    segmentsArray.insert(currentSeg, segmentLocation );
 	        		} else {
 	        			effectedSegment.segStr = effectedSegment.segStr.insert(0, entry);
@@ -413,7 +427,8 @@ $.extend(window.docuviz, {
 	        	else if (startIndex === (effectedSegment.endIndex + 1)){
 	        		if (effectedSegment.permanentFlag === true) {
 	        		    that.currentSegID += 1;
-	        		    var currentSeg = that.constructSegment(authorId, entry, that.currentSegID, that.currentSegID, 0, that.revID, startIndex, (startIndex + entry.length - 1), "new segment and found the effected segment", false);
+                        var currentSeg = that.constructSegment(authorId, entry, that.currentSegID, that.currentSegID, 0, that.revID, startIndex, (startIndex + entry.length - 1), "new segment and found the effected segment", false);
+
 	        		    segmentsArray.insert(currentSeg, (segmentLocation + 1) );
 
 		        		for (var i = (segmentLocation + 2); i < segmentsArray.length; i++) {
@@ -443,7 +458,8 @@ $.extend(window.docuviz, {
 	        		    segmentsArray.insert(segBefore, segmentLocation)
 
 	        		    that.currentSegID += 1;
-	        		    var currentSeg = that.constructSegment(authorId, entry, that.currentSegID, that.currentSegID, 0, that.revID, startIndex, (startIndex + entry.length - 1), "new segment and found the effected segment", false);
+                        var currentSeg = that.constructSegment(authorId, entry, that.currentSegID, that.currentSegID, 0, that.revID, startIndex, (startIndex + entry.length - 1), "new segment and found the effected segment", false);
+
 	            		segmentsArray.insert(currentSeg, (segmentLocation + 1) );
 	        		    
 	        		    that.currentSegID += 1;
@@ -477,7 +493,7 @@ $.extend(window.docuviz, {
     },
 
 
-    buildSegmentsWhenDelete: function(deleteStartIndex, deleteEndIndex, author, segmentsArray) {
+    buildSegmentsWhenDelete: function(deleteStartIndex, deleteEndIndex, author, segmentsArray, fullEntry) {
         var that = this;
 
         // var deleteSegmentLocation = null;
@@ -680,6 +696,8 @@ $.extend(window.docuviz, {
         		    }
         		});
         		if (effectedSegmentOfDeleteEnd === undefined){
+                    console.log(deleteEndIndex);
+                    console.log(segmentsArray);
         			console.log("error 2");
         		}
 
@@ -696,12 +714,12 @@ $.extend(window.docuviz, {
 
 				    		// create two new segments, one with offset 0, another with offeset 
 				    		that.currentSegID += 1;
-				    		var segBefore  = that.constructSegment(effectedSegmentOfDeleteStart.authorId, strBeforeDelete, that.currentSegID, effectedSegmentOfDeleteStart.segID, 0, that.revID, effectedSegmentOfDeleteStart.startIndex, (deleteStartIndex - 1), "", false);
+				    		var segBefore  = that.constructSegment(effectedSegmentOfDeleteStart.authorId, strBeforeDelete, that.currentSegID, effectedSegmentOfDeleteStart.segID, 0, that.revID, effectedSegmentOfDeleteStart.startIndex, (deleteStartIndex - 1), "segBefore of delete in the middle within a segment when permanentFlag is true", false);
 				    		segmentsArray.insert(segBefore, deleteStartSegmentLocation);
 
 				    		// create a new segment with offset
 				    		that.currentSegID += 1;
-				    		var segAfter  = that.constructSegment(effectedSegmentOfDeleteStart.authorId, strAfterDelete, that.currentSegID, effectedSegmentOfDeleteStart.segID, (deleteEndIndex - effectedSegmentOfDeleteStart.startIndex + 1 ), that.revID, deleteStartIndex, (effectedSegmentOfDeleteStart.endIndex - 1 - deleteEndIndex + deleteStartIndex), "", false);
+				    		var segAfter  = that.constructSegment(effectedSegmentOfDeleteStart.authorId, strAfterDelete, that.currentSegID, effectedSegmentOfDeleteStart.segID, (deleteEndIndex - effectedSegmentOfDeleteStart.startIndex + 1 ), that.revID, deleteStartIndex, (effectedSegmentOfDeleteStart.endIndex - 1 - deleteEndIndex + deleteStartIndex), "segAfter of delete in the middle within a segment when permanentFlag is true", false);
 				    		segmentsArray.insert(segAfter, (deleteStartSegmentLocation+1) );
 
 				    		// updates all the following segments
@@ -731,7 +749,16 @@ $.extend(window.docuviz, {
 
 				    		// create a new segment with offset
 				    		that.currentSegID += 1;
-				    		var segAfter  = that.constructSegment(effectedSegmentOfDeleteStart.authorId, strAfterDelete, that.currentSegID, effectedSegmentOfDeleteStart.segID, (deleteEndIndex - effectedSegmentOfDeleteStart.startIndex + 1 ), that.revID, deleteStartIndex, (effectedSegmentOfDeleteStart.endIndex - 1 - deleteEndIndex + deleteStartIndex), "", false);
+
+                            if (segmentsArray.length === 0 && strAfterDelete === "\n"){ // if  after deletion there is no segment left and the segment after is left with just one new line charater,  the seg after's permanent flag has to be set to True. This solve the "#4C16 CCCC PROPOSAL - BEN" document. 
+                                var segAfter  = that.constructSegment(effectedSegmentOfDeleteStart.authorId, strAfterDelete, that.currentSegID, effectedSegmentOfDeleteStart.segID, (deleteEndIndex - effectedSegmentOfDeleteStart.startIndex + 1 ), that.revID, deleteStartIndex, (effectedSegmentOfDeleteStart.endIndex - 1 - deleteEndIndex + deleteStartIndex), "segAfter of delete from start to somewhere in the middle within a segment when permanentFlag is true", true);
+                            }
+
+                            else{
+                                 var segAfter  = that.constructSegment(effectedSegmentOfDeleteStart.authorId, strAfterDelete, that.currentSegID, effectedSegmentOfDeleteStart.segID, (deleteEndIndex - effectedSegmentOfDeleteStart.startIndex + 1 ), that.revID, deleteStartIndex, (effectedSegmentOfDeleteStart.endIndex - 1 - deleteEndIndex + deleteStartIndex), "segAfter of delete from start to somewhere in the middle within a segment when permanentFlag is true", false);                               
+                            }
+
+                            
 				    		segmentsArray.insert(segAfter, (deleteStartSegmentLocation) );
 
 				    		// updates all the following segments
@@ -761,7 +788,10 @@ $.extend(window.docuviz, {
 
 				    		// create two new segments, one with offset 0, another with offeset 
 				    		that.currentSegID += 1;
-				    		var segBefore  = that.constructSegment(effectedSegmentOfDeleteStart.authorId, strBeforeDelete, that.currentSegID, effectedSegmentOfDeleteStart.segID, 0, that.revID, effectedSegmentOfDeleteStart.startIndex, (deleteStartIndex - 1), "", false);
+
+                            var segBefore  = that.constructSegment(effectedSegmentOfDeleteStart.authorId, strBeforeDelete, that.currentSegID, effectedSegmentOfDeleteStart.segID, 0, that.revID, effectedSegmentOfDeleteStart.startIndex, (deleteStartIndex - 1), "segBefore of delete from middle to the end within a segment when permanentFlag is true", false);
+                            
+
 				    		segmentsArray.insert(segBefore, deleteStartSegmentLocation);
 
 				    		// updates all the following segments
@@ -808,7 +838,9 @@ $.extend(window.docuviz, {
 
 				    		// create a new segment, one with offset 0, another with offeset 
 				    		that.currentSegID += 1;
-				    		var segBefore  = that.constructSegment(effectedSegmentOfDeleteStart.authorId, strBeforeDelete, that.currentSegID, effectedSegmentOfDeleteStart.segID, 0, that.revID, effectedSegmentOfDeleteStart.startIndex, (deleteStartIndex - 1), "", false);
+  
+				    		var segBefore  = that.constructSegment(effectedSegmentOfDeleteStart.authorId, strBeforeDelete, that.currentSegID, effectedSegmentOfDeleteStart.segID, 0, that.revID, effectedSegmentOfDeleteStart.startIndex, (deleteStartIndex - 1), "segBefore of delete in the middle across many segments when permanentFlag is true", false);
+                            
 				    		segmentsArray.insert(segBefore, deleteStartSegmentLocation);
 
 						}
@@ -824,7 +856,9 @@ $.extend(window.docuviz, {
 
 				    		// create a new segment with offset
 				    		that.currentSegID += 1;
-				    		var segAfter  = that.constructSegment(effectedSegmentOfDeleteEnd.authorId, strAfterDelete, that.currentSegID, effectedSegmentOfDeleteEnd.segID, (effectedSegmentOfDeleteEnd - deleteEndIndex), that.revID, deleteStartIndex, (effectedSegmentOfDeleteEnd.endIndex - 1 - deleteEndIndex + deleteStartIndex), "", false);
+
+				    		var segAfter  = that.constructSegment(effectedSegmentOfDeleteEnd.authorId, strAfterDelete, that.currentSegID, effectedSegmentOfDeleteEnd.segID, (effectedSegmentOfDeleteEnd.endIndex - deleteEndIndex), that.revID, deleteStartIndex, (effectedSegmentOfDeleteEnd.endIndex - 1 - deleteEndIndex + deleteStartIndex), "segBefore of delete from the beginning of a segment to the middle of any segment across when permanentFlag is true", false);
+                            
 				    		segmentsArray.insert(segAfter, deleteEndSegmentLocation );
 
 						}
@@ -861,7 +895,9 @@ $.extend(window.docuviz, {
 
 				    		// create a new segment with offset
 				    		that.currentSegID += 1;
-				    		var segAfter  = that.constructSegment(effectedSegmentOfDeleteEnd.authorId, strAfterDelete, that.currentSegID, effectedSegmentOfDeleteEnd.segID, (effectedSegmentOfDeleteEnd - deleteEndIndex), that.revID, deleteStartIndex, (effectedSegmentOfDeleteEnd.endIndex - 1 - deleteEndIndex + deleteStartIndex), "", false);
+
+                            var segAfter  = that.constructSegment(effectedSegmentOfDeleteEnd.authorId, strAfterDelete, that.currentSegID, effectedSegmentOfDeleteEnd.segID, (effectedSegmentOfDeleteEnd.endIndex - deleteEndIndex), that.revID, deleteStartIndex, (effectedSegmentOfDeleteEnd.endIndex - 1 - deleteEndIndex + deleteStartIndex), "segAfter of delete from the beginning of a segment to the middle of any segment across when permanentFlag is true", false);
+
 				    		segmentsArray.insert(segAfter, deleteEndSegmentLocation );
 
 						}
@@ -891,7 +927,9 @@ $.extend(window.docuviz, {
 
 				    		// create a new segment, one with offset 0, another with offeset 
 				    		that.currentSegID += 1;
-				    		var segBefore  = that.constructSegment(effectedSegmentOfDeleteStart.authorId, strBeforeDelete, that.currentSegID, effectedSegmentOfDeleteStart.segID, 0, that.revID, effectedSegmentOfDeleteStart.startIndex, (deleteStartIndex - 1), "", false);
+
+                            var segBefore  = that.constructSegment(effectedSegmentOfDeleteStart.authorId, strBeforeDelete, that.currentSegID, effectedSegmentOfDeleteStart.segID, 0, that.revID, effectedSegmentOfDeleteStart.startIndex, (deleteStartIndex - 1), "segBefore of delete from middle of a segment to the end of any segment across when permanentFlag is true", false);
+                            
 				    		segmentsArray.insert(segBefore, deleteStartSegmentLocation);
 
 						}
@@ -907,7 +945,7 @@ $.extend(window.docuviz, {
 						    segmentsArray[i].endIndex -= (deleteEndIndex - deleteStartIndex + 1 );
 						}
 
-						segmentsArray.delete( (deleteStartSegmentLocation+1), deleteEndSegmentLocation);
+						segmentsArray.delete((deleteStartSegmentLocation+1), deleteEndSegmentLocation);
 						
 					}
 					else if (deleteStartIndex === effectedSegmentOfDeleteStart.startIndex && deleteEndIndex === effectedSegmentOfDeleteEnd.endIndex){
