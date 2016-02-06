@@ -107,7 +107,7 @@ $.extend(window.docuviz, {
         } else if (type === 'is' || type === 'iss') {
 
             insertStartIndex = entry.ibi - 1;
-            that.allSegmentsInCurrentRev = that.buildSegmentsWhenInsert(entry.s, insertStartIndex, authorId, that.allSegmentsInCurrentRev, entry);
+            that.allSegmentsInCurrentRev = that.buildSegmentsWhenInsert(entry.s, insertStartIndex, authorId, that.allSegmentsInCurrentRev);
             _.each(entry.s, function(character, index) {
                 var charObj = {
                     s: character,
@@ -122,7 +122,7 @@ $.extend(window.docuviz, {
             deleteStartIndex = entry.si - 1;
             deleteEndIndex = entry.ei - 1;
             that.str.delete(deleteStartIndex, deleteEndIndex);
-            that.allSegmentsInCurrentRev = that.buildSegmentsWhenDelete(deleteStartIndex, deleteEndIndex, authorId, that.allSegmentsInCurrentRev, entry);
+            that.allSegmentsInCurrentRev = that.buildSegmentsWhenDelete(deleteStartIndex, deleteEndIndex, authorId, that.allSegmentsInCurrentRev);
         }
         else {
         	// all other types such as AS (formatting)
@@ -271,7 +271,7 @@ $.extend(window.docuviz, {
     },
 
     // Creating the new segment, breaking the effected old segment if necessary, and updating all the following startIndex and endIndex
-    buildSegmentsWhenInsert: function(entry, startIndex, authorId, segmentsArray, fullEntry) {
+    buildSegmentsWhenInsert: function(entry, startIndex, authorId, segmentsArray) {
 
         var that = this;
 
@@ -493,7 +493,7 @@ $.extend(window.docuviz, {
     },
 
 
-    buildSegmentsWhenDelete: function(deleteStartIndex, deleteEndIndex, author, segmentsArray, fullEntry) {
+    buildSegmentsWhenDelete: function(deleteStartIndex, deleteEndIndex, author, segmentsArray) {
         var that = this;
 
         // var deleteSegmentLocation = null;
