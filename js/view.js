@@ -93,8 +93,8 @@ $.extend(window.docuviz, {
         }
 
         historyUrl = http + '/revisions/history?id=' + this.getDocId() + "&token=" + token + "&start=1&end=-1&zoom_level=0";
-        console.log("historyUrl is at: ");
-        console.log(historyUrl);
+        // console.log("historyUrl is at: ");
+        // console.log(historyUrl);
         return historyUrl;
     },
 
@@ -236,7 +236,7 @@ $.extend(window.docuviz, {
 
 
         rawData = data;
-        console.log(rawData);
+        // console.log(rawData);
 
 
         _.each(rawData, function(val) {
@@ -274,8 +274,8 @@ $.extend(window.docuviz, {
 
         });
 
-        console.log("Time: ");
-        console.log(that.timestamps);
+        // console.log("Time: ");
+        // console.log(that.timestamps);
 
     },
 
@@ -299,7 +299,7 @@ $.extend(window.docuviz, {
         var regmatch = location.href.match(/^(https:\/\/docs\.google\.com.*?\/document\/d\/)/),
             baseUrl = regmatch[1],
             loadUrl = baseUrl + this.getDocId() + "/revisions/load?id=" + this.getDocId() + "&start=1&end=" + parseInt(('' + this.getRevisionNumber()).replace(/,/g, '')) + "&token=" + this.getToken();
-        console.log('got changelogURL for Docuviz: ' + loadUrl);
+        // console.log('got changelogURL for Docuviz: ' + loadUrl);
         return loadUrl;
     },
 
@@ -317,7 +317,7 @@ $.extend(window.docuviz, {
 
             // If the call success, send Changelog Data, Document ID, authors data to Model
             success: function(data) {
-                console.log('GOT changelog data')
+                // console.log('GOT changelog data')
                 var raw = jQuery.parseJSON(data.substring(4));
                 // Send Changelog data to Model
                 //console.log(data);
@@ -350,7 +350,7 @@ $.extend(window.docuviz, {
             // Make the App Visible to user
             $('.js-docuviz').removeClass('hideVisually');
             // $('.js-progress-bar').removeClass('hideVisually');
-            console.log('got docuviz');
+            // console.log('got docuviz');
 
             changelogUrl = that.getChangelogUrlForDocuviz(location.href);
             that.getChangelog(changelogUrl, 'docuviz');
@@ -1177,7 +1177,7 @@ $.extend(window.docuviz, {
                     if (preSegments.length != 0) {
                         _.each(preSegments, function(eachSegment, index) {
                             if (eachSegment.segID === newSegments[k].segID) {
-                                console.log("found");
+                                // console.log("found");
                                 // preIndex = index;
                                 link[j].push([eachSegment, newSegments[k]]);
                             }
