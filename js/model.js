@@ -220,12 +220,13 @@ $.extend(window.docuviz, {
                         var segmentsForFrontend = that.buildSegmentsForOneRevision(that.allSegmentsInCurrentRev, authors);
 
                         revsForFrontend.push([revLength, revTimestamps[that.revID], revAuthors[that.revID], segmentsForFrontend]);
-
                         // console.log("allSegmentsInCurrentRev for revisionID: " + that.revID);
                         // console.log(that.allSegmentsInCurrentRev);
 
                         // update the current revision id
                         that.revID += 1;
+
+
 
 
                     } else {
@@ -284,12 +285,11 @@ $.extend(window.docuviz, {
 	                return eachSegment;
 	            }
 	            else if (startIndex === (eachSegment.endIndex + 1) ){
-	            	
 	            	if (index != (segmentsArray.length - 1 )){
             			segmentLocation = index+1;
             		    return segmentsArray[segmentLocation];
                     }
-                    else{
+                    else {
                     	segmentLocation = index;
                         return segmentsArray[segmentLocation];
                     }
@@ -317,7 +317,8 @@ $.extend(window.docuviz, {
 	            		}
 	            	}
 	            	
-	            } 
+	            }
+
 	            else {
 	            	// do nothing, keep looking
 	            }
@@ -343,9 +344,13 @@ $.extend(window.docuviz, {
             if (authorId != effectedSegment.authorId ) {
 
             	if(effectedSegment.startIndex === startIndex){
+
+                    console.log(startIndex); // 0
+                    console.log(segmentLocation-1); // -1
+
 	            	if (segmentsArray[segmentLocation-1].authorId != authorId){
 		            	that.currentSegID += 1;
-		            	var currentSeg = that.constructSegment(authorId, entryStr, that.currentSegID, that.currentSegID, 0, that.revID, startIndex, startIndex + entryStr.length - 1, "new segment and found the effected segment", false);
+		            	var currentSeg = that.constructSegment(authorId, entryStr, that.currentSegID, that.currentSegID, 0, that.revID, startIndex, startIndex + entryStr.length - 1, "new segment and found the effected segment, not the same author when effectedSegment.startIndex === startIndex)", false);
 		            	segmentsArray.insert(currentSeg, segmentLocation);
 	    	    		for (var i = (segmentLocation + 1) ; i < segmentsArray.length; i++) {
 	    			    	segmentsArray[i].startIndex += entryStr.length;
@@ -354,7 +359,7 @@ $.extend(window.docuviz, {
 	            	}
 	            	else if (segmentsArray[segmentLocation-1].authorId === authorId && segmentsArray[segmentLocation-1].permanentFlag=== true){
 	            		that.currentSegID += 1;
-	            		var currentSeg = that.constructSegment(authorId, entryStr, that.currentSegID, that.currentSegID, 0, that.revID, startIndex, startIndex + entryStr.length - 1, "new segment and found the effected segment", false);
+	            		var currentSeg = that.constructSegment(authorId, entryStr, that.currentSegID, that.currentSegID, 0, that.revID, startIndex, startIndex + entryStr.length - 1, "new segment and found the effected segment, not the same author when segmentsArray[segmentLocation-1].authorId === authorId && segmentsArray[segmentLocation-1].permanentFlag=== true ", false);
 		            	segmentsArray.insert(currentSeg, segmentLocation);
 	    	    		for (var i = (segmentLocation + 1) ; i < segmentsArray.length; i++) {
 	    			    	segmentsArray[i].startIndex += entryStr.length;
@@ -375,14 +380,14 @@ $.extend(window.docuviz, {
             		if (segmentLocation ===  (segmentsArray.length-1))
             		{
             			that.currentSegID += 1;
-            			var currentSeg = that.constructSegment(authorId, entryStr, that.currentSegID, that.currentSegID, 0, that.revID, startIndex, startIndex + entryStr.length - 1, "new segment and found the effected segment", false);
+            			var currentSeg = that.constructSegment(authorId, entryStr, that.currentSegID, that.currentSegID, 0, that.revID, startIndex, startIndex + entryStr.length - 1, "new segment and found the effected segment, not the same author when segmentLocation ===  (segmentsArray.length-1)", false);
             			segmentsArray.insert(currentSeg, (segmentLocation+1) );
             		}	
             		else{
             			if (segmentsArray[segmentLocation+1].permanentFlag === true){
             				// create the new segment and update
             				that.currentSegID += 1;
-            				var currentSeg = that.constructSegment(authorId, entryStr, that.currentSegID, that.currentSegID, 0, that.revID, startIndex, startIndex + entryStr.length - 1, "new segment and found the effected segment", false);
+            				var currentSeg = that.constructSegment(authorId, entryStr, that.currentSegID, that.currentSegID, 0, that.revID, startIndex, startIndex + entryStr.length - 1, "new segment and found the effected segment, not the same author when segmentsArray[segmentLocation+1].permanentFlag === true", false);
             				segmentsArray.insert(currentSeg, (segmentLocation+1) );
 
 				    		for (var i = (segmentLocation + 2); i < segmentsArray.length; i++) {
@@ -394,7 +399,7 @@ $.extend(window.docuviz, {
             				if(segmentsArray[segmentLocation+1].authorId != authorId){
 	            				// create the new segment and update
 	            				that.currentSegID += 1;
-	            				var currentSeg = that.constructSegment(authorId, entryStr, that.currentSegID, that.currentSegID, 0, that.revID, startIndex, startIndex + entryStr.length - 1, "new segment and found the effected segment", false);
+	            				var currentSeg = that.constructSegment(authorId, entryStr, that.currentSegID, that.currentSegID, 0, that.revID, startIndex, startIndex + entryStr.length - 1, "new segment and found the effected segment, when segmentsArray[segmentLocation+1].authorId != authorId", false);
 	            				segmentsArray.insert(currentSeg, (segmentLocation+1) );
 
 					    		for (var i = (segmentLocation + 2); i < segmentsArray.length; i++) {
@@ -466,7 +471,7 @@ $.extend(window.docuviz, {
 	        		if (startIndex === 0){
 	        			if (effectedSegment.permanentFlag === true){
 	        				that.currentSegID += 1;
-	        				var currentSeg = that.constructSegment(authorId, entryStr, that.currentSegID, that.currentSegID, 0, that.revID, startIndex, (startIndex + entryStr.length - 1), "new segment and found the effected segment", false);
+	        				var currentSeg = that.constructSegment(authorId, entryStr, that.currentSegID, that.currentSegID, 0, that.revID, startIndex, (startIndex + entryStr.length - 1), "new segment and found the effected segment, same author, when effectedSegment.startIndex === startIndex and startIndex === 0", false);
 	        				segmentsArray.insert(currentSeg, segmentLocation );
 
 				    		for (var i = (segmentLocation + 1); i < segmentsArray.length; i++) {
@@ -487,7 +492,7 @@ $.extend(window.docuviz, {
 	        		else if ( ((effectedSegment.endIndex+1) ===  startIndex )&& (segmentLocation === (segmentsArray.length-1 ))){
 	        			if (effectedSegment.permanentFlag === true){
 	        				that.currentSegID += 1;
-	        				var currentSeg = that.constructSegment(authorId, entryStr, that.currentSegID, that.currentSegID, 0, that.revID, startIndex, (startIndex + entryStr.length - 1), "new segment and found the effected segment", false);
+	        				var currentSeg = that.constructSegment(authorId, entryStr, that.currentSegID, that.currentSegID, 0, that.revID, startIndex, (startIndex + entryStr.length - 1), "new segment and found the effected segment, same author, when ((effectedSegment.endIndex+1) ===  startIndex )&& (segmentLocation === (segmentsArray.length-1 ))", false);
 	        				segmentsArray.insert(currentSeg, (segmentLocation+1) );
 
 	        			}
@@ -567,7 +572,7 @@ $.extend(window.docuviz, {
 	        			if (effectedSegment.permanentFlag === true){
 	        				// create a new
 	        				that.currentSegID += 1;
-	                        var currentSeg = that.constructSegment(authorId, entryStr, that.currentSegID, that.currentSegID, 0, that.revID, startIndex, (startIndex + entryStr.length - 1), "new segment and found the effected segment", false);
+	                        var currentSeg = that.constructSegment(authorId, entryStr, that.currentSegID, that.currentSegID, 0, that.revID, startIndex, (startIndex + entryStr.length - 1), "new segment and found the effected segment, same author, when startIndex === (effectedSegment.endIndex + 1), and egmentLocation === (segmentsArray.length-1), and effectedSegment.permanentFlag === true", false);
 
 		        		    segmentsArray.insert(currentSeg, (segmentLocation + 1) );
 
@@ -587,7 +592,7 @@ $.extend(window.docuviz, {
 	        				if (segmentsArray[segmentLocation+1].permanentFlag === true){
 	        					// create a new
 		        				that.currentSegID += 1;
-		                        var currentSeg = that.constructSegment(authorId, entryStr, that.currentSegID, that.currentSegID, 0, that.revID, startIndex, (startIndex + entryStr.length - 1), "new segment and found the effected segment", false);
+		                        var currentSeg = that.constructSegment(authorId, entryStr, that.currentSegID, that.currentSegID, 0, that.revID, startIndex, (startIndex + entryStr.length - 1), "new segment and found the effected segment, same author, when startIndex === (effectedSegment.endIndex + 1), and egmentLocation != (segmentsArray.length-1), and segmentsArray[segmentLocation+1].permanentFlag === true", false);
 
 			        		    segmentsArray.insert(currentSeg, (segmentLocation + 1) );
 
@@ -609,7 +614,7 @@ $.extend(window.docuviz, {
 	        					else{
 	        						// create a new
 			        				that.currentSegID += 1;
-			                        var currentSeg = that.constructSegment(authorId, entryStr, that.currentSegID, that.currentSegID, 0, that.revID, startIndex, (startIndex + entryStr.length - 1), "new segment and found the effected segment", false);
+			                        var currentSeg = that.constructSegment(authorId, entryStr, that.currentSegID, that.currentSegID, 0, that.revID, startIndex, (startIndex + entryStr.length - 1), "new segment and found the effected segment, same author, when startIndex === (effectedSegment.endIndex + 1), and egmentLocation != (segmentsArray.length-1), and segmentsArray[segmentLocation+1].authorId === authorId), and segmentsArray[segmentLocation+1].permanentFlag === false", false);
 
 				        		    segmentsArray.insert(currentSeg, (segmentLocation + 1) );
 
@@ -643,7 +648,7 @@ $.extend(window.docuviz, {
 	        		    segmentsArray.insert(segBefore, segmentLocation);
 
 	        		    that.currentSegID += 1;
-                        var currentSeg = that.constructSegment(authorId, entryStr, that.currentSegID, that.currentSegID, 0, that.revID, startIndex, (startIndex + entryStr.length - 1), "new segment and found the effected segment", false);
+                        var currentSeg = that.constructSegment(authorId, entryStr, that.currentSegID, that.currentSegID, 0, that.revID, startIndex, (startIndex + entryStr.length - 1), "new segment and found the effected segment, same author, when effectedSegment.startIndex < startIndex && startIndex <= effectedSegment.endIndex", false);
 
 	            		segmentsArray.insert(currentSeg, (segmentLocation + 1) );
 	        		    
@@ -1009,6 +1014,7 @@ $.extend(window.docuviz, {
 					console.log("deleteStartIndex, deleteEndIndex;" + deleteStartIndex+ "," +deleteEndIndex);
 					console.log(effectedSegmentOfDeleteStart);
 					console.log(effectedSegmentOfDeleteEnd);
+                    console.log(segmentsArray);
 
 					if(deleteStartIndex > effectedSegmentOfDeleteStart.startIndex && deleteEndIndex < effectedSegmentOfDeleteEnd.endIndex){
 						var strBeforeDelete = effectedSegmentOfDeleteStart.segStr.substring(0, (deleteStartIndex - effectedSegmentOfDeleteStart.startIndex)); // = substring(0,end-1)
