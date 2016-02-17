@@ -226,12 +226,8 @@ $.extend(window.docuviz, {
                         // update the current revision id
                         that.revID += 1;
 
-
-
-
                     } else {
                         
-
                     }
 
 
@@ -278,7 +274,7 @@ $.extend(window.docuviz, {
         var effectedSegment = null;
         var segmentLocation = null;
 
-        if(segmentsArray != null){
+        if(segmentsArray != null){ // it shouldn't be, it could be empty, but not null.
 	        effectedSegment = _.find(segmentsArray, function(eachSegment, index) {
 	        	if (eachSegment.startIndex < startIndex && startIndex <= eachSegment.endIndex) {
 	                segmentLocation = index;
@@ -295,37 +291,38 @@ $.extend(window.docuviz, {
                     }
 	            }
 	            else if (startIndex === eachSegment.startIndex) {
-	            	if (index === 0 ){
-	            		segmentLocation = index;
-	            		return eachSegment;
-	            	}
-	            	else {
-	            		if (segmentsArray[index-1].permanentFlag === true){
-	            			segmentLocation = index;
-	            			return eachSegment;
-	            		}
-	            		else if ( (segmentsArray[index-1].permanentFlag === false) && (segmentsArray[index-1].authorId != authorId) ){
-	            			segmentLocation = index;
-	            			return eachSegment;
-	            		}
-	            		else if ( (segmentsArray[index-1].permanentFlag === false) && (segmentsArray[index-1].authorId === authorId) ) {
-	            			segmentLocation = (index - 1);
-	            			return segmentsArray[index-1];
-	            		}
-	            		else {
-                            // will never happen
-	            		}
-	            	}
+	            	// if (index === 0 ){
+	            	// 	segmentLocation = index;
+	            	// 	return eachSegment;
+	            	// }
+	            	// else {
+	            	// 	if (segmentsArray[index-1].permanentFlag === true){
+	            	// 		segmentLocation = index;
+	            	// 		return eachSegment;
+	            	// 	}
+	            	// 	else if ( (segmentsArray[index-1].permanentFlag === false) && (segmentsArray[index-1].authorId != authorId) ){
+	            	// 		segmentLocation = index;
+	            	// 		return eachSegment;
+	            	// 	}
+	            	// 	else if ( (segmentsArray[index-1].permanentFlag === false) && (segmentsArray[index-1].authorId === authorId) ) {
+	            	// 		segmentLocation = (index - 1);
+	            	// 		return segmentsArray[index-1];
+	            	// 	}
+	            	// 	else {
+              //               // will never happen
+	            	// 	}
+	            	// }
+            		segmentLocation = index;
+            	    return segmentsArray[segmentLocation];
 	            	
 	            }
-
 	            else {
 	            	// do nothing, keep looking
 	            }
 	        });
 		}
 
-
+		// meaning, the segmentsArray is empty
         if (effectedSegment === undefined) {
             that.currentSegID += 1;
             if (entryStr.length === 0){ // When an author inserts nothing right at the begining, which made the endIndex to be -1. This statement solve that problem, endIndex when be 0.
@@ -339,120 +336,266 @@ $.extend(window.docuviz, {
 
         
         else {
+        	if(effectedSegment.startIndex === startIndex){
+        		if (startIndex === 0){
+        			if (effectedSegment.permanentFlag === true){
+        				that.currentSegID += 1;
+        				var currentSeg = that.constructSegment(authorId, entryStr, that.currentSegID, that.currentSegID, 0, that.revID, startIndex, (startIndex + entryStr.length - 1), "new segment and found the effected segment, permanentflag = true, when effectedSegment.startIndex === startIndex and startIndex === 0", false);
+        				segmentsArray.insert(currentSeg, segmentLocation );
 
-        	// not the same author // TODO
-            if (authorId != effectedSegment.authorId ) {
-
-            	if(effectedSegment.startIndex === startIndex){
-
-                    console.log(startIndex); // 0
-                    console.log(segmentLocation-1); // -1
-
-	            	if (segmentsArray[segmentLocation-1].authorId != authorId){
-		            	that.currentSegID += 1;
-		            	var currentSeg = that.constructSegment(authorId, entryStr, that.currentSegID, that.currentSegID, 0, that.revID, startIndex, startIndex + entryStr.length - 1, "new segment and found the effected segment, not the same author when effectedSegment.startIndex === startIndex)", false);
-		            	segmentsArray.insert(currentSeg, segmentLocation);
-	    	    		for (var i = (segmentLocation + 1) ; i < segmentsArray.length; i++) {
-	    			    	segmentsArray[i].startIndex += entryStr.length;
-	    			    	segmentsArray[i].endIndex += entryStr.length;
-	    	    		}
-	            	}
-	            	else if (segmentsArray[segmentLocation-1].authorId === authorId && segmentsArray[segmentLocation-1].permanentFlag=== true){
-	            		that.currentSegID += 1;
-	            		var currentSeg = that.constructSegment(authorId, entryStr, that.currentSegID, that.currentSegID, 0, that.revID, startIndex, startIndex + entryStr.length - 1, "new segment and found the effected segment, not the same author when segmentsArray[segmentLocation-1].authorId === authorId && segmentsArray[segmentLocation-1].permanentFlag=== true ", false);
-		            	segmentsArray.insert(currentSeg, segmentLocation);
-	    	    		for (var i = (segmentLocation + 1) ; i < segmentsArray.length; i++) {
-	    			    	segmentsArray[i].startIndex += entryStr.length;
-	    			    	segmentsArray[i].endIndex += entryStr.length;
-	    	    		}
-	            	}
-	            	else {
-	            		segmentsArray[segmentLocation-1].segStr += entryStr;
-	            		segmentsArray[segmentLocation-1].endIndex += entryStr.length;
-			    		for (var i = segmentLocation ; i < segmentsArray.length; i++) {
+			    		for (var i = (segmentLocation + 1); i < segmentsArray.length; i++) {
 					    	segmentsArray[i].startIndex += entryStr.length;
 					    	segmentsArray[i].endIndex += entryStr.length;
 			    		}
-	            	}
-            	}
-            	else if (startIndex === (effectedSegment.endIndex + 1)){
+        			}
+        			else {
+        				if (effectedSegment.authorId === authorId) {
+	        				effectedSegment.segStr = entryStr + effectedSegment.segStr;
+		            		effectedSegment.endIndex += entryStr.length;
+	            		}
+	            		else {
+	            			that.currentSegID += 1;
+	            			var currentSeg = that.constructSegment(authorId, entryStr, that.currentSegID, that.currentSegID, 0, that.revID, startIndex, (startIndex + entryStr.length - 1), "new segment and found the effected segment, permanentflag = false,  authorId != , when effectedSegment.startIndex === startIndex and startIndex === 0", false);
+	            			segmentsArray.insert(currentSeg, segmentLocation );
+	            		}
+			    		for (var i = (segmentLocation + 1); i < segmentsArray.length; i++) {
+					    	segmentsArray[i].startIndex += entryStr.length;
+					    	segmentsArray[i].endIndex += entryStr.length;
+			    		}
+        			}
+        		}
+        		else if ( ((effectedSegment.endIndex+1) ===  startIndex )&& (segmentLocation === (segmentsArray.length-1 ))){
+        			if (effectedSegment.permanentFlag === true){
+        				that.currentSegID += 1;
+        				var currentSeg = that.constructSegment(authorId, entryStr, that.currentSegID, that.currentSegID, 0, that.revID, startIndex, (startIndex + entryStr.length - 1), "new segment and found the effected segment, permanentflag = true, when ((effectedSegment.endIndex+1) ===  startIndex )&& (segmentLocation === (segmentsArray.length-1 ))", false);
+        				segmentsArray.insert(currentSeg, (segmentLocation+1) );
+        			}
+        			else {
+        				if(effectedSegment.authorId === authorId){
+        					effectedSegment.segStr += entryStr;
+	            			effectedSegment.endIndex += entryStr.length;
+	            		}
+	            		else{
+	            			that.currentSegID += 1;
+	            			var currentSeg = that.constructSegment(authorId, entryStr, that.currentSegID, that.currentSegID, 0, that.revID, startIndex, (startIndex + entryStr.length - 1), "new segment and found the effected segment, differentAuthor, permanentflag=false, when ((effectedSegment.endIndex+1) ===  startIndex )&& (segmentLocation === (segmentsArray.length-1 ))", false);
+	            			segmentsArray.insert(currentSeg, (segmentLocation+1) );
+	            		}
+        			}
+        		}
+        		else{
+        			if(effectedSegment.permanentFlag === true && segmentsArray[segmentLocation-1].permanentFlag === true){
+        				that.currentSegID += 1;
+        				var currentSeg = that.constructSegment(authorId, entryStr, that.currentSegID, that.currentSegID, 0, that.revID, startIndex, (startIndex + entryStr.length - 1), "new segment insert between two permanentflag== true", false);
+        				segmentsArray.insert(currentSeg, segmentLocation );
+			    		for (var i = (segmentLocation + 1); i < segmentsArray.length; i++) {
+					    	segmentsArray[i].startIndex += entryStr.length;
+					    	segmentsArray[i].endIndex += entryStr.length;
+			    		}
+        			}
+        			else if (effectedSegment.permanentFlag === true && segmentsArray[segmentLocation-1].permanentFlag === false){
+        				if (segmentsArray[segmentLocation-1].authorId === authorId){
+	        				segmentsArray[segmentLocation-1].segStr += entryStr;
+		            		segmentsArray[segmentLocation-1].endIndex += entryStr.length;
+        		    		for (var i = segmentLocation; i < segmentsArray.length; i++) {
+        				    	segmentsArray[i].startIndex += entryStr.length;
+        				    	segmentsArray[i].endIndex += entryStr.length;
+        		    		}
+        				}
+        				else{
+	        				that.currentSegID += 1;
+	        				var currentSeg = that.constructSegment(authorId, entryStr, that.currentSegID, that.currentSegID, 0, that.revID, startIndex, (startIndex + entryStr.length - 1), "new segment after a temporary segment with differentAuthor, before a permanent segment", false);
+	        				segmentsArray.insert(currentSeg, segmentLocation );
+				    		for (var i = (segmentLocation + 1); i < segmentsArray.length; i++) {
+						    	segmentsArray[i].startIndex += entryStr.length;
+						    	segmentsArray[i].endIndex += entryStr.length;
+				    		}
+        				}
+        			}
+        			else if (effectedSegment.permanentFlag === false && segmentsArray[segmentLocation-1].permanentFlag === true){
+        				if (effectedSegment.authorId === authorId){
+	        				effectedSegment.segStr = entryStr + effectedSegment.segStr;
+		            		effectedSegment.endIndex += entryStr.length;
+        		    		for (var i = (segmentLocation + 1); i < segmentsArray.length; i++) {
+        				    	segmentsArray[i].startIndex += entryStr.length;
+        				    	segmentsArray[i].endIndex += entryStr.length;
+        		    		}
+        				}
+        				else{
+	        				that.currentSegID += 1;
+	        				var currentSeg = that.constructSegment(authorId, entryStr, that.currentSegID, that.currentSegID, 0, that.revID, startIndex, (startIndex + entryStr.length - 1), "new segment, after a permanent, before a temporary but differentAuthor", false);
+	        				segmentsArray.insert(currentSeg, segmentLocation );
+				    		for (var i = (segmentLocation + 1); i < segmentsArray.length; i++) {
+						    	segmentsArray[i].startIndex += entryStr.length;
+						    	segmentsArray[i].endIndex += entryStr.length;
+				    		}
+        				}
+        			}
+        			else{
+        				if (effectedSegment.authorId === authorId){
+	        				effectedSegment.segStr = entryStr + effectedSegment.segStr;
+		            		effectedSegment.endIndex += entryStr.length;
+        		    		for (var i = (segmentLocation + 1); i < segmentsArray.length; i++) {
+        				    	segmentsArray[i].startIndex += entryStr.length;
+        				    	segmentsArray[i].endIndex += entryStr.length;
+        		    		}
+        				}
+        				else if (segmentsArray[segmentLocation-1].authorId === authorId) {
+	        				segmentsArray[segmentLocation-1].segStr += entryStr;
+		            		segmentsArray[segmentLocation-1].endIndex += entryStr.length;
+        		    		for (var i = segmentLocation; i < segmentsArray.length; i++) {
+        				    	segmentsArray[i].startIndex += entryStr.length;
+        				    	segmentsArray[i].endIndex += entryStr.length;
+        		    		}
+        					
+        				}
+        				else{
+	        				that.currentSegID += 1;
+	        				var currentSeg = that.constructSegment(authorId, entryStr, that.currentSegID, that.currentSegID, 0, that.revID, startIndex, (startIndex + entryStr.length - 1), "new segment, between two temporary but differentAuthor", false);
+	        				segmentsArray.insert(currentSeg, segmentLocation );
+				    		for (var i = (segmentLocation + 1); i < segmentsArray.length; i++) {
+						    	segmentsArray[i].startIndex += entryStr.length;
+						    	segmentsArray[i].endIndex += entryStr.length;
+				    		}
+        				}
+        			}
+        		}
 
-            		if (segmentLocation ===  (segmentsArray.length-1))
-            		{
-            			that.currentSegID += 1;
-            			var currentSeg = that.constructSegment(authorId, entryStr, that.currentSegID, that.currentSegID, 0, that.revID, startIndex, startIndex + entryStr.length - 1, "new segment and found the effected segment, not the same author when segmentLocation ===  (segmentsArray.length-1)", false);
-            			segmentsArray.insert(currentSeg, (segmentLocation+1) );
-            		}	
-            		else{
-            			if (segmentsArray[segmentLocation+1].permanentFlag === true){
+	        }
+            	
+        	else if (startIndex === (effectedSegment.endIndex + 1)){
+
+        		if (segmentLocation ===  (segmentsArray.length-1)){
+        			if (effectedSegment.permanentflag === true){
+	        			that.currentSegID += 1;
+	        			var currentSeg = that.constructSegment(authorId, entryStr, that.currentSegID, that.currentSegID, 0, that.revID, startIndex, startIndex + entryStr.length - 1, "new segment and found the effected segment, not the same author when segmentLocation ===  (segmentsArray.length-1)", false);
+	        			segmentsArray.insert(currentSeg, (segmentLocation+1) );
+        			}
+        			else{
+        				if (effectedSegment.authorId != authorId){
+        					that.currentSegID += 1;
+        					var currentSeg = that.constructSegment(authorId, entryStr, that.currentSegID, that.currentSegID, 0, that.revID, startIndex, startIndex + entryStr.length - 1, "new segment and found the effected segment, not the same author when segmentLocation ===  (segmentsArray.length-1)", false);
+        					segmentsArray.insert(currentSeg, (segmentLocation+1) );
+        				}
+        				else{
+        					effectedSegment.segStr += entryStr;
+	            			effectedSegment.endIndex += entryStr.length;
+        				}
+        			}
+        		}	
+        		else{
+        			if (effectedSegment.permanentflag === true && segmentsArray[segmentLocation+1].permanentFlag === true){
+        				that.currentSegID += 1;
+        				var currentSeg = that.constructSegment(authorId, entryStr, that.currentSegID, that.currentSegID, 0, that.revID, startIndex, startIndex + entryStr.length - 1, "new segment and found the effected segment, between two permanentFlag === true", false);
+        				segmentsArray.insert(currentSeg, (segmentLocation+1) );
+
+			    		for (var i = (segmentLocation + 2); i < segmentsArray.length; i++) {
+					    	segmentsArray[i].startIndex += entryStr.length;
+					    	segmentsArray[i].endIndex += entryStr.length;
+			    		}
+        			}
+        			else if (effectedSegment.permanentflag === true && segmentsArray[segmentLocation+1].permanentFlag === false){
+        				if( segmentsArray[segmentLocation+1].authorId === authorId){
+	        				segmentsArray[segmentLocation+1].segStr = entryStr + segmentsArray[segmentLocation+1].segStr;
+		            		segmentsArray[segmentLocation+1].endIndex += entryStr.length;
+        		    		for (var i = (segmentLocation + 2); i < segmentsArray.length; i++) {
+        				    	segmentsArray[i].startIndex += entryStr.length;
+        				    	segmentsArray[i].endIndex += entryStr.length;
+        		    		}
+        				}
+        				else{
+	        				that.currentSegID += 1;
+	        				var currentSeg = that.constructSegment(authorId, entryStr, that.currentSegID, that.currentSegID, 0, that.revID, startIndex, startIndex + entryStr.length - 1, "new segment and found the effected segment, between two permanentFlag === true", false);
+	        				segmentsArray.insert(currentSeg, (segmentLocation+1) );
+
+				    		for (var i = (segmentLocation + 2); i < segmentsArray.length; i++) {
+						    	segmentsArray[i].startIndex += entryStr.length;
+						    	segmentsArray[i].endIndex += entryStr.length;
+				    		}
+        				}
+        			}
+        			else if (effectedSegment.permanentflag === false && segmentsArray[segmentLocation+1].permanentFlag === true) {
+        				if( effectedSegment.authorId === authorId){
+        					effectedSegment.segStr += entryStr;
+	            			effectedSegment.endIndex += entryStr.length;
+    			    		for (var i = (segmentLocation + 1); i < segmentsArray.length; i++) {
+    					    	segmentsArray[i].startIndex += entryStr.length;
+    					    	segmentsArray[i].endIndex += entryStr.length;
+    			    		}
+
+        				}
+        				else{
+	        				that.currentSegID += 1;
+	        				var currentSeg = that.constructSegment(authorId, entryStr, that.currentSegID, that.currentSegID, 0, that.revID, startIndex, startIndex + entryStr.length - 1, "new segment and found the effected segment, between two permanentFlag === true", false);
+	        				segmentsArray.insert(currentSeg, (segmentLocation+1) );
+
+				    		for (var i = (segmentLocation + 2); i < segmentsArray.length; i++) {
+						    	segmentsArray[i].startIndex += entryStr.length;
+						    	segmentsArray[i].endIndex += entryStr.length;
+				    		}
+        				}
+        			}
+        			else {
+
+
+        				if(effectedSegment.authorId ===authorId && segmentsArray[segmentLocation+1].authorId != authorId){
+
+				    		effectedSegment.segStr += entryStr;
+				    		effectedSegment.endIndex += entryStr.length;
+
+	    		    		for (var i = (segmentLocation + 1); i < segmentsArray.length; i++) {
+	    				    	segmentsArray[i].startIndex += entryStr.length;
+	    				    	segmentsArray[i].endIndex += entryStr.length;
+	    		    		}
+        				}
+        				else if (effectedSegment.authorId != authorId && segmentsArray[segmentLocation+1].authorId === authorId) {
+        					segmentsArray[segmentLocation+1].segStr = entryStr + segmentsArray[segmentLocation+1].segStr;
+        					segmentsArray[segmentLocation+1].endIndex += entryStr.length;
+				    		for (var i = (segmentLocation + 2); i < segmentsArray.length; i++) {
+						    	segmentsArray[i].startIndex += entryStr.length;
+						    	segmentsArray[i].endIndex += entryStr.length;
+				    		}
+        				}
+        				else if (effectedSegment.authorId != authorId && segmentsArray[segmentLocation+1].authorId != authorId) {
             				// create the new segment and update
             				that.currentSegID += 1;
-            				var currentSeg = that.constructSegment(authorId, entryStr, that.currentSegID, that.currentSegID, 0, that.revID, startIndex, startIndex + entryStr.length - 1, "new segment and found the effected segment, not the same author when segmentsArray[segmentLocation+1].permanentFlag === true", false);
+            				var currentSeg = that.constructSegment(authorId, entryStr, that.currentSegID, that.currentSegID, 0, that.revID, startIndex, startIndex + entryStr.length - 1, "new segment between two temporary but differentAuthor segments", false);
             				segmentsArray.insert(currentSeg, (segmentLocation+1) );
 
 				    		for (var i = (segmentLocation + 2); i < segmentsArray.length; i++) {
 						    	segmentsArray[i].startIndex += entryStr.length;
 						    	segmentsArray[i].endIndex += entryStr.length;
 				    		}
-            			}
-            			else {
-            				if(segmentsArray[segmentLocation+1].authorId != authorId){
-	            				// create the new segment and update
-	            				that.currentSegID += 1;
-	            				var currentSeg = that.constructSegment(authorId, entryStr, that.currentSegID, that.currentSegID, 0, that.revID, startIndex, startIndex + entryStr.length - 1, "new segment and found the effected segment, when segmentsArray[segmentLocation+1].authorId != authorId", false);
-	            				segmentsArray.insert(currentSeg, (segmentLocation+1) );
+        				}
+        				else {
+				    		effectedSegment.segStr += entryStr;
+				    		effectedSegment.endIndex += entryStr.length;
 
-					    		for (var i = (segmentLocation + 2); i < segmentsArray.length; i++) {
-							    	segmentsArray[i].startIndex += entryStr.length;
-							    	segmentsArray[i].endIndex += entryStr.length;
-					    		}
-            				}
-            				else {
-            					// add it to the begning of the next segment and update
-            					segmentsArray[segmentLocation+1].segStr = entryStr + segmentsArray[segmentLocation+1].segStr;
-            					segmentsArray[segmentLocation+1].endIndex += entryStr.length;
+	    		    		for (var i = (segmentLocation + 1); i < segmentsArray.length; i++) {
+	    				    	segmentsArray[i].startIndex += entryStr.length;
+	    				    	segmentsArray[i].endIndex += entryStr.length;
+	    		    		}
+        				}
+        			}
+        		}
+        		
 
-					    		for (var i = (segmentLocation + 2); i < segmentsArray.length; i++) {
-							    	segmentsArray[i].startIndex += entryStr.length;
-							    	segmentsArray[i].endIndex += entryStr.length;
-					    		}
-            				}
-            			}
-            		}
-            		
+        	}
+        	else if (effectedSegment.startIndex < startIndex && startIndex <= effectedSegment.endIndex) {
+        		if (effectedSegment.permanentflag === true) {
+        			var strBeforeStartIndex = effectedSegment.segStr.substring(0, startIndex - effectedSegment.startIndex);
+        			var strAfterStartIndex = effectedSegment.segStr.substring(startIndex - effectedSegment.startIndex);
+        			segmentsArray.delete(segmentLocation, segmentLocation);
+        			that.currentSegID += 1;
+        			var segBefore = that.constructSegment(effectedSegment.authorId, strBeforeStartIndex, that.currentSegID, effectedSegment.segID, 0, that.revID, effectedSegment.startIndex, (startIndex - 1), "from buildSegmentsWhenInsert Before when permanentFlag = true", true);
+        			segmentsArray.insert(segBefore, segmentLocation);
 
-            	}
-            	else if (effectedSegment.startIndex < startIndex && startIndex <= effectedSegment.endIndex) {
-
-            		var strBeforeStartIndex = effectedSegment.segStr.substring(0, startIndex - effectedSegment.startIndex);
-            		var strAfterStartIndex = effectedSegment.segStr.substring(startIndex - effectedSegment.startIndex);
-
-        		    segmentsArray.delete(segmentLocation, segmentLocation);
-
-        		    that.currentSegID += 1;
-        		    if (effectedSegment.permanentFlag === true) {
-        		        var segBefore = that.constructSegment(effectedSegment.authorId, strBeforeStartIndex, that.currentSegID, effectedSegment.segID, 0, that.revID, effectedSegment.startIndex, (startIndex - 1), "from buildSegmentsWhenInsert Before, authorId !=  effectedSegment.authorId, when permanentFlag = true", true);
-        		    } else {
-        		        var segBefore = that.constructSegment(effectedSegment.authorId, strBeforeStartIndex, that.currentSegID, effectedSegment.parentSegID, effectedSegment.offset, that.revID, effectedSegment.startIndex, (startIndex - 1), "from buildSegmentsWhenInsert Before, authorId !=  effectedSegment.authorId, when permanentFlag = false", false);
-        		    }
-
-        		    segmentsArray.insert(segBefore, segmentLocation);
-
-        		    that.currentSegID += 1;
-        		    var currentSeg = that.constructSegment(authorId, entryStr, that.currentSegID, that.currentSegID, 0, that.revID, startIndex, (startIndex + entryStr.length - 1), "new insert segment in the middle of the found effected segment", false);
-            		   
-            		segmentsArray.insert(currentSeg, (segmentLocation + 1) );
-        		    
-        		    that.currentSegID += 1;
-
-        		    var offset = startIndex - effectedSegment.startIndex;
-
-
-    		        if (effectedSegment.permanentFlag === true) {
-    		            var segAfter = that.constructSegment(effectedSegment.authorId, strAfterStartIndex, that.currentSegID, effectedSegment.segID, offset, that.revID, (startIndex + entryStr.length ), (effectedSegment.endIndex + entryStr.length), "from buildSegmentsWhenInsert After,  authorId !=  effectedSegment.authorId, when permanentFlag = true", true);
-    		        } else {
-    		            var segAfter = that.constructSegment(effectedSegment.authorId, strAfterStartIndex, that.currentSegID, effectedSegment.parentSegID, offset + effectedSegment.offset, that.revID, (startIndex + entryStr.length), (effectedSegment.endIndex + entryStr.length), "from buildSegmentsWhenInsert After, in authorId !=  effectedSegment.authorId when permanentFlag = false", false);
-    		        }
+				    that.currentSegID += 1;
+				    var currentSeg = that.constructSegment(authorId, entryStr, that.currentSegID, that.currentSegID, 0, that.revID, startIndex, (startIndex + entryStr.length - 1), "new insert segment in the middle of the found permanent effected segment", false);
+		    		segmentsArray.insert(currentSeg, (segmentLocation + 1) );
+				    
+				    that.currentSegID += 1;
+				    var offset = startIndex - effectedSegment.startIndex;
+				    var segAfter = that.constructSegment(effectedSegment.authorId, strAfterStartIndex, that.currentSegID, effectedSegment.segID, offset, that.revID, (startIndex + entryStr.length ), (effectedSegment.endIndex + entryStr.length), "from buildSegmentsWhenInsert After when permanentFlag = true", true);
     		        segmentsArray.insert(segAfter, (segmentLocation + 2) );
 
             		for (var i = (segmentLocation + 3); i < segmentsArray.length; i++) {
@@ -460,222 +603,46 @@ $.extend(window.docuviz, {
         		    	segmentsArray[i].endIndex += entryStr.length;
             		}
 
-            	}
-            	else{
-            		// shouldn't happen
-            	}
-            }
-            // when authorId === effectedSegment.authorId
-            else { 
-	        	if(effectedSegment.startIndex === startIndex){
-	        		if (startIndex === 0){
-	        			if (effectedSegment.permanentFlag === true){
-	        				that.currentSegID += 1;
-	        				var currentSeg = that.constructSegment(authorId, entryStr, that.currentSegID, that.currentSegID, 0, that.revID, startIndex, (startIndex + entryStr.length - 1), "new segment and found the effected segment, same author, when effectedSegment.startIndex === startIndex and startIndex === 0", false);
-	        				segmentsArray.insert(currentSeg, segmentLocation );
+        		}
+        		else{
+        			if(effectedSegment.authorId === authorId){
+        				var strBeforeStartIndex = effectedSegment.segStr.substring(0, startIndex - effectedSegment.startIndex);
+        				var strAfterStartIndex = effectedSegment.segStr.substring(startIndex - effectedSegment.startIndex);
+        				effectedSegment.segstr = strBeforeStartIndex + entryStr + strAfterStartIndex;
+        				effectedSegment.endIndex += entryStr.length;
+			    		for (var i = (segmentLocation + 1); i < segmentsArray.length; i++) {
+					    	segmentsArray[i].startIndex += entryStr.length;
+					    	segmentsArray[i].endIndex += entryStr.length;
+			    		}
+					}
+					else{
+	        			var strBeforeStartIndex = effectedSegment.segStr.substring(0, startIndex - effectedSegment.startIndex);
+	        			var strAfterStartIndex = effectedSegment.segStr.substring(startIndex - effectedSegment.startIndex);
+	        			segmentsArray.delete(segmentLocation, segmentLocation);
+	        			that.currentSegID += 1;
+	        			var segBefore = that.constructSegment(effectedSegment.authorId, strBeforeStartIndex, that.currentSegID, effectedSegment.segID, 0, that.revID, effectedSegment.startIndex, (startIndex - 1), "from buildSegmentsWhenInsert Before when permanentFlag = false, differentAuthor", false);
+	        			segmentsArray.insert(segBefore, segmentLocation);
 
-				    		for (var i = (segmentLocation + 1); i < segmentsArray.length; i++) {
-						    	segmentsArray[i].startIndex += entryStr.length;
-						    	segmentsArray[i].endIndex += entryStr.length;
-				    		}
-	        			}
-	        			else {
-	        				effectedSegment.segStr = entryStr + effectedSegment.segStr;
-		            		effectedSegment.endIndex += entryStr.length;
-
-				    		for (var i = (segmentLocation + 1); i < segmentsArray.length; i++) {
-						    	segmentsArray[i].startIndex += entryStr.length;
-						    	segmentsArray[i].endIndex += entryStr.length;
-				    		}
-	        			}
-	        		}
-	        		else if ( ((effectedSegment.endIndex+1) ===  startIndex )&& (segmentLocation === (segmentsArray.length-1 ))){
-	        			if (effectedSegment.permanentFlag === true){
-	        				that.currentSegID += 1;
-	        				var currentSeg = that.constructSegment(authorId, entryStr, that.currentSegID, that.currentSegID, 0, that.revID, startIndex, (startIndex + entryStr.length - 1), "new segment and found the effected segment, same author, when ((effectedSegment.endIndex+1) ===  startIndex )&& (segmentLocation === (segmentsArray.length-1 ))", false);
-	        				segmentsArray.insert(currentSeg, (segmentLocation+1) );
-
-	        			}
-	        			else {
-	        				effectedSegment.segStr += entryStr;
-		            		effectedSegment.endIndex += entryStr.length;
-	        			}
-	        		}
-	        		else{
-	        			if(effectedSegment.permanentFlag === true && segmentsArray[segmentLocation-1].permanentFlag === true){
-	        				that.currentSegID += 1;
-	        				var currentSeg = that.constructSegment(authorId, entryStr, that.currentSegID, that.currentSegID, 0, that.revID, startIndex, (startIndex + entryStr.length - 1), "new segment and found the effected segment", false);
-	        				segmentsArray.insert(currentSeg, segmentLocation );
-				    		for (var i = (segmentLocation + 1); i < segmentsArray.length; i++) {
-						    	segmentsArray[i].startIndex += entryStr.length;
-						    	segmentsArray[i].endIndex += entryStr.length;
-				    		}
-	        			}
-	        			else if (effectedSegment.permanentFlag === true && segmentsArray[segmentLocation-1].permanentFlag === false){
-	        				if (segmentsArray[segmentLocation-1].authorId === authorId){
-		        				segmentsArray[segmentLocation-1].segStr += entryStr;
-			            		segmentsArray[segmentLocation-1].endIndex += entryStr.length;
-            		    		for (var i = segmentLocation; i < segmentsArray.length; i++) {
-            				    	segmentsArray[i].startIndex += entryStr.length;
-            				    	segmentsArray[i].endIndex += entryStr.length;
-            		    		}
-	        				}
-	        				else{
-		        				that.currentSegID += 1;
-		        				var currentSeg = that.constructSegment(authorId, entryStr, that.currentSegID, that.currentSegID, 0, that.revID, startIndex, (startIndex + entryStr.length - 1), "new segment and found the effected segment", false);
-		        				segmentsArray.insert(currentSeg, segmentLocation );
-					    		for (var i = (segmentLocation + 1); i < segmentsArray.length; i++) {
-							    	segmentsArray[i].startIndex += entryStr.length;
-							    	segmentsArray[i].endIndex += entryStr.length;
-					    		}
-	        				}
-	        			}
-	        			else if (effectedSegment.permanentFlag === false && segmentsArray[segmentLocation-1].permanentFlag === true){
-	        				if (effectedSegment.authorId === authorId){
-		        				effectedSegment.segStr = entryStr + effectedSegment.segStr;
-			            		effectedSegment.endIndex += entryStr.length;
-            		    		for (var i = (segmentLocation + 1); i < segmentsArray.length; i++) {
-            				    	segmentsArray[i].startIndex += entryStr.length;
-            				    	segmentsArray[i].endIndex += entryStr.length;
-            		    		}
-	        				}
-	        				else{
-		        				that.currentSegID += 1;
-		        				var currentSeg = that.constructSegment(authorId, entryStr, that.currentSegID, that.currentSegID, 0, that.revID, startIndex, (startIndex + entryStr.length - 1), "new segment and found the effected segment", false);
-		        				segmentsArray.insert(currentSeg, segmentLocation );
-					    		for (var i = (segmentLocation + 1); i < segmentsArray.length; i++) {
-							    	segmentsArray[i].startIndex += entryStr.length;
-							    	segmentsArray[i].endIndex += entryStr.length;
-					    		}
-	        				}
-	        			}
-	        			else{
-	        				if (effectedSegment.authorId === authorId){
-		        				effectedSegment.segStr = entryStr + effectedSegment.segStr;
-			            		effectedSegment.endIndex += entryStr.length;
-            		    		for (var i = (segmentLocation + 1); i < segmentsArray.length; i++) {
-            				    	segmentsArray[i].startIndex += entryStr.length;
-            				    	segmentsArray[i].endIndex += entryStr.length;
-            		    		}
-	        				}
-	        				else {
-	        					console.log("should never happen");
-	        				}
-	        			}
-
-	        		}
-
-	        	}
-	        	else if (startIndex === (effectedSegment.endIndex + 1)){
-
-	        		if(segmentLocation === (segmentsArray.length-1)){
-	        			if (effectedSegment.permanentFlag === true){
-	        				// create a new
-	        				that.currentSegID += 1;
-	                        var currentSeg = that.constructSegment(authorId, entryStr, that.currentSegID, that.currentSegID, 0, that.revID, startIndex, (startIndex + entryStr.length - 1), "new segment and found the effected segment, same author, when startIndex === (effectedSegment.endIndex + 1), and egmentLocation === (segmentsArray.length-1), and effectedSegment.permanentFlag === true", false);
-
-		        		    segmentsArray.insert(currentSeg, (segmentLocation + 1) );
-
-			        		// for (var i = (segmentLocation + 2); i < segmentsArray.length; i++) {
-			    		    // 	segmentsArray[i].startIndex += entryStr.length;
-			    		    // 	segmentsArray[i].endIndex += entryStr.length;
-			        		// }
-	        			}
-	        			else {
-	        				// add string to the end
-	        				effectedSegment.segStr += entryStr;
-	        				effectedSegment.endIndex += entryStr.length;
-	        			}
-	        		}
-	        		else {
-	        			if (effectedSegment.permanentFlag === true){
-	        				if (segmentsArray[segmentLocation+1].permanentFlag === true){
-	        					// create a new
-		        				that.currentSegID += 1;
-		                        var currentSeg = that.constructSegment(authorId, entryStr, that.currentSegID, that.currentSegID, 0, that.revID, startIndex, (startIndex + entryStr.length - 1), "new segment and found the effected segment, same author, when startIndex === (effectedSegment.endIndex + 1), and egmentLocation != (segmentsArray.length-1), and segmentsArray[segmentLocation+1].permanentFlag === true", false);
-
-			        		    segmentsArray.insert(currentSeg, (segmentLocation + 1) );
-
-				        		for (var i = (segmentLocation + 2); i < segmentsArray.length; i++) {
-				    		    	segmentsArray[i].startIndex += entryStr.length;
-				    		    	segmentsArray[i].endIndex += entryStr.length;
-				        		}
-	        				}
-	        				else {
-	        					if (segmentsArray[segmentLocation+1].authorId === authorId){
-	        						// add str to the begining of the next segment
-	        						segmentsArray[segmentLocation+1].segStr = entryStr + segmentsArray[segmentLocation+1].segStr;
-	        						segmentsArray[segmentLocation+1].endIndex += entryStr.length;
-						    		for (var i = (segmentLocation + 2); i < segmentsArray.length; i++) {
-								    	segmentsArray[i].startIndex += entryStr.length;
-								    	segmentsArray[i].endIndex += entryStr.length;
-						    		}
-	        					}
-	        					else{
-	        						// create a new
-			        				that.currentSegID += 1;
-			                        var currentSeg = that.constructSegment(authorId, entryStr, that.currentSegID, that.currentSegID, 0, that.revID, startIndex, (startIndex + entryStr.length - 1), "new segment and found the effected segment, same author, when startIndex === (effectedSegment.endIndex + 1), and egmentLocation != (segmentsArray.length-1), and segmentsArray[segmentLocation+1].authorId === authorId), and segmentsArray[segmentLocation+1].permanentFlag === false", false);
-
-				        		    segmentsArray.insert(currentSeg, (segmentLocation + 1) );
-
-					        		for (var i = (segmentLocation + 2); i < segmentsArray.length; i++) {
-					    		    	segmentsArray[i].startIndex += entryStr.length;
-					    		    	segmentsArray[i].endIndex += entryStr.length;
-					        		}
-	        					}
-	        				}
-	        			}
-	        			else {
-	        				// add string to the end
-	        				effectedSegment.segStr += entryStr;
-	        				effectedSegment.endIndex += entryStr.length;
-				    		for (var i = (segmentLocation + 1); i < segmentsArray.length; i++) {
-						    	segmentsArray[i].startIndex += entryStr.length;
-						    	segmentsArray[i].endIndex += entryStr.length;
-				    		}
-	        			}
-	        		}
-	        	}
-	        	else if (effectedSegment.startIndex < startIndex && startIndex <= effectedSegment.endIndex) {
-	        		if (effectedSegment.permanentFlag === true) {
-	            		var strBeforeStartIndex = effectedSegment.segStr.substring(0, startIndex - effectedSegment.startIndex);
-	            		var strAfterStartIndex = effectedSegment.segStr.substring(startIndex - effectedSegment.startIndex);
-
-	        		    segmentsArray.delete(segmentLocation, segmentLocation);
-
-	        		    that.currentSegID += 1;
-	        		    var segBefore = that.constructSegment(effectedSegment.authorId, strBeforeStartIndex, that.currentSegID, effectedSegment.segID, 0, that.revID, effectedSegment.startIndex, (startIndex - 1), "from buildSegmentsWhenInsert Before, authorId !=  effectedSegment.authorId, when permanentFlag = true", true);
-	        		    segmentsArray.insert(segBefore, segmentLocation);
-
-	        		    that.currentSegID += 1;
-                        var currentSeg = that.constructSegment(authorId, entryStr, that.currentSegID, that.currentSegID, 0, that.revID, startIndex, (startIndex + entryStr.length - 1), "new segment and found the effected segment, same author, when effectedSegment.startIndex < startIndex && startIndex <= effectedSegment.endIndex", false);
-
-	            		segmentsArray.insert(currentSeg, (segmentLocation + 1) );
-	        		    
-	        		    that.currentSegID += 1;
-	        		    var offset = startIndex - effectedSegment.startIndex;
-    		            var segAfter = that.constructSegment(effectedSegment.authorId, strAfterStartIndex, that.currentSegID, effectedSegment.segID, offset, that.revID, (startIndex + entryStr.length ), (effectedSegment.endIndex + entryStr.length), "from buildSegmentsWhenInsert After,  authorId !=  effectedSegment.authorId, when permanentFlag = true", true);
+					    that.currentSegID += 1;
+					    var currentSeg = that.constructSegment(authorId, entryStr, that.currentSegID, that.currentSegID, 0, that.revID, startIndex, (startIndex + entryStr.length - 1), "new insert segment in the middle of the found temporary, differentAuthor effected segment", false);
+			    		segmentsArray.insert(currentSeg, (segmentLocation + 1) );
+					    
+					    that.currentSegID += 1;
+					    var offset = startIndex - effectedSegment.startIndex;
+					    var segAfter = that.constructSegment(effectedSegment.authorId, strAfterStartIndex, that.currentSegID, effectedSegment.segID, offset, that.revID, (startIndex + entryStr.length ), (effectedSegment.endIndex + entryStr.length), "from buildSegmentsWhenInsert After when permanentFlag = false, differentAuthor", false);
 	    		        segmentsArray.insert(segAfter, (segmentLocation + 2) );
 
 	            		for (var i = (segmentLocation + 3); i < segmentsArray.length; i++) {
 	        		    	segmentsArray[i].startIndex += entryStr.length;
 	        		    	segmentsArray[i].endIndex += entryStr.length;
 	            		}
+					}
+        		}
 
-	        		} else {
-	        			effectedSegment.segStr = effectedSegment.segStr.insert( (startIndex - effectedSegment.startIndex), entryStr);
-	        			effectedSegment.endIndex += entryStr.length;
-
-			    		for (var i = (segmentLocation + 1); i < segmentsArray.length; i++) {
-					    	segmentsArray[i].startIndex += entryStr.length;
-					    	segmentsArray[i].endIndex += entryStr.length;
-			    		}
-	        		}
-	        	}
-	        	else {
-	        		//shouldn't happend
-	        	}
-            }
+        	}
+        	else{
+        		// shouldn't happen
+        	}
         }
 
         return segmentsArray;
