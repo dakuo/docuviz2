@@ -124,15 +124,15 @@ $.extend(window.docuviz, {
             that.str.delete(deleteStartIndex, deleteEndIndex);
             that.allSegmentsInCurrentRev = that.buildSegmentsWhenDelete(deleteStartIndex, deleteEndIndex, authorId, that.allSegmentsInCurrentRev);
         }
-        else if (type === 'as' && entry.st === 'paragraph'){
-            insertStartIndex = entry.si -1;
-            that.allSegmentsInCurrentRev = that.buildSegmentsWhenInsert(' ', insertStartIndex, authorId, that.allSegmentsInCurrentRev);
-            var charObj = {
-                s: ' ',
-                aid: authorId
-            };
-            that.str.insert(charObj, insertStartIndex);  
-        }
+        // else if (type === 'as' && entry.st === 'paragraph'){
+        //     insertStartIndex = entry.si -1;
+        //     that.allSegmentsInCurrentRev = that.buildSegmentsWhenInsert('', insertStartIndex, authorId, that.allSegmentsInCurrentRev);
+        //     var charObj = {
+        //         s: ' ',
+        //         aid: authorId
+        //     };
+        //     that.str.insert(charObj, insertStartIndex);  
+        // }
         else {
 
         	// all other types such as AS (formatting)
@@ -193,7 +193,7 @@ $.extend(window.docuviz, {
         	console.log("Check point 1");
         }
 
-        console.log(intervalChangesIndex);
+        // console.log(intervalChangesIndex);
 
         // Async run through each entry in a synchronous sequence.
         async.eachSeries(changelog, function(entry, callBack) {
@@ -247,7 +247,7 @@ $.extend(window.docuviz, {
                     if (soFar === (editCount-1) ) {
                     	// calculate the revision's contributions, edit Nov 02, 2015 by Kenny
                     	var revDataWithContribution = that.calculateRevContribution(revsForFrontend, authors);
-                        console.log(that.allSegmentsInCurrentRev);
+                        // console.log(that.allSegmentsInCurrentRev);
                     	chrome.tabs.query({
                     	    url: '*://docs.google.com/*/' + docId + '/edit*'
                     	}, function(tabs) {
@@ -324,7 +324,6 @@ $.extend(window.docuviz, {
                     if (index === 0){
                         segmentLocation = index;
                         return eachSegment;
-            			
                     }
                     else {
                     	segmentLocation = (index-1);
@@ -342,13 +341,21 @@ $.extend(window.docuviz, {
 		// meaning, the segmentsArray is empty
         if (effectedSegment === undefined) {
             that.currentSegID += 1;
-            if (entryStr.length === 0){ // When an author inserts nothing right at the begining, which made the endIndex to be -1. This statement solve that problem, endIndex when be 0.
-                var currentSeg = that.constructSegment(authorId, entryStr, that.currentSegID, that.currentSegID, 0, that.revID, startIndex, (startIndex + entryStr.length), "new segment because of no previous segment when entryStr.length === 0", false);
+            if (segmentsArray.length === 0) {
+            	if (entryStr.length === 0){ // When an author inserts nothing right at the begining, which made the endIndex to be -1. This statement solve that problem, endIndex when be 0.
+            	    var currentSeg = that.constructSegment(authorId, entryStr, that.currentSegID, that.currentSegID, 0, that.revID, startIndex, (startIndex + entryStr.length), "new segment because of no previous segment when entryStr.length === 0", false);
+            	}
+            	else{
+            	    var currentSeg = that.constructSegment(authorId, entryStr, that.currentSegID, that.currentSegID, 0, that.revID, startIndex, (startIndex + entryStr.length - 1), "new segment because of no previous segment", false);    
+            	}
+            	segmentsArray.insert(currentSeg,segmentsArray.length);
             }
+            // has something in the array but couldn't find the effected, because the comment insert at the end+1
             else{
-                var currentSeg = that.constructSegment(authorId, entryStr, that.currentSegID, that.currentSegID, 0, that.revID, startIndex, (startIndex + entryStr.length - 1), "new segment because of no previous segment", false);    
+            	var currentSeg = that.constructSegment(authorId, entryStr, that.currentSegID, that.currentSegID, 0, that.revID, (segmentsArray[(segmentsArray.length-1)].endIndex+1), ((segmentsArray[(segmentsArray.length-1)].endIndex+1) + entryStr.length - 1), "new segment because of no previous segment", false);    
+            	
+            	segmentsArray.insert(currentSeg,segmentsArray.length);
             }
-            segmentsArray.insert(currentSeg,0);
         } 
 
         
@@ -480,9 +487,7 @@ $.extend(window.docuviz, {
 	        }
             	
         	else if (startIndex === (effectedSegment.endIndex + 1)){
-                console.log("segmentLocation: " + segmentLocation);
-                console.log(segmentsArray.length);
-                console.log(effectedSegment);
+
         		if (segmentLocation ===  (segmentsArray.length-1)){
         			if (effectedSegment.permanentflag === true){
 	        			that.currentSegID += 1;
@@ -490,7 +495,7 @@ $.extend(window.docuviz, {
 	        			segmentsArray.insert(currentSeg, (segmentLocation+1) );
         			}
         			else{
-                        console.log("entryStr: " + entryStr);
+                        
         				if (effectedSegment.authorId != authorId){
         					that.currentSegID += 1;
         					var currentSeg = that.constructSegment(authorId, entryStr, that.currentSegID, that.currentSegID, 0, that.revID, startIndex, startIndex + entryStr.length - 1, "new segment and found the effected segment, not the same author when segmentLocation ===  (segmentsArray.length-1)", false);
@@ -537,9 +542,7 @@ $.extend(window.docuviz, {
         				if( effectedSegment.authorId === authorId){
         					effectedSegment.segStr += entryStr;
 	            			effectedSegment.endIndex += entryStr.length;
-                            console.log("entryStr: " + entryStr);
-                            console.log("startIndex: " + segmentsArray[i+1].startIndex);
-                            console.log("endIndex: " + segmentsArray[i+1].endIndex);
+
     			    		for (var i = (segmentLocation + 1); i < segmentsArray.length; i++) {
     					    	segmentsArray[i].startIndex += entryStr.length;
     					    	segmentsArray[i].endIndex += entryStr.length;
@@ -725,6 +728,7 @@ $.extend(window.docuviz, {
             	// BUG
 
                 effectedSegmentOfDelete = _.find(segmentsArray, function(eachSegment, index) {
+
                     if (eachSegment.startIndex === deleteIndex ) {
                     	if (eachSegment.startIndex === eachSegment.endIndex) {
                     		
@@ -842,7 +846,7 @@ $.extend(window.docuviz, {
 
                     		// create a new segment with offset
                     		that.currentSegID += 1;
-                    		var segAfter  = that.constructSegment(eachSegment.authorId, strAfterDelete, that.currentSegID, eachSegment.segID, (deleteIndex + 1 ), that.revID, deleteIndex, (eachSegment.endIndex - 1), "", true);
+                    		var segAfter  = that.constructSegment(eachSegment.authorId, strAfterDelete, that.currentSegID, eachSegment.segID, (deleteIndex - eachSegment.startIndex + 1 ), that.revID, deleteIndex, (eachSegment.endIndex - 1), "", true);
                     		segmentsArray.insert(segAfter, (index+1) );
 
                     		// updates all the following segments
@@ -871,13 +875,11 @@ $.extend(window.docuviz, {
                     }
 
                 });
-
             }
-
             else{
                 console.log("This should never happen, segmentsArray is null,  buildSegmentsWhenDelete when deleteStartIndex === deleteEndIndex");
             }
-        } 
+        }
         else { // when deleteStartIndex != deleteEndIndex
 
         	var deleteStartSegmentLocation = null;
@@ -1038,10 +1040,6 @@ $.extend(window.docuviz, {
         		}
         		// not within one segment, across multiple segments
         		else {
-					console.log("deleteStartIndex, deleteEndIndex;" + deleteStartIndex+ "," +deleteEndIndex);
-					console.log(effectedSegmentOfDeleteStart);
-					console.log(effectedSegmentOfDeleteEnd);
-                    //console.log(segmentsArray);
 
 					if(deleteStartIndex > effectedSegmentOfDeleteStart.startIndex && deleteEndIndex < effectedSegmentOfDeleteEnd.endIndex){
 						var strBeforeDelete = effectedSegmentOfDeleteStart.segStr.substring(0, (deleteStartIndex - effectedSegmentOfDeleteStart.startIndex)); // = substring(0,end-1)
