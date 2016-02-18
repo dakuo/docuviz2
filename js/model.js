@@ -124,7 +124,17 @@ $.extend(window.docuviz, {
             that.str.delete(deleteStartIndex, deleteEndIndex);
             that.allSegmentsInCurrentRev = that.buildSegmentsWhenDelete(deleteStartIndex, deleteEndIndex, authorId, that.allSegmentsInCurrentRev);
         }
+        else if (type === 'as' && entry.st === 'paragraph'){
+            insertStartIndex = entry.si -1;
+            that.allSegmentsInCurrentRev = that.buildSegmentsWhenInsert(' ', insertStartIndex, authorId, that.allSegmentsInCurrentRev);
+            var charObj = {
+                s: ' ',
+                aid: authorId
+            };
+            that.str.insert(charObj, insertStartIndex);  
+        }
         else {
+
         	// all other types such as AS (formatting)
         }
 
@@ -183,6 +193,8 @@ $.extend(window.docuviz, {
         	console.log("Check point 1");
         }
 
+        console.log(intervalChangesIndex);
+
         // Async run through each entry in a synchronous sequence.
         async.eachSeries(changelog, function(entry, callBack) {
             authorId = entry[2],
@@ -232,10 +244,10 @@ $.extend(window.docuviz, {
 
 
                     // reaching the end of changelog, calculate the contributions and push it to frontend
-                    if (soFar === (editCount - 1) ) {
+                    if (soFar === (editCount-1) ) {
                     	// calculate the revision's contributions, edit Nov 02, 2015 by Kenny
                     	var revDataWithContribution = that.calculateRevContribution(revsForFrontend, authors);
-
+                        console.log(that.allSegmentsInCurrentRev);
                     	chrome.tabs.query({
                     	    url: '*://docs.google.com/*/' + docId + '/edit*'
                     	}, function(tabs) {
@@ -275,51 +287,56 @@ $.extend(window.docuviz, {
         var segmentLocation = null;
 
         if(segmentsArray != null){ // it shouldn't be, it could be empty, but not null.
+            
 	        effectedSegment = _.find(segmentsArray, function(eachSegment, index) {
 	        	if (eachSegment.startIndex < startIndex && startIndex <= eachSegment.endIndex) {
 	                segmentLocation = index;
 	                return eachSegment;
 	            }
+                else if (startIndex === eachSegment.startIndex) {
+                    // if (index === 0 ){
+                    //  segmentLocation = index;
+                    //  return eachSegment;
+                    // }
+                    // else {
+                    //  if (segmentsArray[index-1].permanentFlag === true){
+                    //      segmentLocation = index;
+                    //      return eachSegment;
+                    //  }
+                    //  else if ( (segmentsArray[index-1].permanentFlag === false) && (segmentsArray[index-1].authorId != authorId) ){
+                    //      segmentLocation = index;
+                    //      return eachSegment;
+                    //  }
+                    //  else if ( (segmentsArray[index-1].permanentFlag === false) && (segmentsArray[index-1].authorId === authorId) ) {
+                    //      segmentLocation = (index - 1);
+                    //      return segmentsArray[index-1];
+                    //  }
+                    //  else {
+              //               // will never happen
+                    //  }
+                    // }
+                    segmentLocation = index;
+                    return eachSegment;
+                    
+                }
 	            else if (startIndex === (eachSegment.endIndex + 1) ){
-	            	if (index != (segmentsArray.length - 1 )){
-            			segmentLocation = index+1;
-            		    return segmentsArray[segmentLocation];
+	            	// if (index === (segmentsArray.length - 1 )){
+                    if (index === 0){
+                        segmentLocation = index;
+                        return eachSegment;
+            			
                     }
                     else {
-                    	segmentLocation = index;
+                    	segmentLocation = (index-1);
                         return segmentsArray[segmentLocation];
                     }
 	            }
-	            else if (startIndex === eachSegment.startIndex) {
-	            	// if (index === 0 ){
-	            	// 	segmentLocation = index;
-	            	// 	return eachSegment;
-	            	// }
-	            	// else {
-	            	// 	if (segmentsArray[index-1].permanentFlag === true){
-	            	// 		segmentLocation = index;
-	            	// 		return eachSegment;
-	            	// 	}
-	            	// 	else if ( (segmentsArray[index-1].permanentFlag === false) && (segmentsArray[index-1].authorId != authorId) ){
-	            	// 		segmentLocation = index;
-	            	// 		return eachSegment;
-	            	// 	}
-	            	// 	else if ( (segmentsArray[index-1].permanentFlag === false) && (segmentsArray[index-1].authorId === authorId) ) {
-	            	// 		segmentLocation = (index - 1);
-	            	// 		return segmentsArray[index-1];
-	            	// 	}
-	            	// 	else {
-              //               // will never happen
-	            	// 	}
-	            	// }
-            		segmentLocation = index;
-            	    return segmentsArray[segmentLocation];
-	            	
-	            }
+
 	            else {
 	            	// do nothing, keep looking
 	            }
 	        });
+            
 		}
 
 		// meaning, the segmentsArray is empty
@@ -331,7 +348,7 @@ $.extend(window.docuviz, {
             else{
                 var currentSeg = that.constructSegment(authorId, entryStr, that.currentSegID, that.currentSegID, 0, that.revID, startIndex, (startIndex + entryStr.length - 1), "new segment because of no previous segment", false);    
             }
-            segmentsArray.insert(currentSeg,segmentsArray.length);
+            segmentsArray.insert(currentSeg,0);
         } 
 
         
@@ -463,7 +480,9 @@ $.extend(window.docuviz, {
 	        }
             	
         	else if (startIndex === (effectedSegment.endIndex + 1)){
-
+                console.log("segmentLocation: " + segmentLocation);
+                console.log(segmentsArray.length);
+                console.log(effectedSegment);
         		if (segmentLocation ===  (segmentsArray.length-1)){
         			if (effectedSegment.permanentflag === true){
 	        			that.currentSegID += 1;
@@ -471,6 +490,7 @@ $.extend(window.docuviz, {
 	        			segmentsArray.insert(currentSeg, (segmentLocation+1) );
         			}
         			else{
+                        console.log("entryStr: " + entryStr);
         				if (effectedSegment.authorId != authorId){
         					that.currentSegID += 1;
         					var currentSeg = that.constructSegment(authorId, entryStr, that.currentSegID, that.currentSegID, 0, that.revID, startIndex, startIndex + entryStr.length - 1, "new segment and found the effected segment, not the same author when segmentLocation ===  (segmentsArray.length-1)", false);
@@ -517,6 +537,9 @@ $.extend(window.docuviz, {
         				if( effectedSegment.authorId === authorId){
         					effectedSegment.segStr += entryStr;
 	            			effectedSegment.endIndex += entryStr.length;
+                            console.log("entryStr: " + entryStr);
+                            console.log("startIndex: " + segmentsArray[i+1].startIndex);
+                            console.log("endIndex: " + segmentsArray[i+1].endIndex);
     			    		for (var i = (segmentLocation + 1); i < segmentsArray.length; i++) {
     					    	segmentsArray[i].startIndex += entryStr.length;
     					    	segmentsArray[i].endIndex += entryStr.length;
@@ -535,8 +558,6 @@ $.extend(window.docuviz, {
         				}
         			}
         			else {
-
-
         				if(effectedSegment.authorId ===authorId && segmentsArray[segmentLocation+1].authorId != authorId){
 
 				    		effectedSegment.segStr += entryStr;
@@ -582,60 +603,99 @@ $.extend(window.docuviz, {
         	}
         	else if (effectedSegment.startIndex < startIndex && startIndex <= effectedSegment.endIndex) {
         		if (effectedSegment.permanentflag === true) {
-        			var strBeforeStartIndex = effectedSegment.segStr.substring(0, startIndex - effectedSegment.startIndex);
-        			var strAfterStartIndex = effectedSegment.segStr.substring(startIndex - effectedSegment.startIndex);
-        			segmentsArray.delete(segmentLocation, segmentLocation);
-        			that.currentSegID += 1;
-        			var segBefore = that.constructSegment(effectedSegment.authorId, strBeforeStartIndex, that.currentSegID, effectedSegment.segID, 0, that.revID, effectedSegment.startIndex, (startIndex - 1), "from buildSegmentsWhenInsert Before when permanentFlag = true", true);
-        			segmentsArray.insert(segBefore, segmentLocation);
+                    if (effectedSegment.startIndex === effectedSegment.endIndex){
+                        that.currentSegID += 1;
+                        var currentSeg = that.constructSegment(authorId, entryStr, that.currentSegID, that.currentSegID, 0, that.revID, startIndex, (startIndex + entryStr.length - 1), "new insert segment in the middle of the found permanent effected segment", false);
+                        segmentsArray.insert(currentSeg, (segmentLocation) );
+                        for (var i = (segmentLocation + 1); i < segmentsArray.length; i++) {
+                            segmentsArray[i].startIndex += entryStr.length;
+                            segmentsArray[i].endIndex += entryStr.length;
+                        }
+                    }
 
-				    that.currentSegID += 1;
-				    var currentSeg = that.constructSegment(authorId, entryStr, that.currentSegID, that.currentSegID, 0, that.revID, startIndex, (startIndex + entryStr.length - 1), "new insert segment in the middle of the found permanent effected segment", false);
-		    		segmentsArray.insert(currentSeg, (segmentLocation + 1) );
-				    
-				    that.currentSegID += 1;
-				    var offset = startIndex - effectedSegment.startIndex;
-				    var segAfter = that.constructSegment(effectedSegment.authorId, strAfterStartIndex, that.currentSegID, effectedSegment.segID, offset, that.revID, (startIndex + entryStr.length ), (effectedSegment.endIndex + entryStr.length), "from buildSegmentsWhenInsert After when permanentFlag = true", true);
-    		        segmentsArray.insert(segAfter, (segmentLocation + 2) );
+                    else{
 
-            		for (var i = (segmentLocation + 3); i < segmentsArray.length; i++) {
-        		    	segmentsArray[i].startIndex += entryStr.length;
-        		    	segmentsArray[i].endIndex += entryStr.length;
-            		}
+            			var strBeforeStartIndex = effectedSegment.segStr.substring(0, startIndex - effectedSegment.startIndex);
+            			var strAfterStartIndex = effectedSegment.segStr.substring(startIndex - effectedSegment.startIndex);
+            			segmentsArray.delete(segmentLocation, segmentLocation);
+            			that.currentSegID += 1;
+            			var segBefore = that.constructSegment(effectedSegment.authorId, strBeforeStartIndex, that.currentSegID, effectedSegment.segID, 0, that.revID, effectedSegment.startIndex, (startIndex - 1), "from buildSegmentsWhenInsert Before when permanentFlag = true", true);
+            			segmentsArray.insert(segBefore, segmentLocation);
+
+    				    that.currentSegID += 1;
+    				    var currentSeg = that.constructSegment(authorId, entryStr, that.currentSegID, that.currentSegID, 0, that.revID, startIndex, (startIndex + entryStr.length - 1), "new insert segment in the middle of the found permanent effected segment", false);
+    		    		segmentsArray.insert(currentSeg, (segmentLocation + 1) );
+    				    
+    				    that.currentSegID += 1;
+    				    var offset = startIndex - effectedSegment.startIndex;
+    				    var segAfter = that.constructSegment(effectedSegment.authorId, strAfterStartIndex, that.currentSegID, effectedSegment.segID, offset, that.revID, (startIndex + entryStr.length ), (effectedSegment.endIndex + entryStr.length), "from buildSegmentsWhenInsert After when permanentFlag = true", true);
+        		        segmentsArray.insert(segAfter, (segmentLocation + 2) );
+
+                		for (var i = (segmentLocation + 3); i < segmentsArray.length; i++) {
+            		    	segmentsArray[i].startIndex += entryStr.length;
+            		    	segmentsArray[i].endIndex += entryStr.length;
+                		}
+
+                    }
 
         		}
         		else{
         			if(effectedSegment.authorId === authorId){
-        				var strBeforeStartIndex = effectedSegment.segStr.substring(0, startIndex - effectedSegment.startIndex);
-        				var strAfterStartIndex = effectedSegment.segStr.substring(startIndex - effectedSegment.startIndex);
-        				effectedSegment.segstr = strBeforeStartIndex + entryStr + strAfterStartIndex;
-        				effectedSegment.endIndex += entryStr.length;
-			    		for (var i = (segmentLocation + 1); i < segmentsArray.length; i++) {
-					    	segmentsArray[i].startIndex += entryStr.length;
-					    	segmentsArray[i].endIndex += entryStr.length;
-			    		}
+                        if (effectedSegment.startIndex === effectedSegment.endIndex){
+                            effectedSegment.segStr = entryStr + effectedSegment.segStr;
+                            effectedSegment.endIndex += entryStr.length;
+                            for (var i = (segmentLocation + 1); i < segmentsArray.length; i++) {
+                                segmentsArray[i].startIndex += entryStr.length;
+                                segmentsArray[i].endIndex += entryStr.length;
+                            }
+                        }
+
+                        else{
+            				var strBeforeStartIndex = effectedSegment.segStr.substring(0, startIndex - effectedSegment.startIndex);
+            				var strAfterStartIndex = effectedSegment.segStr.substring(startIndex - effectedSegment.startIndex);
+            				effectedSegment.segStr = strBeforeStartIndex + entryStr + strAfterStartIndex;
+            				effectedSegment.endIndex += entryStr.length;
+    			    		for (var i = (segmentLocation + 1); i < segmentsArray.length; i++) {
+    					    	segmentsArray[i].startIndex += entryStr.length;
+    					    	segmentsArray[i].endIndex += entryStr.length;
+    			    		}
+                        }
 					}
 					else{
-	        			var strBeforeStartIndex = effectedSegment.segStr.substring(0, startIndex - effectedSegment.startIndex);
-	        			var strAfterStartIndex = effectedSegment.segStr.substring(startIndex - effectedSegment.startIndex);
-	        			segmentsArray.delete(segmentLocation, segmentLocation);
-	        			that.currentSegID += 1;
-	        			var segBefore = that.constructSegment(effectedSegment.authorId, strBeforeStartIndex, that.currentSegID, effectedSegment.segID, 0, that.revID, effectedSegment.startIndex, (startIndex - 1), "from buildSegmentsWhenInsert Before when permanentFlag = false, differentAuthor", false);
-	        			segmentsArray.insert(segBefore, segmentLocation);
+                        if (effectedSegment.startIndex === effectedSegment.endIndex){
+                            that.currentSegID += 1;
+                            var currentSeg = that.constructSegment(authorId, entryStr, that.currentSegID, that.currentSegID, 0, that.revID, startIndex, (startIndex + entryStr.length - 1), "new insert segment in the middle of the found temporary, differentAuthor effected segment", false);
+                            segmentsArray.insert(currentSeg, (segmentLocation) );
 
-					    that.currentSegID += 1;
-					    var currentSeg = that.constructSegment(authorId, entryStr, that.currentSegID, that.currentSegID, 0, that.revID, startIndex, (startIndex + entryStr.length - 1), "new insert segment in the middle of the found temporary, differentAuthor effected segment", false);
-			    		segmentsArray.insert(currentSeg, (segmentLocation + 1) );
-					    
-					    that.currentSegID += 1;
-					    var offset = startIndex - effectedSegment.startIndex;
-					    var segAfter = that.constructSegment(effectedSegment.authorId, strAfterStartIndex, that.currentSegID, effectedSegment.segID, offset, that.revID, (startIndex + entryStr.length ), (effectedSegment.endIndex + entryStr.length), "from buildSegmentsWhenInsert After when permanentFlag = false, differentAuthor", false);
-	    		        segmentsArray.insert(segAfter, (segmentLocation + 2) );
+                            for (var i = (segmentLocation + 1); i < segmentsArray.length; i++) {
+                                segmentsArray[i].startIndex += entryStr.length;
+                                segmentsArray[i].endIndex += entryStr.length;
+                            }
+                        }
 
-	            		for (var i = (segmentLocation + 3); i < segmentsArray.length; i++) {
-	        		    	segmentsArray[i].startIndex += entryStr.length;
-	        		    	segmentsArray[i].endIndex += entryStr.length;
-	            		}
+
+                        else {
+    	        			var strBeforeStartIndex = effectedSegment.segStr.substring(0, startIndex - effectedSegment.startIndex);
+    	        			var strAfterStartIndex = effectedSegment.segStr.substring(startIndex - effectedSegment.startIndex);
+    	        			segmentsArray.delete(segmentLocation, segmentLocation);
+    	        			that.currentSegID += 1;
+    	        			var segBefore = that.constructSegment(effectedSegment.authorId, strBeforeStartIndex, that.currentSegID, effectedSegment.segID, 0, that.revID, effectedSegment.startIndex, (startIndex - 1), "from buildSegmentsWhenInsert Before when permanentFlag = false, differentAuthor", false);
+    	        			segmentsArray.insert(segBefore, segmentLocation);
+
+    					    that.currentSegID += 1;
+    					    var currentSeg = that.constructSegment(authorId, entryStr, that.currentSegID, that.currentSegID, 0, that.revID, startIndex, (startIndex + entryStr.length - 1), "new insert segment in the middle of the found temporary, differentAuthor effected segment", false);
+    			    		segmentsArray.insert(currentSeg, (segmentLocation + 1) );
+    					    
+    					    that.currentSegID += 1;
+    					    var offset = startIndex - effectedSegment.startIndex;
+    					    var segAfter = that.constructSegment(effectedSegment.authorId, strAfterStartIndex, that.currentSegID, effectedSegment.segID, offset, that.revID, (startIndex + entryStr.length ), (effectedSegment.endIndex + entryStr.length), "from buildSegmentsWhenInsert After when permanentFlag = false, differentAuthor", false);
+    	    		        segmentsArray.insert(segAfter, (segmentLocation + 2) );
+
+    	            		for (var i = (segmentLocation + 3); i < segmentsArray.length; i++) {
+    	        		    	segmentsArray[i].startIndex += entryStr.length;
+    	        		    	segmentsArray[i].endIndex += entryStr.length;
+    	            		}
+                        }
 					}
         		}
 
@@ -981,7 +1041,7 @@ $.extend(window.docuviz, {
 					console.log("deleteStartIndex, deleteEndIndex;" + deleteStartIndex+ "," +deleteEndIndex);
 					console.log(effectedSegmentOfDeleteStart);
 					console.log(effectedSegmentOfDeleteEnd);
-                    console.log(segmentsArray);
+                    //console.log(segmentsArray);
 
 					if(deleteStartIndex > effectedSegmentOfDeleteStart.startIndex && deleteEndIndex < effectedSegmentOfDeleteEnd.endIndex){
 						var strBeforeDelete = effectedSegmentOfDeleteStart.segStr.substring(0, (deleteStartIndex - effectedSegmentOfDeleteStart.startIndex)); // = substring(0,end-1)
