@@ -754,7 +754,7 @@ $.extend(window.docuviz, {
 
 	                    		// create a new segment with offset
 	                    		that.currentSegID += 1;
-	                    		var segAfter  = that.constructSegment(eachSegment.authorId, strAfterDelete, that.currentSegID, eachSegment.segID, 1, that.revID, eachSegment.startIndex, (eachSegment.endIndex - 1), "", true);
+	                    		var segAfter  = that.constructSegment(eachSegment.authorId, strAfterDelete, that.currentSegID, eachSegment.segID, 1, that.revID, eachSegment.startIndex, (eachSegment.endIndex - 1), " segAfter when eleteStartIndex === deleteEndIndex, permanentflag = true", true);
 	                    		segmentsArray.insert(segAfter, index);
 
 	                    		// updates all the following segments's start and end index
@@ -805,7 +805,7 @@ $.extend(window.docuviz, {
 
 	                    		// create a new segment with offset
 	                    		that.currentSegID += 1;
-	                    		var segBefore  = that.constructSegment(eachSegment.authorId, strBeforeDelete, that.currentSegID, eachSegment.segID, 0, that.revID, eachSegment.startIndex, (eachSegment.endIndex - 1), "", true);
+	                    		var segBefore  = that.constructSegment(eachSegment.authorId, strBeforeDelete, that.currentSegID, eachSegment.segID, 0, that.revID, eachSegment.startIndex, (eachSegment.endIndex - 1), " segBefore when eleteStartIndex === deleteEndIndex, in eachSegment.startIndex != eachSegment.endIndex, permanentflag = true", true);
 	                    		segmentsArray.insert(segBefore, index);
 
 	                    		// updates all the following segments's start and end index
@@ -841,12 +841,12 @@ $.extend(window.docuviz, {
 
                     		// create two new segments, one with offset 0, another with offeset 
                     		that.currentSegID += 1;
-                    		var segBefore  = that.constructSegment(eachSegment.authorId, strBeforeDelete, that.currentSegID, eachSegment.segID, 0, that.revID, eachSegment.startIndex, (deleteIndex - 1), "", true);
+                    		var segBefore  = that.constructSegment(eachSegment.authorId, strBeforeDelete, that.currentSegID, eachSegment.segID, 0, that.revID, eachSegment.startIndex, (deleteIndex - 1), "segBefore when eachSegment.startIndex === eachSegment.endIndex, in (eachSegment.startIndex < deleteIndex && deleteIndex < eachSegment.endIndex), permanentflag = true", true);
                     		segmentsArray.insert(segBefore, index);
 
                     		// create a new segment with offset
                     		that.currentSegID += 1;
-                    		var segAfter  = that.constructSegment(eachSegment.authorId, strAfterDelete, that.currentSegID, eachSegment.segID, (deleteIndex - eachSegment.startIndex + 1 ), that.revID, deleteIndex, (eachSegment.endIndex - 1), "", true);
+                    		var segAfter  = that.constructSegment(eachSegment.authorId, strAfterDelete, that.currentSegID, eachSegment.segID, (deleteIndex - eachSegment.startIndex + 1 ), that.revID, deleteIndex, (eachSegment.endIndex - 1), "segAffter when when eachSegment.startIndex === eachSegment.endIndex, in (eachSegment.startIndex < deleteIndex && deleteIndex < eachSegment.endIndex), permanentflag = true", true);
                     		segmentsArray.insert(segAfter, (index+1) );
 
                     		// updates all the following segments
