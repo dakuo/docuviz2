@@ -887,7 +887,8 @@ $.extend(window.docuviz, {
                             } else if (eachSegment.segID === newSegments[k].parentSegID) {
                                 preIndex = index;
 
-                            } else {
+                            }
+                            else {
 
                             }
                         });

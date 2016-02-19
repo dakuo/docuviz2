@@ -232,8 +232,8 @@ $.extend(window.docuviz, {
                         var segmentsForFrontend = that.buildSegmentsForOneRevision(that.allSegmentsInCurrentRev, authors);
 
                         revsForFrontend.push([revLength, revTimestamps[that.revID], revAuthors[that.revID], segmentsForFrontend]);
-                        // console.log("allSegmentsInCurrentRev for revisionID: " + that.revID);
-                        // console.log(that.allSegmentsInCurrentRev);
+                        console.log("allSegmentsInCurrentRev for revisionID: " + that.revID);
+                        console.log(that.allSegmentsInCurrentRev);
 
                         // update the current revision id
                         that.revID += 1;
@@ -320,8 +320,8 @@ $.extend(window.docuviz, {
                     
                 }
 	            else if (startIndex === (eachSegment.endIndex + 1) ){
-	            	// if (index === (segmentsArray.length - 1 )){
-                    if (index === 0){
+	            	if (index === (segmentsArray.length - 1 )){
+                    // if (index === 0){
                         segmentLocation = index;
                         return eachSegment;
                     }
@@ -725,7 +725,6 @@ $.extend(window.docuviz, {
             var deleteIndex = deleteStartIndex;
 
             if(segmentsArray != null){
-            	// BUG
 
                 effectedSegmentOfDelete = _.find(segmentsArray, function(eachSegment, index) {
 
@@ -936,7 +935,7 @@ $.extend(window.docuviz, {
 				    		var segBefore  = that.constructSegment(effectedSegmentOfDeleteStart.authorId, strBeforeDelete, that.currentSegID, effectedSegmentOfDeleteStart.segID, 0, that.revID, effectedSegmentOfDeleteStart.startIndex, (deleteStartIndex - 1), "segBefore of delete in the middle within a segment when permanentFlag is true", true);
 				    		segmentsArray.insert(segBefore, deleteStartSegmentLocation);
 
-				    		// create a new segment with offset
+				    		// seg after
 				    		that.currentSegID += 1;
 				    		var segAfter  = that.constructSegment(effectedSegmentOfDeleteStart.authorId, strAfterDelete, that.currentSegID, effectedSegmentOfDeleteStart.segID, (deleteEndIndex - effectedSegmentOfDeleteStart.startIndex + 1 ), that.revID, deleteStartIndex, (effectedSegmentOfDeleteStart.endIndex - 1 - deleteEndIndex + deleteStartIndex), "segAfter of delete in the middle within a segment when permanentFlag is true", true);
 				    		segmentsArray.insert(segAfter, (deleteStartSegmentLocation+1) );
