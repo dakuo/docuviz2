@@ -819,6 +819,48 @@ $.extend(window.docuviz, {
                 + "," + (height - margin.bottom + (barHeight*4 )+ 250 ) + ")");
 
 
+        // draw new statistics table
+        var columnTitles = ['Name', 'Self Edit', 'Total Edit'];
+        var varNames = ['name', 'selfEdit', 'totalEdit'];
+        var statisticsData = [{name: "Kenny Pham", selfEdit: 224, totalEdit: 1268},
+                                {name: "Dakuo Wang", selfEdit: 579, totalEdit: 3021}];
+
+        var statisticsTable = svg.append("foreignObject")
+                            .attr("width",300)
+                            .attr("height", 300)
+                            .attr(
+                                "transform",
+                                "translate(" + (width - margin.right - 260)
+                                    + "," + (height - margin.bottom + (barHeight*4 )+ 250 ) + ")")
+                            .append("xhtml:body")
+                            .append("table")
+                            .attr("border", 1)
+
+
+            statisticsTable.append('thead')
+                            .append("tr")
+                            .selectAll("th")
+                            .data(columnTitles).enter()
+                            .append("th")
+                            .attr('class', 'title')
+                            .text(function(title){return title;});
+
+            statisticsTable.append('tbody')
+                            .selectAll('tr')
+                            .data(statisticsData).enter()
+                            .append('tr')
+                            .selectAll('td')
+                            .data(function(row) {
+                                return varNames.map(function(column) {
+                                    console.log(row[column]);
+                                    return {column: column, value: row[column]};
+                                });
+                            }).enter()
+                            .append('td')
+                            .html(function(d) { return d.value; });
+                            
+
+
         _.each(data, function(rev, index) {
             var segStartIndex = 0;
             var soFarSegmentsLength = 0;
