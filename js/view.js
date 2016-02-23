@@ -495,7 +495,7 @@ $.extend(window.docuviz, {
     },
 
 
-    renderResultPanelForDocuviz: function(chars, revData) {
+    renderResultPanelForDocuviz: function(chars, revData, statisticData) {
         var initial_render_revision_amount = 100;
         var rendered_revision_counter_end = initial_render_revision_amount;
 
@@ -603,7 +603,7 @@ $.extend(window.docuviz, {
 
             if (currentChartType === 'equalDistance') {
                 $('svg').remove();
-                docuviz.drawEqualDistance(data, margin, width, height, barHeight, authorsColors, beginRev, endRev);
+                docuviz.drawEqualDistance(data, margin, width, height, barHeight, authorsColors, beginRev, endRev,statisticData);
             } else {
                 $('svg').remove();
                 docuviz.drawTimeScaled(data, margin, width, height, barHeight, authorsColors, beginRev, endRev);
@@ -618,7 +618,7 @@ $.extend(window.docuviz, {
 
 
         // at first, draw a intital graph with equal distance
-        this.drawEqualDistance(data, margin, width, height, barHeight, authorsColors, beginRev, endRev);
+        this.drawEqualDistance(data, margin, width, height, barHeight, authorsColors, beginRev, endRev, statisticData);
         $('#equal-distance-btn').css({
             'background': '#E25A5A',
             'color': 'white'
@@ -634,7 +634,7 @@ $.extend(window.docuviz, {
                 'background': '#E25A5A',
                 'color': 'white'
             });
-            docuviz.drawEqualDistance(data, margin, width, height, barHeight, authorsColors, beginRev, endRev);
+            docuviz.drawEqualDistance(data, margin, width, height, barHeight, authorsColors, beginRev, endRev, statisticData);
         };
 
         document.getElementById('time-scaled-btn').onclick = function() { // if time scaled button is clicked
@@ -671,7 +671,7 @@ $.extend(window.docuviz, {
 
 
 
-    drawEqualDistance: function(data, margin, width, height, barHeight, authorsColors, beginRev, endRev) {
+    drawEqualDistance: function(data, margin, width, height, barHeight, authorsColors, beginRev, endRev, statisticData) {
         function filterRevisionArray(value, index) {
             return (index >= beginRev - 1) && (index <= endRev - 1);
         }
@@ -819,18 +819,18 @@ $.extend(window.docuviz, {
                 + "," + (height - margin.bottom + (barHeight*4 )+ 250 ) + ")");
 
 
-        // draw new statistics table
-        var columnTitles = ['Name', 'Self Edit', 'Total Edit'];
-        var varNames = ['name', 'selfEdit', 'totalEdit'];
-        var statisticsData = [{name: "Kenny Pham", selfEdit: 224, totalEdit: 1268},
-                                {name: "Dakuo Wang", selfEdit: 579, totalEdit: 3021}];
+        // start draw new statistic table
+        var columnTitles = ['Name', 'Self Edit', 'Other Edit','Total Edit'];
+        var varNames = ['authorName', 'selfEdit', 'otherEdit','totalEdit'];
+        // var statisticsData = [{name: "Kenny Pham", selfEdit: 224, totalEdit: 1268},
+        //                         {name: "Dakuo Wang", selfEdit: 579, totalEdit: 3021}];
 
         var statisticsTable = svg.append("foreignObject")
-                            .attr("width",300)
+                            .attr("width",400)
                             .attr("height", 300)
                             .attr(
                                 "transform",
-                                "translate(" + (width - margin.right - 260)
+                                "translate(" + (width - margin.right - 340)
                                     + "," + (height - margin.bottom + (barHeight*4 )+ 250 ) + ")")
                             .append("xhtml:body")
                             .append("table")
@@ -847,17 +847,19 @@ $.extend(window.docuviz, {
 
             statisticsTable.append('tbody')
                             .selectAll('tr')
-                            .data(statisticsData).enter()
+                            .data(statisticData).enter()
                             .append('tr')
                             .selectAll('td')
                             .data(function(row) {
                                 return varNames.map(function(column) {
-                                    console.log(row[column]);
+                                    //console.log(row[column]);
                                     return {column: column, value: row[column]};
                                 });
                             }).enter()
                             .append('td')
                             .html(function(d) { return d.value; });
+
+        // end draw new statictic table
                             
 
 
@@ -1358,7 +1360,7 @@ chrome.runtime.onMessage.addListener(
                 break;
 
             case 'renderDocuviz': // this is when the Docuviz button is pressed
-                window.docuviz.renderResultPanelForDocuviz(request.chars, request.revData);
+                window.docuviz.renderResultPanelForDocuviz(request.chars, request.revData, request.statisticData); // new
                 sendResponse('end');
                 break;
 

@@ -37,6 +37,7 @@ $.extend(window.docuviz, {
     segmentsArray: [],
     revID: 0,
     currentSegID: 0,
+    statisticDataArray: [], // new
 
     renderToString: function(chars) {
         return _.reduce(chars, function(memo, obj) {
@@ -47,6 +48,17 @@ $.extend(window.docuviz, {
             }
 
         }, '');
+    },
+
+    //new:
+    statisticDataObject: function(authorName, authorId, selfEdit, otherEdit, totalEdit){
+        return {
+            authorName: authorName,
+            authorId: authorId,
+            selfEdit: selfEdit,
+            otherEdit: otherEdit,
+            totalEdit: totalEdit
+        }
     },
 
     // constructSegmentForFrontend is the actual segment that will be passed to the View, it only contains the information needed
@@ -109,6 +121,15 @@ $.extend(window.docuviz, {
 
             insertStartIndex = entry.ibi - 1;
             that.allSegmentsInCurrentRev = that.buildSegmentsWhenInsert(entry.s, insertStartIndex, authorId, that.allSegmentsInCurrentRev);
+
+            // new
+            _.find(that.statisticDataArray, function(eachAuthor){
+                if (eachAuthor.authorId === authorId){
+                    eachAuthor.totalEdit += entry.s.length;
+                }
+            });
+
+
             _.each(entry.s, function(character, index) {
                 var charObj = {
                     s: character,
@@ -122,6 +143,14 @@ $.extend(window.docuviz, {
 
             deleteStartIndex = entry.si - 1;
             deleteEndIndex = entry.ei - 1;
+
+            // new
+            _.find(that.statisticDataArray, function(eachAuthor){
+                if (eachAuthor.authorId === authorId){
+                    eachAuthor.totalEdit += deleteEndIndex - deleteStartIndex + 1;
+                }
+            });
+
             that.str.delete(deleteStartIndex, deleteEndIndex);
             that.allSegmentsInCurrentRev = that.buildSegmentsWhenDelete(deleteStartIndex, deleteEndIndex, authorId, that.allSegmentsInCurrentRev);
         }
@@ -172,6 +201,7 @@ $.extend(window.docuviz, {
         this.revID = 0;
         this.allSegmentsInCurrentRev = [];
         this.segmentsArray = [];
+        this.statisticDataArray = [];
 
         console.log(changelog);
 
@@ -195,6 +225,18 @@ $.extend(window.docuviz, {
         }
 
         // console.log(intervalChangesIndex);
+
+
+        // new
+        // initialize the statisticDataArray:
+        _.each(authors, function(eachAuthor){
+            that.statisticDataArray.push(that.statisticDataObject(eachAuthor.name, eachAuthor.id, 0, 0, 0)); // initalize the array with author's name, author's id, selfEdit =0, otherEdit = 0,totalEdit = 0
+        });
+
+        console.log("statisticDataArray: ");
+        console.log(that.statisticDataArray);
+
+
 
         // Async run through each entry in a synchronous sequence.
         async.eachSeries(changelog, function(entry, callBack) {
@@ -260,7 +302,8 @@ $.extend(window.docuviz, {
                     	        msg: 'renderDocuviz',
                     	        chars: that.str,
                     	        // calculate the revision's contributions, edit Nov 02, 2015 by Kenny
-                    	        revData: revDataWithContribution
+                    	        revData: revDataWithContribution,
+                                statisticData: that.statisticDataArray // new
                     	    }, function(response) {});
                     	});
                     }
@@ -333,12 +376,26 @@ $.extend(window.docuviz, {
             	    var currentSeg = that.constructSegment(authorId, entryStr, that.currentSegID, that.currentSegID, 0, that.revID, startIndex, (startIndex + entryStr.length - 1), "new segment because of no previous segment", false);    
             	}
             	segmentsArray.insert(currentSeg,segmentsArray.length);
+                // new
+                _.find(that.statisticDataArray, function(eachAuthor){
+                    if (eachAuthor.authorId === authorId){
+                        eachAuthor.selfEdit += entryStr.length;
+                    }
+                });
+
+
             }
             // has something in the array but couldn't find the effected, because the comment insert at the end+1
             else{
             	var currentSeg = that.constructSegment(authorId, entryStr, that.currentSegID, that.currentSegID, 0, that.revID, (segmentsArray[(segmentsArray.length-1)].endIndex+1), ((segmentsArray[(segmentsArray.length-1)].endIndex+1) + entryStr.length - 1), "new segment at the end because of couldn't find previous segment", false);    
             	
             	segmentsArray.insert(currentSeg,segmentsArray.length);
+                // new
+                _.find(that.statisticDataArray, function(eachAuthor){
+                    if (eachAuthor.authorId === authorId){
+                        eachAuthor.selfEdit += entryStr.length;
+                    }
+                });
             }
         } 
 
@@ -356,16 +413,48 @@ $.extend(window.docuviz, {
 					    	segmentsArray[i].startIndex += entryStr.length;
 					    	segmentsArray[i].endIndex += entryStr.length;
 			    		}
+                        // new
+                        if (effectedSegment.authorId === authorId) {
+                            _.find(that.statisticDataArray, function(eachAuthor){
+                                if (eachAuthor.authorId === authorId){
+                                    eachAuthor.selfEdit += entryStr.length;
+                                }
+                            });
+                        }
+                        else{
+                            _.find(that.statisticDataArray, function(eachAuthor){
+                                if (eachAuthor.authorId === authorId){
+                                    eachAuthor.otherEdit += entryStr.length;
+                                }
+                            });     
+                        }
         			}
         			else {
         				if (effectedSegment.authorId === authorId) {
 	        				effectedSegment.segStr = entryStr + effectedSegment.segStr;
 		            		effectedSegment.endIndex += entryStr.length;
+
+                            // new
+                            _.find(that.statisticDataArray, function(eachAuthor){
+                                if (eachAuthor.authorId === authorId){
+                                    eachAuthor.selfEdit += entryStr.length;
+                                }
+                            });
+
 	            		}
 	            		else {
 	            			that.currentSegID += 1;
 	            			var currentSeg = that.constructSegment(authorId, entryStr, that.currentSegID, that.currentSegID, 0, that.revID, startIndex, (startIndex + entryStr.length - 1), "new segment and found the effected segment, permanentflag = false,  authorId != , when effectedSegment.startIndex === startIndex and startIndex === 0", false);
 	            			segmentsArray.insert(currentSeg, segmentLocation );
+
+                            // new
+                            _.find(that.statisticDataArray, function(eachAuthor){
+                                if (eachAuthor.authorId === authorId){
+                                    eachAuthor.otherEdit += entryStr.length;
+                                }
+                            });     
+                        
+
 	            		}
 			    		for (var i = (segmentLocation + 1); i < segmentsArray.length; i++) {
 					    	segmentsArray[i].startIndex += entryStr.length;
@@ -378,16 +467,47 @@ $.extend(window.docuviz, {
         				that.currentSegID += 1;
         				var currentSeg = that.constructSegment(authorId, entryStr, that.currentSegID, that.currentSegID, 0, that.revID, startIndex, (startIndex + entryStr.length - 1), "new segment and found the effected segment, permanentflag = true, when ((effectedSegment.endIndex+1) ===  startIndex )&& (segmentLocation === (segmentsArray.length-1 ))", false);
         				segmentsArray.insert(currentSeg, (segmentLocation+1) );
+
+                        // new
+                        if (effectedSegment.authorId === authorId) {
+                            _.find(that.statisticDataArray, function(eachAuthor){
+                                if (eachAuthor.authorId === authorId){
+                                    eachAuthor.selfEdit += entryStr.length;
+                                }
+                            });
+                        }
+                        else{
+                            _.find(that.statisticDataArray, function(eachAuthor){
+                                if (eachAuthor.authorId === authorId){
+                                    eachAuthor.otherEdit += entryStr.length;
+                                }
+                            });     
+                        }
         			}
         			else {
         				if(effectedSegment.authorId === authorId){
         					effectedSegment.segStr += entryStr;
 	            			effectedSegment.endIndex += entryStr.length;
+
+                            // new
+                            _.find(that.statisticDataArray, function(eachAuthor){
+                                if (eachAuthor.authorId === authorId){
+                                    eachAuthor.selfEdit += entryStr.length;
+                                }
+                            });
+
 	            		}
 	            		else{
 	            			that.currentSegID += 1;
 	            			var currentSeg = that.constructSegment(authorId, entryStr, that.currentSegID, that.currentSegID, 0, that.revID, startIndex, (startIndex + entryStr.length - 1), "new segment and found the effected segment, differentAuthor, permanentflag=false, when ((effectedSegment.endIndex+1) ===  startIndex )&& (segmentLocation === (segmentsArray.length-1 ))", false);
 	            			segmentsArray.insert(currentSeg, (segmentLocation+1) );
+
+                            // new
+                            _.find(that.statisticDataArray, function(eachAuthor){
+                                if (eachAuthor.authorId === authorId){
+                                    eachAuthor.otherEdit += entryStr.length;
+                                }
+                            });            
 	            		}
         			}
         		}
@@ -400,6 +520,22 @@ $.extend(window.docuviz, {
 					    	segmentsArray[i].startIndex += entryStr.length;
 					    	segmentsArray[i].endIndex += entryStr.length;
 			    		}
+                        // new
+                        if (effectedSegment.authorId === authorId) {
+                            _.find(that.statisticDataArray, function(eachAuthor){
+                                if (eachAuthor.authorId === authorId){
+                                    eachAuthor.selfEdit += entryStr.length;
+                                }
+                            });
+                        }
+                        else{
+                            _.find(that.statisticDataArray, function(eachAuthor){
+                                if (eachAuthor.authorId === authorId){
+                                    eachAuthor.otherEdit += entryStr.length;
+                                }
+                            });     
+                        }
+
         			}
         			else if (effectedSegment.permanentFlag === true && segmentsArray[segmentLocation-1].permanentFlag === false){
         				if (segmentsArray[segmentLocation-1].authorId === authorId){
@@ -409,6 +545,14 @@ $.extend(window.docuviz, {
         				    	segmentsArray[i].startIndex += entryStr.length;
         				    	segmentsArray[i].endIndex += entryStr.length;
         		    		}
+
+                            // new
+                            _.find(that.statisticDataArray, function(eachAuthor){
+                                if (eachAuthor.authorId === authorId){
+                                    eachAuthor.selfEdit += entryStr.length;
+                                }
+                            });
+
         				}
         				else{
 	        				that.currentSegID += 1;
@@ -418,6 +562,14 @@ $.extend(window.docuviz, {
 						    	segmentsArray[i].startIndex += entryStr.length;
 						    	segmentsArray[i].endIndex += entryStr.length;
 				    		}
+
+                            // new
+                            _.find(that.statisticDataArray, function(eachAuthor){
+                                if (eachAuthor.authorId === authorId){
+                                    eachAuthor.otherEdit += entryStr.length;
+                                }
+                            });
+
         				}
         			}
         			else if (effectedSegment.permanentFlag === false && segmentsArray[segmentLocation-1].permanentFlag === true){
@@ -428,6 +580,14 @@ $.extend(window.docuviz, {
         				    	segmentsArray[i].startIndex += entryStr.length;
         				    	segmentsArray[i].endIndex += entryStr.length;
         		    		}
+
+                            // new
+                            _.find(that.statisticDataArray, function(eachAuthor){
+                                if (eachAuthor.authorId === authorId){
+                                    eachAuthor.selfEdit += entryStr.length;
+                                }
+                            });
+
         				}
         				else{
 	        				that.currentSegID += 1;
@@ -437,6 +597,13 @@ $.extend(window.docuviz, {
 						    	segmentsArray[i].startIndex += entryStr.length;
 						    	segmentsArray[i].endIndex += entryStr.length;
 				    		}
+
+                            // new
+                            _.find(that.statisticDataArray, function(eachAuthor){
+                                if (eachAuthor.authorId === authorId){
+                                    eachAuthor.otherEdit += entryStr.length;
+                                }
+                            });
         				}
         			}
         			else{
@@ -447,6 +614,14 @@ $.extend(window.docuviz, {
         				    	segmentsArray[i].startIndex += entryStr.length;
         				    	segmentsArray[i].endIndex += entryStr.length;
         		    		}
+
+                            // new
+                            _.find(that.statisticDataArray, function(eachAuthor){
+                                if (eachAuthor.authorId === authorId){
+                                    eachAuthor.selfEdit += entryStr.length;
+                                }
+                            });
+
         				}
         				else if (segmentsArray[segmentLocation-1].authorId === authorId) {
 	        				segmentsArray[segmentLocation-1].segStr += entryStr;
@@ -455,7 +630,12 @@ $.extend(window.docuviz, {
         				    	segmentsArray[i].startIndex += entryStr.length;
         				    	segmentsArray[i].endIndex += entryStr.length;
         		    		}
-        					
+                            // new
+                            _.find(that.statisticDataArray, function(eachAuthor){
+                                if (eachAuthor.authorId === authorId){
+                                    eachAuthor.selfEdit += entryStr.length;
+                                }
+                            });
         				}
         				else{
 	        				that.currentSegID += 1;
@@ -465,6 +645,14 @@ $.extend(window.docuviz, {
 						    	segmentsArray[i].startIndex += entryStr.length;
 						    	segmentsArray[i].endIndex += entryStr.length;
 				    		}
+
+
+                            // new
+                            _.find(that.statisticDataArray, function(eachAuthor){
+                                if (eachAuthor.authorId === authorId){
+                                    eachAuthor.otherEdit += entryStr.length;
+                                }
+                            });
         				}
         			}
         		}
@@ -478,6 +666,23 @@ $.extend(window.docuviz, {
 	        			that.currentSegID += 1;
 	        			var currentSeg = that.constructSegment(authorId, entryStr, that.currentSegID, that.currentSegID, 0, that.revID, startIndex, (startIndex + entryStr.length - 1), "new segment and found the effected segment, not the same author when segmentLocation ===  (segmentsArray.length-1)", false);
 	        			segmentsArray.insert(currentSeg, (segmentLocation+1) );
+
+                        // new
+                        if (effectedSegment.authorId === authorId){
+                            _.find(that.statisticDataArray, function(eachAuthor){
+                                if (eachAuthor.authorId === authorId){
+                                    eachAuthor.selfEdit += entryStr.length;
+                                }
+                            });      
+                        }
+
+                        else{
+                            _.find(that.statisticDataArray, function(eachAuthor){
+                                if (eachAuthor.authorId === authorId){
+                                    eachAuthor.otherEdit += entryStr.length;
+                                }
+                            });           
+                        }
         			}
         			else{
                         
@@ -485,10 +690,23 @@ $.extend(window.docuviz, {
         					that.currentSegID += 1;
         					var currentSeg = that.constructSegment(authorId, entryStr, that.currentSegID, that.currentSegID, 0, that.revID, startIndex, (startIndex + entryStr.length - 1), "new segment and found the effected segment, not the same author when segmentLocation ===  (segmentsArray.length-1)", false);
         					segmentsArray.insert(currentSeg, (segmentLocation+1) );
+                            // new
+                            _.find(that.statisticDataArray, function(eachAuthor){
+                                if (eachAuthor.authorId === authorId){
+                                    eachAuthor.otherEdit += entryStr.length;
+                                }
+                            });
         				}
         				else{
         					effectedSegment.segStr += entryStr;
 	            			effectedSegment.endIndex += entryStr.length;
+
+                            // new
+                            _.find(that.statisticDataArray, function(eachAuthor){
+                                if (eachAuthor.authorId === authorId){
+                                    eachAuthor.selfEdit += entryStr.length;
+                                }
+                            });
         				}
         			}
         		}	
@@ -502,6 +720,24 @@ $.extend(window.docuviz, {
 					    	segmentsArray[i].startIndex += entryStr.length;
 					    	segmentsArray[i].endIndex += entryStr.length;
 			    		}
+
+                        // new
+                        if (effectedSegment.authorId === authorId){
+                            _.find(that.statisticDataArray, function(eachAuthor){
+                                if (eachAuthor.authorId === authorId){
+                                    eachAuthor.selfEdit += entryStr.length;
+                                }
+                            });      
+                        }
+
+                        else{
+                            _.find(that.statisticDataArray, function(eachAuthor){
+                                if (eachAuthor.authorId === authorId){
+                                    eachAuthor.otherEdit += entryStr.length;
+                                }
+                            });           
+                        }
+
         			}
         			else if (effectedSegment.permanentFlag === true && segmentsArray[segmentLocation+1].permanentFlag === false){
         				if( segmentsArray[segmentLocation+1].authorId === authorId){
@@ -511,6 +747,14 @@ $.extend(window.docuviz, {
         				    	segmentsArray[i].startIndex += entryStr.length;
         				    	segmentsArray[i].endIndex += entryStr.length;
         		    		}
+
+                            // new
+                            _.find(that.statisticDataArray, function(eachAuthor){
+                                if (eachAuthor.authorId === authorId){
+                                    eachAuthor.selfEdit += entryStr.length;
+                                }
+                            });
+
         				}
         				else{
 	        				that.currentSegID += 1;
@@ -521,6 +765,13 @@ $.extend(window.docuviz, {
 						    	segmentsArray[i].startIndex += entryStr.length;
 						    	segmentsArray[i].endIndex += entryStr.length;
 				    		}
+                            // new
+                            _.find(that.statisticDataArray, function(eachAuthor){
+                                if (eachAuthor.authorId === authorId){
+                                    eachAuthor.otherEdit += entryStr.length;
+                                }
+                            });
+
         				}
         			}
         			else if (effectedSegment.permanentFlag === false && segmentsArray[segmentLocation+1].permanentFlag === true) {
@@ -533,6 +784,13 @@ $.extend(window.docuviz, {
     					    	segmentsArray[i].endIndex += entryStr.length;
     			    		}
 
+                            // new
+                            _.find(that.statisticDataArray, function(eachAuthor){
+                                if (eachAuthor.authorId === authorId){
+                                    eachAuthor.selfEdit += entryStr.length;
+                                }
+                            });
+
         				}
         				else{
 	        				that.currentSegID += 1;
@@ -543,6 +801,13 @@ $.extend(window.docuviz, {
 						    	segmentsArray[i].startIndex += entryStr.length;
 						    	segmentsArray[i].endIndex += entryStr.length;
 				    		}
+
+                            // new
+                            _.find(that.statisticDataArray, function(eachAuthor){
+                                if (eachAuthor.authorId === authorId){
+                                    eachAuthor.otherEdit += entryStr.length;
+                                }
+                            });
         				}
         			}
         			else {
@@ -555,6 +820,14 @@ $.extend(window.docuviz, {
 	    				    	segmentsArray[i].startIndex += entryStr.length;
 	    				    	segmentsArray[i].endIndex += entryStr.length;
 	    		    		}
+
+                            // new
+                            _.find(that.statisticDataArray, function(eachAuthor){
+                                if (eachAuthor.authorId === authorId){
+                                    eachAuthor.selfEdit += entryStr.length;
+                                }
+                            });
+
         				}
         				else if (effectedSegment.authorId != authorId && segmentsArray[segmentLocation+1].authorId === authorId) {
         					segmentsArray[(segmentLocation+1)].segStr = entryStr + segmentsArray[segmentLocation+1].segStr;
@@ -563,17 +836,31 @@ $.extend(window.docuviz, {
 						    	segmentsArray[i].startIndex += entryStr.length;
 						    	segmentsArray[i].endIndex += entryStr.length;
 				    		}
+
+                            // new
+                            _.find(that.statisticDataArray, function(eachAuthor){
+                                if (eachAuthor.authorId === authorId){
+                                    eachAuthor.selfEdit += entryStr.length;
+                                }
+                            });
         				}
         				else if (effectedSegment.authorId != authorId && segmentsArray[segmentLocation+1].authorId != authorId) {
             				// create the new segment and update
             				that.currentSegID += 1;
             				var currentSeg = that.constructSegment(authorId, entryStr, that.currentSegID, that.currentSegID, 0, that.revID, startIndex, startIndex + entryStr.length - 1, "new segment between two temporary but differentAuthor segments", false);
             				segmentsArray.insert(currentSeg, (segmentLocation+1) );
-
 				    		for (var i = (segmentLocation + 2); i < segmentsArray.length; i++) {
 						    	segmentsArray[i].startIndex += entryStr.length;
 						    	segmentsArray[i].endIndex += entryStr.length;
 				    		}
+
+                            // new
+                            _.find(that.statisticDataArray, function(eachAuthor){
+                                if (eachAuthor.authorId === authorId){
+                                    eachAuthor.otherEdit += entryStr.length;
+                                }
+                            });
+
         				}
         				else {
 				    		effectedSegment.segStr += entryStr;
@@ -583,6 +870,24 @@ $.extend(window.docuviz, {
 	    				    	segmentsArray[i].startIndex += entryStr.length;
 	    				    	segmentsArray[i].endIndex += entryStr.length;
 	    		    		}
+
+                            // new
+                            if (effectedSegment.authorId === authorId){
+                                _.find(that.statisticDataArray, function(eachAuthor){
+                                    if (eachAuthor.authorId === authorId){
+                                        eachAuthor.selfEdit += entryStr.length;
+                                    }
+                                });      
+                            }
+
+                            else{
+                                _.find(that.statisticDataArray, function(eachAuthor){
+                                    if (eachAuthor.authorId === authorId){
+                                        eachAuthor.otherEdit += entryStr.length;
+                                    }
+                                });           
+                            }
+
         				}
         			}
         		}
@@ -601,6 +906,24 @@ $.extend(window.docuviz, {
                             segmentsArray[i].startIndex += entryStr.length;
                             segmentsArray[i].endIndex += entryStr.length;
                         }
+                        // new
+                        if (effectedSegment.authorId === authorId){
+                            _.find(that.statisticDataArray, function(eachAuthor){
+                                if (eachAuthor.authorId === authorId){
+                                    eachAuthor.selfEdit += entryStr.length;
+                                }
+                            });      
+                        }
+
+                        else{
+                            _.find(that.statisticDataArray, function(eachAuthor){
+                                if (eachAuthor.authorId === authorId){
+                                    eachAuthor.otherEdit += entryStr.length;
+                                }
+                            });           
+                        }
+
+
                     }
 
                     else {
@@ -629,6 +952,23 @@ $.extend(window.docuviz, {
             		    	segmentsArray[i].endIndex += entryStr.length;
                 		}
 
+                        // new
+                        if (effectedSegment.authorId === authorId){
+                            _.find(that.statisticDataArray, function(eachAuthor){
+                                if (eachAuthor.authorId === authorId){
+                                    eachAuthor.selfEdit += entryStr.length;
+                                }
+                            });      
+                        }
+
+                        else{
+                            _.find(that.statisticDataArray, function(eachAuthor){
+                                if (eachAuthor.authorId === authorId){
+                                    eachAuthor.otherEdit += entryStr.length;
+                                }
+                            });           
+                        }
+
                     }
 
         		}
@@ -642,6 +982,13 @@ $.extend(window.docuviz, {
                                 segmentsArray[i].startIndex += entryStr.length;
                                 segmentsArray[i].endIndex += entryStr.length;
                             }
+
+                            // new
+                            _.find(that.statisticDataArray, function(eachAuthor){
+                                if (eachAuthor.authorId === authorId){
+                                    eachAuthor.selfEdit += entryStr.length;
+                                }
+                            });
                         }
 
                         else{
@@ -655,6 +1002,13 @@ $.extend(window.docuviz, {
     					    	segmentsArray[i].startIndex += entryStr.length;
     					    	segmentsArray[i].endIndex += entryStr.length;
     			    		}
+
+                            // new
+                            _.find(that.statisticDataArray, function(eachAuthor){
+                                if (eachAuthor.authorId === authorId){
+                                    eachAuthor.selfEdit += entryStr.length;
+                                }
+                            });
                         }
 					}
 					else{
@@ -667,6 +1021,12 @@ $.extend(window.docuviz, {
                                 segmentsArray[i].startIndex += entryStr.length;
                                 segmentsArray[i].endIndex += entryStr.length;
                             }
+                            // new
+                            _.find(that.statisticDataArray, function(eachAuthor){
+                                if (eachAuthor.authorId === authorId){
+                                    eachAuthor.otherEdit += entryStr.length;
+                                }
+                            });
                         }
 
 
@@ -693,6 +1053,15 @@ $.extend(window.docuviz, {
     	        		    	segmentsArray[i].startIndex += entryStr.length;
     	        		    	segmentsArray[i].endIndex += entryStr.length;
     	            		}
+                            // new
+                            _.find(that.statisticDataArray, function(eachAuthor){
+                                if (eachAuthor.authorId === authorId){
+                                    eachAuthor.otherEdit += entryStr.length;
+                                }
+                            });
+
+
+
                         }
 					}
         		}
@@ -708,7 +1077,7 @@ $.extend(window.docuviz, {
     },
 
 
-    buildSegmentsWhenDelete: function(deleteStartIndex, deleteEndIndex, author, segmentsArray) {
+    buildSegmentsWhenDelete: function(deleteStartIndex, deleteEndIndex, authorId, segmentsArray) {
         var that = this;
 
         // var deleteSegmentLocation = null;
@@ -722,7 +1091,6 @@ $.extend(window.docuviz, {
             if(segmentsArray != null){
 
                 effectedSegmentOfDelete = _.find(segmentsArray, function(eachSegment, index) {
-
                     if (eachSegment.startIndex === deleteIndex ) {
 
                     	if (eachSegment.startIndex === eachSegment.endIndex) {
@@ -735,6 +1103,23 @@ $.extend(window.docuviz, {
                     		    segmentsArray[i].startIndex -= 1;
                     		    segmentsArray[i].endIndex -= 1;
                     		}
+
+                            // new
+                            if (eachSegment.authorId === authorId){
+                                _.find(that.statisticDataArray, function(eachAuthor){
+                                    if (eachAuthor.authorId === authorId){
+                                        eachAuthor.selfEdit += 1;
+                                    }
+                                });   
+                            }
+                            else{
+                                _.find(that.statisticDataArray, function(eachAuthor){
+                                    if (eachAuthor.authorId === authorId){
+                                        eachAuthor.otherEdit += 1;
+                                    }
+                                });   
+                            }
+
 
                     		// deleteSegmentLocation = index;
                     		return eachSegment;
@@ -760,6 +1145,23 @@ $.extend(window.docuviz, {
 	                    		    segmentsArray[i].endIndex -= 1;
 	                    		}
 
+
+                                // new
+                                if (eachSegment.authorId === authorId){
+                                    _.find(that.statisticDataArray, function(eachAuthor){
+                                        if (eachAuthor.authorId === authorId){
+                                            eachAuthor.selfEdit += 1;
+                                        }
+                                    });   
+                                }
+                                else{
+                                    _.find(that.statisticDataArray, function(eachAuthor){
+                                        if (eachAuthor.authorId === authorId){
+                                            eachAuthor.otherEdit += 1;
+                                        }
+                                    });   
+                                }
+
 	                    		return eachSegment;
 
                     		}
@@ -781,6 +1183,22 @@ $.extend(window.docuviz, {
                                     segmentsArray[i].endIndex -= 1;
                                 }
 
+
+                                // new
+                                if (eachSegment.authorId === authorId){
+                                    _.find(that.statisticDataArray, function(eachAuthor){
+                                        if (eachAuthor.authorId === authorId){
+                                            eachAuthor.selfEdit += 1;
+                                        }
+                                    });   
+                                }
+                                else{
+                                    _.find(that.statisticDataArray, function(eachAuthor){
+                                        if (eachAuthor.authorId === authorId){
+                                            eachAuthor.otherEdit += 1;
+                                        }
+                                    });   
+                                }
                     			return eachSegment;
                     		}
 
@@ -799,6 +1217,23 @@ $.extend(window.docuviz, {
 
                     		// delete the whole segment
                     		segmentsArray.delete( (index + 1 ), (index+1));
+
+
+                            // new
+                            if (eachSegment.authorId === authorId){
+                                _.find(that.statisticDataArray, function(eachAuthor){
+                                    if (eachAuthor.authorId === authorId){
+                                        eachAuthor.selfEdit += 1;
+                                    }
+                                });   
+                            }
+                            else{
+                                _.find(that.statisticDataArray, function(eachAuthor){
+                                    if (eachAuthor.authorId === authorId){
+                                        eachAuthor.otherEdit += 1;
+                                    }
+                                });   
+                            }
 
                     		return eachSegment;
                     		
@@ -822,6 +1257,25 @@ $.extend(window.docuviz, {
 	                    		    segmentsArray[i].startIndex -= 1;
 	                    		    segmentsArray[i].endIndex -= 1;
 	                    		}
+
+
+                                // new
+                                if (eachSegment.authorId === authorId){
+                                    _.find(that.statisticDataArray, function(eachAuthor){
+                                        if (eachAuthor.authorId === authorId){
+                                            eachAuthor.selfEdit += 1;
+                                        }
+                                    });   
+                                }
+                                else{
+                                    _.find(that.statisticDataArray, function(eachAuthor){
+                                        if (eachAuthor.authorId === authorId){
+                                            eachAuthor.otherEdit += 1;
+                                        }
+                                    });   
+                                }
+
+
 	                    		return eachSegment;
                     		}
                     		else {
@@ -843,6 +1297,23 @@ $.extend(window.docuviz, {
                     			    segmentsArray[i].startIndex -= 1;
                     			    segmentsArray[i].endIndex -= 1;
                     			}
+
+
+                                // new
+                                if (eachSegment.authorId === authorId){
+                                    _.find(that.statisticDataArray, function(eachAuthor){
+                                        if (eachAuthor.authorId === authorId){
+                                            eachAuthor.selfEdit += 1;
+                                        }
+                                    });   
+                                }
+                                else{
+                                    _.find(that.statisticDataArray, function(eachAuthor){
+                                        if (eachAuthor.authorId === authorId){
+                                            eachAuthor.otherEdit += 1;
+                                        }
+                                    });   
+                                }
 
                     			return eachSegment;
                     		}
@@ -874,6 +1345,24 @@ $.extend(window.docuviz, {
                     		    segmentsArray[i].startIndex -= 1;
                     		    segmentsArray[i].endIndex -= 1;
                     		}
+
+
+                            // new
+                            if (eachSegment.authorId === authorId){
+                                _.find(that.statisticDataArray, function(eachAuthor){
+                                    if (eachAuthor.authorId === authorId){
+                                        eachAuthor.selfEdit += 1;
+                                    }
+                                });   
+                            }
+                            else{
+                                _.find(that.statisticDataArray, function(eachAuthor){
+                                    if (eachAuthor.authorId === authorId){
+                                        eachAuthor.otherEdit += 1;
+                                    }
+                                });   
+                            }
+
                     		return eachSegment;
 
                 		}
@@ -905,6 +1394,24 @@ $.extend(window.docuviz, {
                                 segmentsArray[i].startIndex -= 1;
                                 segmentsArray[i].endIndex -= 1;
                             }
+
+
+                            // new
+                            if (eachSegment.authorId === authorId){
+                                _.find(that.statisticDataArray, function(eachAuthor){
+                                    if (eachAuthor.authorId === authorId){
+                                        eachAuthor.selfEdit += 1;
+                                    }
+                                });   
+                            }
+                            else{
+                                _.find(that.statisticDataArray, function(eachAuthor){
+                                    if (eachAuthor.authorId === authorId){
+                                        eachAuthor.otherEdit += 1;
+                                    }
+                                });   
+                            }
+
                             return eachSegment;
                 		}
 
@@ -945,6 +1452,7 @@ $.extend(window.docuviz, {
 
         		}
 
+
         		effectedSegmentOfDeleteEnd = _.find(segmentsArray, function(eachSegment, index) {
         		    if (eachSegment.startIndex <= deleteEndIndex && deleteEndIndex <= eachSegment.endIndex) {
         		        deleteEndSegmentLocation = index;
@@ -969,6 +1477,24 @@ $.extend(window.docuviz, {
 
         		// delete within the same segment
         		if (deleteStartSegmentLocation === deleteEndSegmentLocation) {
+
+                    // new
+                    if (effectedSegmentOfDeleteStart.authorId === authorId){
+                        _.find(that.statisticDataArray, function(eachAuthor){
+                            if (eachAuthor.authorId === authorId){ 
+                                eachAuthor.selfEdit +=  deleteEndIndex - deleteStartIndex + 1;
+                            }
+                        });      
+                    }
+                    else{
+                        _.find(that.statisticDataArray, function(eachAuthor){
+                            if (eachAuthor.authorId === authorId){ 
+                                eachAuthor.otherEdit +=  deleteEndIndex - deleteStartIndex + 1;
+                            }
+                        });   
+                    }
+
+
 
         			if(deleteStartIndex > effectedSegmentOfDeleteStart.startIndex && deleteEndIndex < effectedSegmentOfDeleteStart.endIndex){
 						var strBeforeDelete = effectedSegmentOfDeleteStart.segStr.substring(0, (deleteStartIndex - effectedSegmentOfDeleteStart.startIndex)); // = substring(0,end-1)
@@ -995,6 +1521,7 @@ $.extend(window.docuviz, {
 				    		    segmentsArray[i].startIndex -= (deleteEndIndex - deleteStartIndex + 1 );
 				    		    segmentsArray[i].endIndex -= (deleteEndIndex - deleteStartIndex + 1 );
 				    		}
+
 
 						}
 						else {
@@ -1048,6 +1575,7 @@ $.extend(window.docuviz, {
 				    		    segmentsArray[i].endIndex -= (deleteEndIndex - deleteStartIndex + 1 );
 				    		}
 
+
 						}
 						else {
 							// segmentsArray[deleteStartSegmentLocation].segStr = strAfterDelete;
@@ -1074,6 +1602,7 @@ $.extend(window.docuviz, {
                                 segmentsArray[i].startIndex -= (deleteEndIndex - deleteStartIndex + 1 );
                                 segmentsArray[i].endIndex -= (deleteEndIndex - deleteStartIndex + 1 );
                             }
+
 						}
         			}
         			else if(deleteStartIndex > effectedSegmentOfDeleteStart.startIndex && deleteEndIndex === effectedSegmentOfDeleteStart.endIndex){
@@ -1099,6 +1628,7 @@ $.extend(window.docuviz, {
 				    		    segmentsArray[i].startIndex -= (deleteEndIndex - deleteStartIndex + 1 );
 				    		    segmentsArray[i].endIndex -= (deleteEndIndex - deleteStartIndex + 1 );
 				    		}
+
 
 						}
 						else {
@@ -1127,6 +1657,7 @@ $.extend(window.docuviz, {
                                 segmentsArray[i].endIndex -= (deleteEndIndex - deleteStartIndex + 1 );
                             }
 
+
 						}
         			}
         			else if (deleteStartIndex === effectedSegmentOfDeleteStart.startIndex && deleteEndIndex === effectedSegmentOfDeleteStart.endIndex){
@@ -1136,6 +1667,7 @@ $.extend(window.docuviz, {
         				    segmentsArray[i].startIndex -= (deleteEndIndex - deleteStartIndex + 1 );
         				    segmentsArray[i].endIndex -= (deleteEndIndex - deleteStartIndex + 1 );
         				}
+
         			}
         			else {
         				console.log("shouldn't happen in buildSegmentsWhenDelete, deleteStartSegmentLocation === deleteEndSegmentLocation");
@@ -1144,6 +1676,55 @@ $.extend(window.docuviz, {
         		}
         		// not within one segment, across multiple segments
         		else {
+                    // new
+                    
+                    var selfEditCount = 0;
+                    var otherEditCount = 0;
+
+                    for (var i = deleteStartSegmentLocation+1; i<= deleteEndSegmentLocation-1; i++){
+                        if (segmentsArray[i].authorId === authorId){
+                            selfEditCount += segmentsArray[i].endIndex - segmentsArray[i].startIndex + 1;
+                        }
+                        else{
+                            otherEditCount += segmentsArray[i].endIndex - segmentsArray[i].startIndex + 1;
+                        }
+                    }
+
+
+                    if (effectedSegmentOfDeleteStart.authorId === authorId){
+                        _.find(that.statisticDataArray, function(eachAuthor){
+                            if (eachAuthor.authorId === authorId){ 
+                                eachAuthor.selfEdit += selfEditCount + effectedSegmentOfDeleteStart.endIndex - deleteStartIndex + 1;
+                                eachAuthor.otherEdit += otherEditCount;
+                            }
+                        });      
+                    }
+                    else{
+                        _.find(that.statisticDataArray, function(eachAuthor){
+                            if (eachAuthor.authorId === authorId){ 
+                                eachAuthor.selfEdit +=  effectedSegmentOfDeleteStart.endIndex - deleteStartIndex + 1;
+                                eachAuthor.otherEdit += otherEditCount + effectedSegmentOfDeleteStart.endIndex - deleteStartIndex + 1;
+                            }
+                        });   
+                    }
+
+                    if (effectedSegmentOfDeleteEnd.authorId === authorId){
+                        _.find(that.statisticDataArray, function(eachAuthor){
+                            if (eachAuthor.authorId === authorId){ 
+                                eachAuthor.selfEdit += deleteEndIndex - effectedSegmentOfDeleteEnd.startIndex + 1;
+                                //eachAuthor.otherEdit += otherEditCount;
+                            }
+                        });   
+                    }
+                    else{
+                        _.find(that.statisticDataArray, function(eachAuthor){
+                            if (eachAuthor.authorId === authorId){ 
+                                //eachAuthor.selfEdit += deleteEndIndex - effectedSegmentOfDeleteEnd.startIndex + 1;
+                                eachAuthor.otherEdit +=  deleteEndIndex - effectedSegmentOfDeleteEnd.startIndex + 1;
+                            }
+                        });   
+                    }
+
 
 					if(deleteStartIndex > effectedSegmentOfDeleteStart.startIndex && deleteEndIndex < effectedSegmentOfDeleteEnd.endIndex){
 						var strBeforeDelete = effectedSegmentOfDeleteStart.segStr.substring(0, (deleteStartIndex - effectedSegmentOfDeleteStart.startIndex)); // = substring(0,end-1)
