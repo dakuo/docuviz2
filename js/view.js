@@ -376,7 +376,7 @@ $.extend(window.docuviz, {
         // js-result: The result panel
         // js-left-panel: Left Panel
 
-        var html = '<div class="docuviz js-docuviz hideVisually"><div class="docuviz__layout"><div class="l-half-docuviz l-half--top-docuviz docuviz__wrap--top"><div class="aligner-docuviz txt-c js-left-panel-docuviz" style="height: 100%"><div class="aligner-item-docuviz docuviz__intro"><div class="aligner-item-docuviz aligner-item-top-docuviz"><h3 class="docuviz__doc-title js-doc-title-docuviz">Final Paper</h3><div class="js-author-docuviz docuviz__author"></div></div><div class="aligner-item-docuviz js-progress-bar-docuviz"><div class="docuviz__progress-bar"><div class="docuviz__progress-bar-item js-progress-so-far-docuviz"></div></div><p class="docuviz__loading-text">Loading <span class="js-revision-so-far-docuviz">0</span>/<span class="js-revision-out-of-docuviz">?</span> revisions</p></div></div></div></div><div class="l-half-docuviz l-half--bottom-docuviz docuviz__wrap--bottom"><div class="docuviz__box js-result-docuviz"></div></div></div></div>';
+        var html = '<div class="docuviz js-docuviz hideVisually"><div class="docuviz__layout"><div class="l-half-docuviz l-half--top-docuviz docuviz__wrap--top"><div class="aligner-docuviz txt-c js-left-panel-docuviz" style="height: 100%"><div class="aligner-item-docuviz docuviz__intro"><div class="aligner-item-docuviz aligner-item-top-docuviz"><h3 class="docuviz__doc-title js-doc-title-docuviz">Final Paper</h3><div class="js-author-docuviz docuviz__author"></div></div><div class="aligner-item-docuviz js-progress-bar-docuviz"><div class="docuviz__progress-bar"><div class="docuviz__progress-bar-item js-progress-so-far-docuviz"></div></div><p class="docuviz__loading-text">Loading <span class="js-revision-so-far-docuviz">0</span>/<span class="js-revision-out-of-docuviz">?</span> changes</p></div></div></div></div><div class="l-half-docuviz l-half--bottom-docuviz docuviz__wrap--bottom"><div class="docuviz__box js-result-docuviz"></div></div></div></div>';
 
         $('body').prepend(html);
 
@@ -393,7 +393,7 @@ $.extend(window.docuviz, {
 
         // js-authorviz: feature btn
         // js-revision-number: revision number
-        $('<div class="goog-inline-block js-docuviz-btn is-disabled"><div role="button" class="goog-inline-block jfk-button jfk-button-standard docs-titlebar-button jfk-button-clear-outline" aria-disabled="false" aria-pressed="false" tabindex="0" data-tooltip="Docuviz" aria-label="Docuviz" value="undefined" style="-webkit-user-select: none;">DocuViz (<span class="js-revision-number-docuviz">loading</span> revisions)</div><div id="docs-docos-caret" style="display: none" class="docos-enable-new-header"><div class="docs-docos-caret-outer"></div><div class="docs-docos-caret-inner"></div></div></div>').prependTo(btnGroup);
+        $('<div class="goog-inline-block js-docuviz-btn is-disabled"><div role="button" class="goog-inline-block jfk-button jfk-button-standard docs-titlebar-button jfk-button-clear-outline" aria-disabled="false" aria-pressed="false" tabindex="0" data-tooltip="Docuviz" aria-label="Docuviz" value="undefined" style="-webkit-user-select: none;">DocuViz (<span class="js-revision-number-docuviz">loading</span> changes)</div><div id="docs-docos-caret" style="display: none" class="docos-enable-new-header"><div class="docs-docos-caret-outer"></div><div class="docs-docos-caret-inner"></div></div></div>').prependTo(btnGroup);
         this.addListenerToDocuvizBtn();
     },
 
