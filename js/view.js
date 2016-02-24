@@ -128,6 +128,7 @@ $.extend(window.docuviz, {
                 $('.js-docuviz-btn').removeClass('is-disabled');
 
                 that.authors = that.parseAuthors(raw[2]); // set list of authors
+                console.log(raw[2]);
                 that.parseTimestampsAuthors(raw[2], that.authors); // set an array of authors which correspond for revisions' time
 
             }
@@ -606,7 +607,7 @@ $.extend(window.docuviz, {
                 docuviz.drawEqualDistance(data, margin, width, height, barHeight, authorsColors, beginRev, endRev,statisticData);
             } else {
                 $('svg').remove();
-                docuviz.drawTimeScaled(data, margin, width, height, barHeight, authorsColors, beginRev, endRev);
+                docuviz.drawTimeScaled(data, margin, width, height, barHeight, authorsColors, beginRev, endRev, statisticData);
             }
         }
 
@@ -647,7 +648,7 @@ $.extend(window.docuviz, {
                     'color': 'white'
                 });
                 currentChartType = 'timeScaled';
-                docuviz.drawTimeScaled(data, margin, width, height, barHeight, authorsColors, beginRev, endRev);
+                docuviz.drawTimeScaled(data, margin, width, height, barHeight, authorsColors, beginRev, endRev, statisticData);
                 timeScaledGraph = $('svg').html();
             } else {
                 $('#equal-distance-btn').removeAttr('style');
@@ -657,7 +658,7 @@ $.extend(window.docuviz, {
                     'color': 'white'
                 });
                 currentChartType = 'timeScaled';
-                docuviz.drawTimeScaled(data, margin, width, height, barHeight, authorsColors, beginRev, endRev);
+                docuviz.drawTimeScaled(data, margin, width, height, barHeight, authorsColors, beginRev, endRev, statisticData);
                 timeScaledGraph = $('svg').html();
 
             }
@@ -822,8 +823,6 @@ $.extend(window.docuviz, {
         // start draw new statistic table
         var columnTitles = ['Name', 'Self Edit', 'Other Edit','Total Edit'];
         var varNames = ['authorName', 'selfEdit', 'otherEdit','totalEdit'];
-        // var statisticsData = [{name: "Kenny Pham", selfEdit: 224, totalEdit: 1268},
-        //                         {name: "Dakuo Wang", selfEdit: 579, totalEdit: 3021}];
 
         var statisticsTable = svg.append("foreignObject")
                             .attr("width",400)
@@ -1029,7 +1028,7 @@ $.extend(window.docuviz, {
     },
 
 
-    drawTimeScaled: function(data, margin, width, height, barHeight, authorsColors, beginRev, endRev) {
+    drawTimeScaled: function(data, margin, width, height, barHeight, authorsColors, beginRev, endRev, statisticData) {
 
         function filterRevisionArray(value, index) {
             return (index >= beginRev - 1) && (index <= endRev - 1);
@@ -1167,6 +1166,49 @@ $.extend(window.docuviz, {
             "transform",
             "translate(" + (margin.left - 120)
                 + "," + (height - margin.bottom + (barHeight*4 )+ 250 ) + ")");
+
+
+
+        // start draw new statistic table
+        var columnTitles = ['Name', 'Self Edit', 'Other Edit','Total Edit'];
+        var varNames = ['authorName', 'selfEdit', 'otherEdit','totalEdit'];
+
+        var statisticsTable = svg.append("foreignObject")
+                            .attr("width",400)
+                            .attr("height", 300)
+                            .attr(
+                                "transform",
+                                "translate(" + (width - margin.right - 340)
+                                    + "," + (height - margin.bottom + (barHeight*4 )+ 250 ) + ")")
+                            .append("xhtml:body")
+                            .append("table")
+                            .attr("border", 1)
+
+
+            statisticsTable.append('thead')
+                            .append("tr")
+                            .selectAll("th")
+                            .data(columnTitles).enter()
+                            .append("th")
+                            .attr('class', 'title')
+                            .text(function(title){return title;});
+
+            statisticsTable.append('tbody')
+                            .selectAll('tr')
+                            .data(statisticData).enter()
+                            .append('tr')
+                            .selectAll('td')
+                            .data(function(row) {
+                                return varNames.map(function(column) {
+                                    //console.log(row[column]);
+                                    return {column: column, value: row[column]};
+                                });
+                            }).enter()
+                            .append('td')
+                            .html(function(d) { return d.value; });
+
+        // end draw new statictic table
+
 
 
         _.each(data, function(rev, index) {

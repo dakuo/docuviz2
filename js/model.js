@@ -94,6 +94,40 @@ $.extend(window.docuviz, {
         };
     },
 
+    adjustStatisticData: function(authorId, type, num){
+        var foundIndex = _.findIndex(this.statisticDataArray, function(eachAuthor, index){
+            return (eachAuthor.authorId === authorId)
+        });
+
+        if (foundIndex != -1){
+            if (type === "self"){
+                this.statisticDataArray[foundIndex].selfEdit += num;
+            }
+            else if (type === "other"){
+                this.statisticDataArray[foundIndex].otherEdit += num;
+            }
+            else if (type === "total"){
+                this.statisticDataArray[foundIndex].totalEdit += num;
+            }
+        }
+
+        else if (foundIndex === -1){
+            _.find(this.statisticDataArray, function(eachAuthor, index){
+                if (eachAuthor.authorName === "Anonymous"){
+                    if (type === "self"){
+                        eachAuthor.selfEdit += num;
+                    }
+                    else if (type === "other"){
+                        eachAuthor.otherEdit += num;
+                    }
+                    else if (type === "total"){
+                        eachAuthor.totalEdit += num;
+                    }
+                }
+            });
+        }
+    },
+
     analyzeEachEditInChangelog: function(entry, authorId, currentRevID, currentSegID, segsInFirstRev) {
         var that = this,
             type = entry.ty,
@@ -123,13 +157,10 @@ $.extend(window.docuviz, {
             that.allSegmentsInCurrentRev = that.buildSegmentsWhenInsert(entry.s, insertStartIndex, authorId, that.allSegmentsInCurrentRev);
 
             // new
-            _.find(that.statisticDataArray, function(eachAuthor){
-                if (eachAuthor.authorId === authorId){
-                    eachAuthor.totalEdit += entry.s.length;
-                }
-            });
-            // end 
 
+            that.adjustStatisticData(authorId, "total", entry.s.length);
+
+            // end 
             _.each(entry.s, function(character, index) {
                 var charObj = {
                     s: character,
@@ -145,11 +176,7 @@ $.extend(window.docuviz, {
             deleteEndIndex = entry.ei - 1;
 
             // new
-            _.find(that.statisticDataArray, function(eachAuthor){
-                if (eachAuthor.authorId === authorId){
-                    eachAuthor.totalEdit += (deleteEndIndex - deleteStartIndex + 1);
-                }
-            });
+            that.adjustStatisticData(authorId, "total", (deleteEndIndex - deleteStartIndex + 1));
             // end
 
             that.str.delete(deleteStartIndex, deleteEndIndex);
@@ -162,6 +189,7 @@ $.extend(window.docuviz, {
 
         return true;
     },
+
 
     // calculate the revision's contributions Nov 02, 2015 by Kenny
     calculateRevContribution: function(revisionData, authors) {
@@ -223,6 +251,7 @@ $.extend(window.docuviz, {
         // initialize the statisticDataArray:
         _.each(authors, function(eachAuthor){
             that.statisticDataArray.push(that.statisticDataObject(eachAuthor.name, eachAuthor.id, 0, 0, 0)); // initalize the array with author's name, author's id, selfEdit =0, otherEdit = 0,totalEdit = 0
+
         });
 
         console.log("statisticDataArray: ");
@@ -365,11 +394,7 @@ $.extend(window.docuviz, {
             	segmentsArray.insert(currentSeg,segmentsArray.length);
 
                 // self edit v.s. other edit
-                _.find(that.statisticDataArray, function(eachAuthor){
-                    if (eachAuthor.authorId === authorId){
-                        eachAuthor.selfEdit += entryStr.length;
-                    }
-                });
+                that.adjustStatisticData(authorId, "self", entryStr.length);
 
 
             }
@@ -379,11 +404,7 @@ $.extend(window.docuviz, {
             	
             	segmentsArray.insert(currentSeg,segmentsArray.length);
                 // new
-                _.find(that.statisticDataArray, function(eachAuthor){
-                    if (eachAuthor.authorId === authorId){
-                        eachAuthor.selfEdit += entryStr.length;
-                    }
-                });
+                that.adjustStatisticData(authorId, "self", entryStr.length);
             }
         } 
 
@@ -403,18 +424,10 @@ $.extend(window.docuviz, {
 			    		}
                         // new calculating edits
                         if (effectedSegment.authorId === authorId) {
-                            _.find(that.statisticDataArray, function(eachAuthor){
-                                if (eachAuthor.authorId === authorId){
-                                    eachAuthor.selfEdit += entryStr.length;
-                                }
-                            });
+                            that.adjustStatisticData(authorId, "self", entryStr.length);
                         }
                         else{
-                            _.find(that.statisticDataArray, function(eachAuthor){
-                                if (eachAuthor.authorId === authorId){
-                                    eachAuthor.otherEdit += entryStr.length;
-                                }
-                            });     
+                            that.adjustStatisticData(authorId, "other", entryStr.length);
                         }
                         // end of calculating edits
         			}
@@ -425,11 +438,7 @@ $.extend(window.docuviz, {
 		            		effectedSegment.endIndex += entryStr.length;
 
                             // new
-                            _.find(that.statisticDataArray, function(eachAuthor){
-                                if (eachAuthor.authorId === authorId){
-                                    eachAuthor.selfEdit += entryStr.length;
-                                }
-                            });
+                            that.adjustStatisticData(authorId, "self", entryStr.length);
 
 	            		}
 	            		else {
@@ -439,18 +448,10 @@ $.extend(window.docuviz, {
 
                             // new calculating edits
                             if (effectedSegment.authorId === authorId) {
-                                _.find(that.statisticDataArray, function(eachAuthor){
-                                    if (eachAuthor.authorId === authorId){
-                                        eachAuthor.selfEdit += entryStr.length;
-                                    }
-                                });
+                                that.adjustStatisticData(authorId, "self", entryStr.length);
                             }
                             else{
-                                _.find(that.statisticDataArray, function(eachAuthor){
-                                    if (eachAuthor.authorId === authorId){
-                                        eachAuthor.otherEdit += entryStr.length;
-                                    }
-                                });     
+                                that.adjustStatisticData(authorId, "other", entryStr.length);    
                             }
                             // end of calculating edits   
                         
@@ -470,18 +471,10 @@ $.extend(window.docuviz, {
 
                         // new calculating edits
                         if (effectedSegment.authorId === authorId) {
-                            _.find(that.statisticDataArray, function(eachAuthor){
-                                if (eachAuthor.authorId === authorId){
-                                    eachAuthor.selfEdit += entryStr.length;
-                                }
-                            });
+                            that.adjustStatisticData(authorId, "self", entryStr.length);
                         }
                         else{
-                            _.find(that.statisticDataArray, function(eachAuthor){
-                                if (eachAuthor.authorId === authorId){
-                                    eachAuthor.otherEdit += entryStr.length;
-                                }
-                            });     
+                            that.adjustStatisticData(authorId, "other", entryStr.length);    
                         }
                         // end of calculating edits
         			}
@@ -491,11 +484,7 @@ $.extend(window.docuviz, {
 	            			effectedSegment.endIndex += entryStr.length;
 
                             // new
-                            _.find(that.statisticDataArray, function(eachAuthor){
-                                if (eachAuthor.authorId === authorId){
-                                    eachAuthor.selfEdit += entryStr.length;
-                                }
-                            });
+                            that.adjustStatisticData(authorId, "self", entryStr.length);
 
 	            		}
 	            		else{
@@ -505,18 +494,10 @@ $.extend(window.docuviz, {
 
                             // new calculating edits
                             if (effectedSegment.authorId === authorId) {
-                                _.find(that.statisticDataArray, function(eachAuthor){
-                                    if (eachAuthor.authorId === authorId){
-                                        eachAuthor.selfEdit += entryStr.length;
-                                    }
-                                });
+                                that.adjustStatisticData(authorId, "self", entryStr.length);
                             }
                             else{
-                                _.find(that.statisticDataArray, function(eachAuthor){
-                                    if (eachAuthor.authorId === authorId){
-                                        eachAuthor.otherEdit += entryStr.length;
-                                    }
-                                });     
+                                that.adjustStatisticData(authorId, "other", entryStr.length);
                             }
                             // end of calculating edits           
 	            		}
@@ -533,20 +514,12 @@ $.extend(window.docuviz, {
 					    	segmentsArray[i].endIndex += entryStr.length;
 			    		}
                         // new calculating edits
-                        if (effectedSegment.authorId === authorId) {
-                            _.find(that.statisticDataArray, function(eachAuthor){
-                                if (eachAuthor.authorId === authorId){
-                                    eachAuthor.selfEdit += entryStr.length;
-                                }
-                            });
-                        }
-                        else{
-                            _.find(that.statisticDataArray, function(eachAuthor){
-                                if (eachAuthor.authorId === authorId){
-                                    eachAuthor.otherEdit += entryStr.length;
-                                }
-                            });     
-                        }
+                            if (effectedSegment.authorId === authorId) {
+                                that.adjustStatisticData(authorId, "self", entryStr.length);
+                            }
+                            else{
+                                that.adjustStatisticData(authorId, "other", entryStr.length);
+                            }
                         // end of calculating edits
 
         			}
@@ -560,11 +533,7 @@ $.extend(window.docuviz, {
         		    		}
 
                             // new
-                            _.find(that.statisticDataArray, function(eachAuthor){
-                                if (eachAuthor.authorId === authorId){
-                                    eachAuthor.selfEdit += entryStr.length;
-                                }
-                            });
+                            that.adjustStatisticData(authorId, "self", entryStr.length);
 
         				}
         				else{
@@ -578,18 +547,11 @@ $.extend(window.docuviz, {
 
                             // new calculating edits
                             if (effectedSegment.authorId === authorId) {
-                                _.find(that.statisticDataArray, function(eachAuthor){
-                                    if (eachAuthor.authorId === authorId){
-                                        eachAuthor.selfEdit += entryStr.length;
-                                    }
-                                });
+
+                                that.adjustStatisticData(authorId, "self", entryStr.length);
                             }
                             else{
-                                _.find(that.statisticDataArray, function(eachAuthor){
-                                    if (eachAuthor.authorId === authorId){
-                                        eachAuthor.otherEdit += entryStr.length;
-                                    }
-                                });     
+                                that.adjustStatisticData(authorId, "other", entryStr.length);
                             }
                             // end of calculating edits
 
@@ -605,11 +567,7 @@ $.extend(window.docuviz, {
         		    		}
 
                             // new
-                            _.find(that.statisticDataArray, function(eachAuthor){
-                                if (eachAuthor.authorId === authorId){
-                                    eachAuthor.selfEdit += entryStr.length;
-                                }
-                            });
+                            that.adjustStatisticData(authorId, "self", entryStr.length);
 
         				}
         				else{
@@ -623,18 +581,10 @@ $.extend(window.docuviz, {
 
                             // new calculating edits
                             if (effectedSegment.authorId === authorId) {
-                                _.find(that.statisticDataArray, function(eachAuthor){
-                                    if (eachAuthor.authorId === authorId){
-                                        eachAuthor.selfEdit += entryStr.length;
-                                    }
-                                });
+                                that.adjustStatisticData(authorId, "self", entryStr.length);
                             }
-                            else{
-                                _.find(that.statisticDataArray, function(eachAuthor){
-                                    if (eachAuthor.authorId === authorId){
-                                        eachAuthor.otherEdit += entryStr.length;
-                                    }
-                                });     
+                            else{  
+                                that.adjustStatisticData(authorId, "other", entryStr.length);
                             }
                             // end of calculating edits
         				}
@@ -649,11 +599,7 @@ $.extend(window.docuviz, {
         		    		}
 
                             // new
-                            _.find(that.statisticDataArray, function(eachAuthor){
-                                if (eachAuthor.authorId === authorId){
-                                    eachAuthor.selfEdit += entryStr.length;
-                                }
-                            });
+                            that.adjustStatisticData(authorId, "self", entryStr.length);
 
         				}
         				else if (segmentsArray[segmentLocation-1].authorId === authorId && segmentsArray[segmentLocation-1].parentSegID === segmentsArray[segmentLocation-1].segID) {
@@ -664,11 +610,7 @@ $.extend(window.docuviz, {
         				    	segmentsArray[i].endIndex += entryStr.length;
         		    		}
                             // new
-                            _.find(that.statisticDataArray, function(eachAuthor){
-                                if (eachAuthor.authorId === authorId){
-                                    eachAuthor.selfEdit += entryStr.length;
-                                }
-                            });
+                            that.adjustStatisticData(authorId, "self", entryStr.length);
         				}
         				else{
 	        				that.currentSegID += 1;
@@ -681,18 +623,10 @@ $.extend(window.docuviz, {
 
                             // new calculating edits
                             if (effectedSegment.authorId === authorId) {
-                                _.find(that.statisticDataArray, function(eachAuthor){
-                                    if (eachAuthor.authorId === authorId){
-                                        eachAuthor.selfEdit += entryStr.length;
-                                    }
-                                });
+                                that.adjustStatisticData(authorId, "self", entryStr.length);
                             }
                             else{
-                                _.find(that.statisticDataArray, function(eachAuthor){
-                                    if (eachAuthor.authorId === authorId){
-                                        eachAuthor.otherEdit += entryStr.length;
-                                    }
-                                });     
+                                that.adjustStatisticData(authorId, "other", entryStr.length);     
                             }
                             // end of calculating edits
         				}
@@ -711,18 +645,10 @@ $.extend(window.docuviz, {
 
                         // new calculating edits
                         if (effectedSegment.authorId === authorId) {
-                            _.find(that.statisticDataArray, function(eachAuthor){
-                                if (eachAuthor.authorId === authorId){
-                                    eachAuthor.selfEdit += entryStr.length;
-                                }
-                            });
+                            that.adjustStatisticData(authorId, "self", entryStr.length);
                         }
                         else{
-                            _.find(that.statisticDataArray, function(eachAuthor){
-                                if (eachAuthor.authorId === authorId){
-                                    eachAuthor.otherEdit += entryStr.length;
-                                }
-                            });     
+                            that.adjustStatisticData(authorId, "other", entryStr.length);
                         }
                         // end of calculating edits
         			}
@@ -732,11 +658,8 @@ $.extend(window.docuviz, {
 	            			effectedSegment.endIndex += entryStr.length;
 
                             // new
-                            _.find(that.statisticDataArray, function(eachAuthor){
-                                if (eachAuthor.authorId === authorId){
-                                    eachAuthor.selfEdit += entryStr.length;
-                                }
-                            });
+
+                            that.adjustStatisticData(authorId, "self", entryStr.length);
         				}
         				else{
         					that.currentSegID += 1;
@@ -745,18 +668,10 @@ $.extend(window.docuviz, {
 
 	            			// new calculating edits
 	            			if (effectedSegment.authorId === authorId) {
-	            			    _.find(that.statisticDataArray, function(eachAuthor){
-	            			        if (eachAuthor.authorId === authorId){
-	            			            eachAuthor.selfEdit += entryStr.length;
-	            			        }
-	            			    });
+                                that.adjustStatisticData(authorId, "self", entryStr.length);
 	            			}
 	            			else{
-	            			    _.find(that.statisticDataArray, function(eachAuthor){
-	            			        if (eachAuthor.authorId === authorId){
-	            			            eachAuthor.otherEdit += entryStr.length;
-	            			        }
-	            			    });     
+                                that.adjustStatisticData(authorId, "other", entryStr.length);
 	            			}
 	            			// end of calculating edits
         				}
@@ -775,18 +690,10 @@ $.extend(window.docuviz, {
 
                         // new calculating edits
                         if (effectedSegment.authorId === authorId) {
-                            _.find(that.statisticDataArray, function(eachAuthor){
-                                if (eachAuthor.authorId === authorId){
-                                    eachAuthor.selfEdit += entryStr.length;
-                                }
-                            });
+                            that.adjustStatisticData(authorId, "self", entryStr.length);
                         }
                         else{
-                            _.find(that.statisticDataArray, function(eachAuthor){
-                                if (eachAuthor.authorId === authorId){
-                                    eachAuthor.otherEdit += entryStr.length;
-                                }
-                            });     
+                            that.adjustStatisticData(authorId, "other", entryStr.length);
                         }
                         // end of calculating edits
 
@@ -801,12 +708,8 @@ $.extend(window.docuviz, {
         		    		}
 
                             // new
-                            _.find(that.statisticDataArray, function(eachAuthor){
-                                if (eachAuthor.authorId === authorId){
-                                    eachAuthor.selfEdit += entryStr.length;
-                                }
-                            });
 
+                            that.adjustStatisticData(authorId, "self", entryStr.length);
         				}
         				else{
 	        				that.currentSegID += 1;
@@ -819,18 +722,10 @@ $.extend(window.docuviz, {
 				    		}
                             // new calculating edits
                             if (effectedSegment.authorId === authorId) {
-                                _.find(that.statisticDataArray, function(eachAuthor){
-                                    if (eachAuthor.authorId === authorId){
-                                        eachAuthor.selfEdit += entryStr.length;
-                                    }
-                                });
+                                that.adjustStatisticData(authorId, "self", entryStr.length);
                             }
                             else{
-                                _.find(that.statisticDataArray, function(eachAuthor){
-                                    if (eachAuthor.authorId === authorId){
-                                        eachAuthor.otherEdit += entryStr.length;
-                                    }
-                                });     
+                                that.adjustStatisticData(authorId, "other", entryStr.length);   
                             }
                             // end of calculating edits
 
@@ -847,11 +742,7 @@ $.extend(window.docuviz, {
     			    		}
 
                             // new
-                            _.find(that.statisticDataArray, function(eachAuthor){
-                                if (eachAuthor.authorId === authorId){
-                                    eachAuthor.selfEdit += entryStr.length;
-                                }
-                            });
+                            that.adjustStatisticData(authorId, "self", entryStr.length);
 
         				}
         				else{
@@ -866,18 +757,10 @@ $.extend(window.docuviz, {
 
                             // new calculating edits
                             if (effectedSegment.authorId === authorId) {
-                                _.find(that.statisticDataArray, function(eachAuthor){
-                                    if (eachAuthor.authorId === authorId){
-                                        eachAuthor.selfEdit += entryStr.length;
-                                    }
-                                });
+                                that.adjustStatisticData(authorId, "self", entryStr.length);
                             }
                             else{
-                                _.find(that.statisticDataArray, function(eachAuthor){
-                                    if (eachAuthor.authorId === authorId){
-                                        eachAuthor.otherEdit += entryStr.length;
-                                    }
-                                });     
+                                that.adjustStatisticData(authorId, "other", entryStr.length);
                             }
                             // end of calculating edits
         				}
@@ -894,12 +777,7 @@ $.extend(window.docuviz, {
 	    		    		}
 
                             // new
-                            _.find(that.statisticDataArray, function(eachAuthor){
-                                if (eachAuthor.authorId === authorId){
-                                    eachAuthor.selfEdit += entryStr.length;
-                                }
-                            });
-
+                            that.adjustStatisticData(authorId, "self", entryStr.length);
         				}
         				else if (effectedSegment.authorId != authorId && segmentsArray[segmentLocation+1].authorId === authorId && segmentsArray[segmentLocation+1].parentSegID === segmentsArray[segmentLocation+1].segID) {
         					segmentsArray[(segmentLocation+1)].segStr = entryStr + segmentsArray[segmentLocation+1].segStr;
@@ -910,11 +788,7 @@ $.extend(window.docuviz, {
 				    		}
 
                             // new
-                            _.find(that.statisticDataArray, function(eachAuthor){
-                                if (eachAuthor.authorId === authorId){
-                                    eachAuthor.otherEdit += entryStr.length;
-                                }
-                            });
+                            that.adjustStatisticData(authorId, "other", entryStr.length);
         				}
         				else if (effectedSegment.authorId != authorId && segmentsArray[segmentLocation+1].authorId != authorId) {
             				// create the new segment and update
@@ -927,11 +801,7 @@ $.extend(window.docuviz, {
 				    		}
 
                             // new
-                            _.find(that.statisticDataArray, function(eachAuthor){
-                                if (eachAuthor.authorId === authorId){
-                                    eachAuthor.otherEdit += entryStr.length;
-                                }
-                            });
+                            that.adjustStatisticData(authorId, "other", entryStr.length);
 
         				}
         				else {
@@ -945,18 +815,10 @@ $.extend(window.docuviz, {
 
                             // new calculating edits
                             if (effectedSegment.authorId === authorId) {
-                                _.find(that.statisticDataArray, function(eachAuthor){
-                                    if (eachAuthor.authorId === authorId){
-                                        eachAuthor.selfEdit += entryStr.length;
-                                    }
-                                });
+                                that.adjustStatisticData(authorId, "self", entryStr.length);
                             }
                             else{
-                                _.find(that.statisticDataArray, function(eachAuthor){
-                                    if (eachAuthor.authorId === authorId){
-                                        eachAuthor.otherEdit += entryStr.length;
-                                    }
-                                });     
+                                that.adjustStatisticData(authorId, "other", entryStr.length);     
                             }
                             // end of calculating edits
 
@@ -980,18 +842,10 @@ $.extend(window.docuviz, {
                         }
                         // new calculating edits
                         if (effectedSegment.authorId === authorId) {
-                            _.find(that.statisticDataArray, function(eachAuthor){
-                                if (eachAuthor.authorId === authorId){
-                                    eachAuthor.selfEdit += entryStr.length;
-                                }
-                            });
+                            that.adjustStatisticData(authorId, "self", entryStr.length);
                         }
                         else{
-                            _.find(that.statisticDataArray, function(eachAuthor){
-                                if (eachAuthor.authorId === authorId){
-                                    eachAuthor.otherEdit += entryStr.length;
-                                }
-                            });     
+                            that.adjustStatisticData(authorId, "other", entryStr.length);
                         }
                         // end of calculating edits
 
@@ -1026,18 +880,10 @@ $.extend(window.docuviz, {
 
                 		// new calculating edits
                 		if (effectedSegment.authorId === authorId) {
-                		    _.find(that.statisticDataArray, function(eachAuthor){
-                		        if (eachAuthor.authorId === authorId){
-                		            eachAuthor.selfEdit += entryStr.length;
-                		        }
-                		    });
+                            that.adjustStatisticData(authorId, "self", entryStr.length);
                 		}
                 		else{
-                		    _.find(that.statisticDataArray, function(eachAuthor){
-                		        if (eachAuthor.authorId === authorId){
-                		            eachAuthor.otherEdit += entryStr.length;
-                		        }
-                		    });     
+                            that.adjustStatisticData(authorId, "other", entryStr.length); 
                 		}
                 		// end of calculating edits
 
@@ -1056,11 +902,7 @@ $.extend(window.docuviz, {
                             }
 
                             // new
-                            _.find(that.statisticDataArray, function(eachAuthor){
-                                if (eachAuthor.authorId === authorId){
-                                    eachAuthor.selfEdit += entryStr.length;
-                                }
-                            });
+                            that.adjustStatisticData(authorId, "self", entryStr.length);
                         }
 
                         else{
@@ -1076,11 +918,7 @@ $.extend(window.docuviz, {
     			    		}
 
                             // new
-                            _.find(that.statisticDataArray, function(eachAuthor){
-                                if (eachAuthor.authorId === authorId){
-                                    eachAuthor.selfEdit += entryStr.length;
-                                }
-                            });
+                            that.adjustStatisticData(authorId, "self", entryStr.length);
                         }
 					}
 					else{
@@ -1120,18 +958,10 @@ $.extend(window.docuviz, {
                         }
                         // new calculating edits
                         if (effectedSegment.authorId === authorId) {
-                            _.find(that.statisticDataArray, function(eachAuthor){
-                                if (eachAuthor.authorId === authorId){
-                                    eachAuthor.selfEdit += entryStr.length;
-                                }
-                            });
+                            that.adjustStatisticData(authorId, "self", entryStr.length);
                         }
                         else{
-                            _.find(that.statisticDataArray, function(eachAuthor){
-                                if (eachAuthor.authorId === authorId){
-                                    eachAuthor.otherEdit += entryStr.length;
-                                }
-                            });     
+                            that.adjustStatisticData(authorId, "other", entryStr.length);
                         }
                         // end of calculating edits
 					}
@@ -1169,18 +999,10 @@ $.extend(window.docuviz, {
 
                     	// new calculating edits
                     	if (eachSegment.authorId === authorId) {
-                    	    _.find(that.statisticDataArray, function(eachAuthor){
-                    	        if (eachAuthor.authorId === authorId){
-                    	            eachAuthor.selfEdit += 1;
-                    	        }
-                    	    });
+                            that.adjustStatisticData(authorId, "self", 1);
                     	}
-                    	else{
-                    	    _.find(that.statisticDataArray, function(eachAuthor){
-                    	        if (eachAuthor.authorId === authorId){
-                    	            eachAuthor.otherEdit += 1;
-                    	        }
-                    	    });     
+                    	else{ 
+                            that.adjustStatisticData(authorId, "other", 1);  
                     	}
                     	// end of calculating edits
 
@@ -1248,18 +1070,10 @@ $.extend(window.docuviz, {
 
                     	// new calculating edits
                     	if (eachSegment.authorId === authorId) {
-                    	    _.find(that.statisticDataArray, function(eachAuthor){
-                    	        if (eachAuthor.authorId === authorId){
-                    	            eachAuthor.selfEdit += 1;
-                    	        }
-                    	    });
+                            that.adjustStatisticData(authorId, "self", 1);
                     	}
                     	else{
-                    	    _.find(that.statisticDataArray, function(eachAuthor){
-                    	        if (eachAuthor.authorId === authorId){
-                    	            eachAuthor.otherEdit += 1;
-                    	        }
-                    	    });     
+                            that.adjustStatisticData(authorId, "other", 1); 
                     	}
                     	// end of calculating edits
 
@@ -1320,19 +1134,11 @@ $.extend(window.docuviz, {
                     else if (eachSegment.startIndex < deleteIndex && deleteIndex < eachSegment.endIndex){
                     	// new calculating edits
                     	if (eachSegment.authorId === authorId) {
-                    	    _.find(that.statisticDataArray, function(eachAuthor){
-                    	        if (eachAuthor.authorId === authorId){
-                    	            eachAuthor.selfEdit += 1;
-                    	        }
-                    	    });
-                    	}
-                    	else{
-                    	    _.find(that.statisticDataArray, function(eachAuthor){
-                    	        if (eachAuthor.authorId === authorId){
-                    	            eachAuthor.otherEdit += 1;
-                    	        }
-                    	    });     
-                    	}
+                            that.adjustStatisticData(authorId, "self", 1);
+                        }
+                        else {
+                            that.adjustStatisticData(authorId, "other", 1); 
+                        }
                     	// end of calculating edits
 
                 		var strBeforeDelete = eachSegment.segStr.substring(0, (deleteIndex - eachSegment.startIndex)); // = substring(0,end-1)
@@ -1448,18 +1254,10 @@ $.extend(window.docuviz, {
 
                     // new calculating edits
                     if (effectedSegmentOfDeleteStart.authorId === authorId){
-                        _.find(that.statisticDataArray, function(eachAuthor){
-                            if (eachAuthor.authorId === authorId){ 
-                                eachAuthor.selfEdit +=  deleteEndIndex - deleteStartIndex + 1;
-                            }
-                        });      
+                        that.adjustStatisticData(authorId, "self", (deleteEndIndex - deleteStartIndex + 1));    
                     }
-                    else{
-                        _.find(that.statisticDataArray, function(eachAuthor){
-                            if (eachAuthor.authorId === authorId){ 
-                                eachAuthor.otherEdit +=  deleteEndIndex - deleteStartIndex + 1;
-                            }
-                        });   
+                    else{ 
+                        that.adjustStatisticData(authorId, "other", (deleteEndIndex - deleteStartIndex + 1));    
                     }
                     // end of calculating edits
 
@@ -1625,42 +1423,27 @@ $.extend(window.docuviz, {
                         if (segmentsArray[i].authorId === authorId){
                             selfEditCount += segmentsArray[i].endIndex - segmentsArray[i].startIndex + 1;
                         }
-                        else{
+                        else if (segmentsArray[i].authorId != authorId){
                             otherEditCount += segmentsArray[i].endIndex - segmentsArray[i].startIndex + 1;
                         }
                     }
 
 
                     if (effectedSegmentOfDeleteStart.authorId === authorId){
-                        _.find(that.statisticDataArray, function(eachAuthor){
-                            if (eachAuthor.authorId === authorId){ 
-                                eachAuthor.selfEdit += selfEditCount + effectedSegmentOfDeleteStart.endIndex - deleteStartIndex + 1;
-                                eachAuthor.otherEdit += otherEditCount;
-                            }
-                        });      
+                        that.adjustStatisticData(authorId, "self", (selfEditCount + effectedSegmentOfDeleteStart.endIndex - deleteStartIndex + 1));    
+                        that.adjustStatisticData(authorId, "other", otherEditCount);    
+
                     }
                     else{
-                        _.find(that.statisticDataArray, function(eachAuthor){
-                            if (eachAuthor.authorId === authorId){ 
-                                eachAuthor.selfEdit +=  effectedSegmentOfDeleteStart.endIndex - deleteStartIndex + 1;
-                                eachAuthor.otherEdit += otherEditCount + effectedSegmentOfDeleteStart.endIndex - deleteStartIndex + 1;
-                            }
-                        });   
+                        that.adjustStatisticData(authorId, "self", (effectedSegmentOfDeleteStart.endIndex - deleteStartIndex + 1));    
+                        that.adjustStatisticData(authorId, "other", (otherEditCount + effectedSegmentOfDeleteStart.endIndex - deleteStartIndex + 1));    
                     }
 
                     if (effectedSegmentOfDeleteEnd.authorId === authorId){
-                        _.find(that.statisticDataArray, function(eachAuthor){
-                            if (eachAuthor.authorId === authorId){ 
-                                eachAuthor.selfEdit += deleteEndIndex - effectedSegmentOfDeleteEnd.startIndex + 1;
-                            }
-                        });   
+                        that.adjustStatisticData(authorId, "self", (deleteEndIndex - effectedSegmentOfDeleteEnd.startIndex + 1));    
                     }
-                    else{
-                        _.find(that.statisticDataArray, function(eachAuthor){
-                            if (eachAuthor.authorId === authorId){ 
-                                eachAuthor.otherEdit +=  deleteEndIndex - effectedSegmentOfDeleteEnd.startIndex + 1;
-                            }
-                        });   
+                    else{ 
+                        that.adjustStatisticData(authorId, "otherEdit", (deleteEndIndex - effectedSegmentOfDeleteEnd.startIndex + 1));    
                     }
                     // end
 
