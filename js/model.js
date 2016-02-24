@@ -263,15 +263,10 @@ $.extend(window.docuviz, {
                     that.analyzeEachEditInChangelog(command, authorId, that.revID, that.currentSegID, that.allSegmentsInCurrentRev);                    
 
                     if (soFar === intervalChangesIndex[that.revID] ) {
-                    	// var index = 0;
                         // change all segments'revID to the same revID
                         _.each(that.allSegmentsInCurrentRev, function(eachSegment) {
                             eachSegment.revID = that.revID;
                             eachSegment.permanentFlag = true;
-                            // eachSegment.startIndex = index;
-                            // index += (eachSegment.segStr.length - 1);
-                            // eachSegment.endIndex = index;
-                            // index += 1;
                         });
 
                         var revLength = that.str.length;
@@ -376,7 +371,8 @@ $.extend(window.docuviz, {
             	    var currentSeg = that.constructSegment(authorId, entryStr, that.currentSegID, that.currentSegID, 0, that.revID, startIndex, (startIndex + entryStr.length - 1), "new segment because of no previous segment", false);    
             	}
             	segmentsArray.insert(currentSeg,segmentsArray.length);
-                // new
+
+                // self edit v.s. other edit
                 _.find(that.statisticDataArray, function(eachAuthor){
                     if (eachAuthor.authorId === authorId){
                         eachAuthor.selfEdit += entryStr.length;
@@ -413,7 +409,7 @@ $.extend(window.docuviz, {
 					    	segmentsArray[i].startIndex += entryStr.length;
 					    	segmentsArray[i].endIndex += entryStr.length;
 			    		}
-                        // new
+                        // new calculating edits
                         if (effectedSegment.authorId === authorId) {
                             _.find(that.statisticDataArray, function(eachAuthor){
                                 if (eachAuthor.authorId === authorId){
@@ -428,6 +424,7 @@ $.extend(window.docuviz, {
                                 }
                             });     
                         }
+                        // end of calculating edits
         			}
         			else {
         				if (effectedSegment.authorId === authorId && effectedSegment.parentSegID === effectedSegment.segID) {
@@ -448,12 +445,22 @@ $.extend(window.docuviz, {
 	            			var currentSeg = that.constructSegment(authorId, entryStr, that.currentSegID, that.currentSegID, 0, that.revID, startIndex, (startIndex + entryStr.length - 1), "new segment and found the effected segment, permanentflag = false,  authorId != , when effectedSegment.startIndex === startIndex and startIndex === 0", false);
 	            			segmentsArray.insert(currentSeg, segmentLocation );
 
-                            // new
-                            _.find(that.statisticDataArray, function(eachAuthor){
-                                if (eachAuthor.authorId === authorId){
-                                    eachAuthor.otherEdit += entryStr.length;
-                                }
-                            });     
+                            // new calculating edits
+                            if (effectedSegment.authorId === authorId) {
+                                _.find(that.statisticDataArray, function(eachAuthor){
+                                    if (eachAuthor.authorId === authorId){
+                                        eachAuthor.selfEdit += entryStr.length;
+                                    }
+                                });
+                            }
+                            else{
+                                _.find(that.statisticDataArray, function(eachAuthor){
+                                    if (eachAuthor.authorId === authorId){
+                                        eachAuthor.otherEdit += entryStr.length;
+                                    }
+                                });     
+                            }
+                            // end of calculating edits   
                         
 
 	            		}
@@ -469,7 +476,7 @@ $.extend(window.docuviz, {
         				var currentSeg = that.constructSegment(authorId, entryStr, that.currentSegID, that.currentSegID, 0, that.revID, startIndex, (startIndex + entryStr.length - 1), "new segment and found the effected segment, permanentflag = true, when ((effectedSegment.endIndex+1) ===  startIndex )&& (segmentLocation === (segmentsArray.length-1 ))", false);
         				segmentsArray.insert(currentSeg, (segmentLocation+1) );
 
-                        // new
+                        // new calculating edits
                         if (effectedSegment.authorId === authorId) {
                             _.find(that.statisticDataArray, function(eachAuthor){
                                 if (eachAuthor.authorId === authorId){
@@ -484,6 +491,7 @@ $.extend(window.docuviz, {
                                 }
                             });     
                         }
+                        // end of calculating edits
         			}
         			else {
         				if(effectedSegment.authorId === authorId && effectedSegment.parentSegID === effectedSegment.segID){
@@ -503,12 +511,22 @@ $.extend(window.docuviz, {
 	            			var currentSeg = that.constructSegment(authorId, entryStr, that.currentSegID, that.currentSegID, 0, that.revID, startIndex, (startIndex + entryStr.length - 1), "new segment and found the effected segment, differentAuthor, permanentflag=false, when ((effectedSegment.endIndex+1) ===  startIndex )&& (segmentLocation === (segmentsArray.length-1 ))", false);
 	            			segmentsArray.insert(currentSeg, (segmentLocation+1) );
 
-                            // new
-                            _.find(that.statisticDataArray, function(eachAuthor){
-                                if (eachAuthor.authorId === authorId){
-                                    eachAuthor.otherEdit += entryStr.length;
-                                }
-                            });            
+                            // new calculating edits
+                            if (effectedSegment.authorId === authorId) {
+                                _.find(that.statisticDataArray, function(eachAuthor){
+                                    if (eachAuthor.authorId === authorId){
+                                        eachAuthor.selfEdit += entryStr.length;
+                                    }
+                                });
+                            }
+                            else{
+                                _.find(that.statisticDataArray, function(eachAuthor){
+                                    if (eachAuthor.authorId === authorId){
+                                        eachAuthor.otherEdit += entryStr.length;
+                                    }
+                                });     
+                            }
+                            // end of calculating edits           
 	            		}
         			}
         		}
@@ -522,7 +540,7 @@ $.extend(window.docuviz, {
 					    	segmentsArray[i].startIndex += entryStr.length;
 					    	segmentsArray[i].endIndex += entryStr.length;
 			    		}
-                        // new
+                        // new calculating edits
                         if (effectedSegment.authorId === authorId) {
                             _.find(that.statisticDataArray, function(eachAuthor){
                                 if (eachAuthor.authorId === authorId){
@@ -537,6 +555,7 @@ $.extend(window.docuviz, {
                                 }
                             });     
                         }
+                        // end of calculating edits
 
         			}
         			else if (effectedSegment.permanentFlag === true && segmentsArray[segmentLocation-1].permanentFlag === false){
@@ -565,12 +584,22 @@ $.extend(window.docuviz, {
 						    	segmentsArray[i].endIndex += entryStr.length;
 				    		}
 
-                            // new
-                            _.find(that.statisticDataArray, function(eachAuthor){
-                                if (eachAuthor.authorId === authorId){
-                                    eachAuthor.otherEdit += entryStr.length;
-                                }
-                            });
+                            // new calculating edits
+                            if (effectedSegment.authorId === authorId) {
+                                _.find(that.statisticDataArray, function(eachAuthor){
+                                    if (eachAuthor.authorId === authorId){
+                                        eachAuthor.selfEdit += entryStr.length;
+                                    }
+                                });
+                            }
+                            else{
+                                _.find(that.statisticDataArray, function(eachAuthor){
+                                    if (eachAuthor.authorId === authorId){
+                                        eachAuthor.otherEdit += entryStr.length;
+                                    }
+                                });     
+                            }
+                            // end of calculating edits
 
         				}
         			}
@@ -600,12 +629,22 @@ $.extend(window.docuviz, {
 						    	segmentsArray[i].endIndex += entryStr.length;
 				    		}
 
-                            // new
-                            _.find(that.statisticDataArray, function(eachAuthor){
-                                if (eachAuthor.authorId === authorId){
-                                    eachAuthor.otherEdit += entryStr.length;
-                                }
-                            });
+                            // new calculating edits
+                            if (effectedSegment.authorId === authorId) {
+                                _.find(that.statisticDataArray, function(eachAuthor){
+                                    if (eachAuthor.authorId === authorId){
+                                        eachAuthor.selfEdit += entryStr.length;
+                                    }
+                                });
+                            }
+                            else{
+                                _.find(that.statisticDataArray, function(eachAuthor){
+                                    if (eachAuthor.authorId === authorId){
+                                        eachAuthor.otherEdit += entryStr.length;
+                                    }
+                                });     
+                            }
+                            // end of calculating edits
         				}
         			}
         			else{
@@ -648,13 +687,22 @@ $.extend(window.docuviz, {
 						    	segmentsArray[i].endIndex += entryStr.length;
 				    		}
 
-
-                            // new
-                            _.find(that.statisticDataArray, function(eachAuthor){
-                                if (eachAuthor.authorId === authorId){
-                                    eachAuthor.otherEdit += entryStr.length;
-                                }
-                            });
+                            // new calculating edits
+                            if (effectedSegment.authorId === authorId) {
+                                _.find(that.statisticDataArray, function(eachAuthor){
+                                    if (eachAuthor.authorId === authorId){
+                                        eachAuthor.selfEdit += entryStr.length;
+                                    }
+                                });
+                            }
+                            else{
+                                _.find(that.statisticDataArray, function(eachAuthor){
+                                    if (eachAuthor.authorId === authorId){
+                                        eachAuthor.otherEdit += entryStr.length;
+                                    }
+                                });     
+                            }
+                            // end of calculating edits
         				}
         			}
         		}
@@ -669,22 +717,22 @@ $.extend(window.docuviz, {
 	        			var currentSeg = that.constructSegment(authorId, entryStr, that.currentSegID, that.currentSegID, 0, that.revID, startIndex, (startIndex + entryStr.length - 1), "new segment and found the effected segment, not the same author when segmentLocation ===  (segmentsArray.length-1)", false);
 	        			segmentsArray.insert(currentSeg, (segmentLocation+1) );
 
-                        // new
-                        if (effectedSegment.authorId === authorId){
+                        // new calculating edits
+                        if (effectedSegment.authorId === authorId) {
                             _.find(that.statisticDataArray, function(eachAuthor){
                                 if (eachAuthor.authorId === authorId){
                                     eachAuthor.selfEdit += entryStr.length;
                                 }
-                            });      
+                            });
                         }
-
                         else{
                             _.find(that.statisticDataArray, function(eachAuthor){
                                 if (eachAuthor.authorId === authorId){
                                     eachAuthor.otherEdit += entryStr.length;
                                 }
-                            });           
+                            });     
                         }
+                        // end of calculating edits
         			}
         			else{
         				if (effectedSegment.authorId === authorId && effectedSegment.parentSegID === effectedSegment.segID){
@@ -702,6 +750,23 @@ $.extend(window.docuviz, {
         					that.currentSegID += 1;
 	            			var currentSeg = that.constructSegment(authorId, entryStr, that.currentSegID, that.currentSegID, 0, that.revID, startIndex, (startIndex + entryStr.length - 1), "new segment and found the effected segment, not the same author when segmentLocation ===  (segmentsArray.length-1)", false);
 	            			segmentsArray.insert(currentSeg, (segmentLocation+1) );
+
+	            			// new calculating edits
+	            			if (effectedSegment.authorId === authorId) {
+	            			    _.find(that.statisticDataArray, function(eachAuthor){
+	            			        if (eachAuthor.authorId === authorId){
+	            			            eachAuthor.selfEdit += entryStr.length;
+	            			        }
+	            			    });
+	            			}
+	            			else{
+	            			    _.find(that.statisticDataArray, function(eachAuthor){
+	            			        if (eachAuthor.authorId === authorId){
+	            			            eachAuthor.otherEdit += entryStr.length;
+	            			        }
+	            			    });     
+	            			}
+	            			// end of calculating edits
         				}
         			}
         		}	
@@ -716,22 +781,22 @@ $.extend(window.docuviz, {
 					    	segmentsArray[i].endIndex += entryStr.length;
 			    		}
 
-                        // new
-                        if (effectedSegment.authorId === authorId){
+                        // new calculating edits
+                        if (effectedSegment.authorId === authorId) {
                             _.find(that.statisticDataArray, function(eachAuthor){
                                 if (eachAuthor.authorId === authorId){
                                     eachAuthor.selfEdit += entryStr.length;
                                 }
-                            });      
+                            });
                         }
-
                         else{
                             _.find(that.statisticDataArray, function(eachAuthor){
                                 if (eachAuthor.authorId === authorId){
                                     eachAuthor.otherEdit += entryStr.length;
                                 }
-                            });           
+                            });     
                         }
+                        // end of calculating edits
 
         			}
         			else if (effectedSegment.permanentFlag === true && segmentsArray[segmentLocation+1].permanentFlag === false){
@@ -760,12 +825,22 @@ $.extend(window.docuviz, {
 						    	segmentsArray[i].startIndex += entryStr.length;
 						    	segmentsArray[i].endIndex += entryStr.length;
 				    		}
-                            // new
-                            _.find(that.statisticDataArray, function(eachAuthor){
-                                if (eachAuthor.authorId === authorId){
-                                    eachAuthor.otherEdit += entryStr.length;
-                                }
-                            });
+                            // new calculating edits
+                            if (effectedSegment.authorId === authorId) {
+                                _.find(that.statisticDataArray, function(eachAuthor){
+                                    if (eachAuthor.authorId === authorId){
+                                        eachAuthor.selfEdit += entryStr.length;
+                                    }
+                                });
+                            }
+                            else{
+                                _.find(that.statisticDataArray, function(eachAuthor){
+                                    if (eachAuthor.authorId === authorId){
+                                        eachAuthor.otherEdit += entryStr.length;
+                                    }
+                                });     
+                            }
+                            // end of calculating edits
 
         				}
         			}
@@ -797,12 +872,22 @@ $.extend(window.docuviz, {
 						    	segmentsArray[i].endIndex += entryStr.length;
 				    		}
 
-                            // new
-                            _.find(that.statisticDataArray, function(eachAuthor){
-                                if (eachAuthor.authorId === authorId){
-                                    eachAuthor.otherEdit += entryStr.length;
-                                }
-                            });
+                            // new calculating edits
+                            if (effectedSegment.authorId === authorId) {
+                                _.find(that.statisticDataArray, function(eachAuthor){
+                                    if (eachAuthor.authorId === authorId){
+                                        eachAuthor.selfEdit += entryStr.length;
+                                    }
+                                });
+                            }
+                            else{
+                                _.find(that.statisticDataArray, function(eachAuthor){
+                                    if (eachAuthor.authorId === authorId){
+                                        eachAuthor.otherEdit += entryStr.length;
+                                    }
+                                });     
+                            }
+                            // end of calculating edits
         				}
         			}
         			else {
@@ -835,7 +920,7 @@ $.extend(window.docuviz, {
                             // new
                             _.find(that.statisticDataArray, function(eachAuthor){
                                 if (eachAuthor.authorId === authorId){
-                                    eachAuthor.selfEdit += entryStr.length;
+                                    eachAuthor.otherEdit += entryStr.length;
                                 }
                             });
         				}
@@ -866,22 +951,22 @@ $.extend(window.docuviz, {
 	    				    	segmentsArray[i].endIndex += entryStr.length;
 	    		    		}
 
-                            // new
-                            if (effectedSegment.authorId === authorId){
+                            // new calculating edits
+                            if (effectedSegment.authorId === authorId) {
                                 _.find(that.statisticDataArray, function(eachAuthor){
                                     if (eachAuthor.authorId === authorId){
                                         eachAuthor.selfEdit += entryStr.length;
                                     }
-                                });      
+                                });
                             }
-
                             else{
                                 _.find(that.statisticDataArray, function(eachAuthor){
                                     if (eachAuthor.authorId === authorId){
                                         eachAuthor.otherEdit += entryStr.length;
                                     }
-                                });           
+                                });     
                             }
+                            // end of calculating edits
 
         				}
         			}
@@ -901,22 +986,22 @@ $.extend(window.docuviz, {
                             segmentsArray[i].startIndex += entryStr.length;
                             segmentsArray[i].endIndex += entryStr.length;
                         }
-                        // new
-                        if (effectedSegment.authorId === authorId){
+                        // new calculating edits
+                        if (effectedSegment.authorId === authorId) {
                             _.find(that.statisticDataArray, function(eachAuthor){
                                 if (eachAuthor.authorId === authorId){
                                     eachAuthor.selfEdit += entryStr.length;
                                 }
-                            });      
+                            });
                         }
-
                         else{
                             _.find(that.statisticDataArray, function(eachAuthor){
                                 if (eachAuthor.authorId === authorId){
                                     eachAuthor.otherEdit += entryStr.length;
                                 }
-                            });           
+                            });     
                         }
+                        // end of calculating edits
 
 
                     }
@@ -947,22 +1032,22 @@ $.extend(window.docuviz, {
             		    	segmentsArray[i].endIndex += entryStr.length;
                 		}
 
-                        // new
-                        if (effectedSegment.authorId === authorId){
-                            _.find(that.statisticDataArray, function(eachAuthor){
-                                if (eachAuthor.authorId === authorId){
-                                    eachAuthor.selfEdit += entryStr.length;
-                                }
-                            });      
-                        }
-
-                        else{
-                            _.find(that.statisticDataArray, function(eachAuthor){
-                                if (eachAuthor.authorId === authorId){
-                                    eachAuthor.otherEdit += entryStr.length;
-                                }
-                            });           
-                        }
+                		// new calculating edits
+                		if (effectedSegment.authorId === authorId) {
+                		    _.find(that.statisticDataArray, function(eachAuthor){
+                		        if (eachAuthor.authorId === authorId){
+                		            eachAuthor.selfEdit += entryStr.length;
+                		        }
+                		    });
+                		}
+                		else{
+                		    _.find(that.statisticDataArray, function(eachAuthor){
+                		        if (eachAuthor.authorId === authorId){
+                		            eachAuthor.otherEdit += entryStr.length;
+                		        }
+                		    });     
+                		}
+                		// end of calculating edits
 
                     }
 
@@ -1016,15 +1101,7 @@ $.extend(window.docuviz, {
                                 segmentsArray[i].startIndex += entryStr.length;
                                 segmentsArray[i].endIndex += entryStr.length;
                             }
-                            // new
-                            _.find(that.statisticDataArray, function(eachAuthor){
-                                if (eachAuthor.authorId === authorId){
-                                    eachAuthor.otherEdit += entryStr.length;
-                                }
-                            });
                         }
-
-
                         else {
     	        			var strBeforeStartIndex = effectedSegment.segStr.substring(0, (startIndex - effectedSegment.startIndex));
     	        			var strAfterStartIndex = effectedSegment.segStr.substring(startIndex - effectedSegment.startIndex);
@@ -1048,16 +1125,23 @@ $.extend(window.docuviz, {
     	        		    	segmentsArray[i].startIndex += entryStr.length;
     	        		    	segmentsArray[i].endIndex += entryStr.length;
     	            		}
-                            // new
+                        }
+                        // new calculating edits
+                        if (effectedSegment.authorId === authorId) {
+                            _.find(that.statisticDataArray, function(eachAuthor){
+                                if (eachAuthor.authorId === authorId){
+                                    eachAuthor.selfEdit += entryStr.length;
+                                }
+                            });
+                        }
+                        else{
                             _.find(that.statisticDataArray, function(eachAuthor){
                                 if (eachAuthor.authorId === authorId){
                                     eachAuthor.otherEdit += entryStr.length;
                                 }
-                            });
-
-
-
+                            });     
                         }
+                        // end of calculating edits
 					}
         		}
 
@@ -1086,7 +1170,27 @@ $.extend(window.docuviz, {
             if(segmentsArray != null){
 
                 effectedSegmentOfDelete = _.find(segmentsArray, function(eachSegment, index) {
+
+
+
                     if (eachSegment.startIndex === deleteIndex ) {
+
+                    	// new calculating edits
+                    	if (eachSegment.authorId === authorId) {
+                    	    _.find(that.statisticDataArray, function(eachAuthor){
+                    	        if (eachAuthor.authorId === authorId){
+                    	            eachAuthor.selfEdit += 1;
+                    	        }
+                    	    });
+                    	}
+                    	else{
+                    	    _.find(that.statisticDataArray, function(eachAuthor){
+                    	        if (eachAuthor.authorId === authorId){
+                    	            eachAuthor.otherEdit += 1;
+                    	        }
+                    	    });     
+                    	}
+                    	// end of calculating edits
 
                     	if (eachSegment.startIndex === eachSegment.endIndex) {
                     		
@@ -1098,23 +1202,6 @@ $.extend(window.docuviz, {
                     		    segmentsArray[i].startIndex -= 1;
                     		    segmentsArray[i].endIndex -= 1;
                     		}
-
-                            // new
-                            if (eachSegment.authorId === authorId){
-                                _.find(that.statisticDataArray, function(eachAuthor){
-                                    if (eachAuthor.authorId === authorId){
-                                        eachAuthor.selfEdit += 1;
-                                    }
-                                });   
-                            }
-                            else{
-                                _.find(that.statisticDataArray, function(eachAuthor){
-                                    if (eachAuthor.authorId === authorId){
-                                        eachAuthor.otherEdit += 1;
-                                    }
-                                });   
-                            }
-
 
                     		// deleteSegmentLocation = index;
                     		return eachSegment;
@@ -1139,24 +1226,6 @@ $.extend(window.docuviz, {
 	                    		    segmentsArray[i].startIndex -= 1;
 	                    		    segmentsArray[i].endIndex -= 1;
 	                    		}
-
-
-                                // new
-                                if (eachSegment.authorId === authorId){
-                                    _.find(that.statisticDataArray, function(eachAuthor){
-                                        if (eachAuthor.authorId === authorId){
-                                            eachAuthor.selfEdit += 1;
-                                        }
-                                    });   
-                                }
-                                else{
-                                    _.find(that.statisticDataArray, function(eachAuthor){
-                                        if (eachAuthor.authorId === authorId){
-                                            eachAuthor.otherEdit += 1;
-                                        }
-                                    });   
-                                }
-
 	                    		return eachSegment;
 
                     		}
@@ -1177,23 +1246,6 @@ $.extend(window.docuviz, {
                                     segmentsArray[i].startIndex -= 1;
                                     segmentsArray[i].endIndex -= 1;
                                 }
-
-
-                                // new
-                                if (eachSegment.authorId === authorId){
-                                    _.find(that.statisticDataArray, function(eachAuthor){
-                                        if (eachAuthor.authorId === authorId){
-                                            eachAuthor.selfEdit += 1;
-                                        }
-                                    });   
-                                }
-                                else{
-                                    _.find(that.statisticDataArray, function(eachAuthor){
-                                        if (eachAuthor.authorId === authorId){
-                                            eachAuthor.otherEdit += 1;
-                                        }
-                                    });   
-                                }
                     			return eachSegment;
                     		}
 
@@ -1201,8 +1253,25 @@ $.extend(window.docuviz, {
                     	
                     }
                     else if (eachSegment.endIndex === deleteIndex ){
+
+                    	// new calculating edits
+                    	if (eachSegment.authorId === authorId) {
+                    	    _.find(that.statisticDataArray, function(eachAuthor){
+                    	        if (eachAuthor.authorId === authorId){
+                    	            eachAuthor.selfEdit += 1;
+                    	        }
+                    	    });
+                    	}
+                    	else{
+                    	    _.find(that.statisticDataArray, function(eachAuthor){
+                    	        if (eachAuthor.authorId === authorId){
+                    	            eachAuthor.otherEdit += 1;
+                    	        }
+                    	    });     
+                    	}
+                    	// end of calculating edits
+
                     	if (eachSegment.startIndex === eachSegment.endIndex) {
-                    		
 
                     		// updates all the following segments's start and end index
                     		for (var i = index; i <= (segmentsArray.length-1); i++){
@@ -1212,24 +1281,6 @@ $.extend(window.docuviz, {
 
                     		// delete the whole segment
                     		segmentsArray.delete( (index + 1 ), (index+1));
-
-
-                            // new
-                            if (eachSegment.authorId === authorId){
-                                _.find(that.statisticDataArray, function(eachAuthor){
-                                    if (eachAuthor.authorId === authorId){
-                                        eachAuthor.selfEdit += 1;
-                                    }
-                                });   
-                            }
-                            else{
-                                _.find(that.statisticDataArray, function(eachAuthor){
-                                    if (eachAuthor.authorId === authorId){
-                                        eachAuthor.otherEdit += 1;
-                                    }
-                                });   
-                            }
-
                     		return eachSegment;
                     		
                     	}
@@ -1252,33 +1303,9 @@ $.extend(window.docuviz, {
 	                    		    segmentsArray[i].startIndex -= 1;
 	                    		    segmentsArray[i].endIndex -= 1;
 	                    		}
-
-
-                                // new
-                                if (eachSegment.authorId === authorId){
-                                    _.find(that.statisticDataArray, function(eachAuthor){
-                                        if (eachAuthor.authorId === authorId){
-                                            eachAuthor.selfEdit += 1;
-                                        }
-                                    });   
-                                }
-                                else{
-                                    _.find(that.statisticDataArray, function(eachAuthor){
-                                        if (eachAuthor.authorId === authorId){
-                                            eachAuthor.otherEdit += 1;
-                                        }
-                                    });   
-                                }
-
-
 	                    		return eachSegment;
                     		}
                     		else {
-
-
-                    			// segmentsArray[index].segStr = strBeforeDelete;
-                    			// segmentsArray[index].endIndex -= 1;
-
                                 // create a new segment with offset
                                 that.currentSegID += 1;
                                 var segBefore  = that.constructSegment(eachSegment.authorId, strBeforeDelete, that.currentSegID, eachSegment.parentSegID, eachSegment.offset, that.revID, eachSegment.startIndex, (eachSegment.endIndex - 1), " segBefore when eleteStartIndex === deleteEndIndex, in eachSegment.startIndex != eachSegment.endIndex, permanentflag = true", false);
@@ -1292,24 +1319,6 @@ $.extend(window.docuviz, {
                     			    segmentsArray[i].startIndex -= 1;
                     			    segmentsArray[i].endIndex -= 1;
                     			}
-
-
-                                // new
-                                if (eachSegment.authorId === authorId){
-                                    _.find(that.statisticDataArray, function(eachAuthor){
-                                        if (eachAuthor.authorId === authorId){
-                                            eachAuthor.selfEdit += 1;
-                                        }
-                                    });   
-                                }
-                                else{
-                                    _.find(that.statisticDataArray, function(eachAuthor){
-                                        if (eachAuthor.authorId === authorId){
-                                            eachAuthor.otherEdit += 1;
-                                        }
-                                    });   
-                                }
-
                     			return eachSegment;
                     		}
 
@@ -1317,6 +1326,23 @@ $.extend(window.docuviz, {
                     	
                     }
                     else if (eachSegment.startIndex < deleteIndex && deleteIndex < eachSegment.endIndex){
+                    	// new calculating edits
+                    	if (eachSegment.authorId === authorId) {
+                    	    _.find(that.statisticDataArray, function(eachAuthor){
+                    	        if (eachAuthor.authorId === authorId){
+                    	            eachAuthor.selfEdit += 1;
+                    	        }
+                    	    });
+                    	}
+                    	else{
+                    	    _.find(that.statisticDataArray, function(eachAuthor){
+                    	        if (eachAuthor.authorId === authorId){
+                    	            eachAuthor.otherEdit += 1;
+                    	        }
+                    	    });     
+                    	}
+                    	// end of calculating edits
+
                 		var strBeforeDelete = eachSegment.segStr.substring(0, (deleteIndex - eachSegment.startIndex)); // = substring(0,end-1)
                 		var strAfterDelete = eachSegment.segStr.substring(deleteIndex - eachSegment.startIndex + 1); //
 
@@ -1340,37 +1366,10 @@ $.extend(window.docuviz, {
                     		    segmentsArray[i].startIndex -= 1;
                     		    segmentsArray[i].endIndex -= 1;
                     		}
-
-
-                            // new
-                            if (eachSegment.authorId === authorId){
-                                _.find(that.statisticDataArray, function(eachAuthor){
-                                    if (eachAuthor.authorId === authorId){
-                                        eachAuthor.selfEdit += 1;
-                                    }
-                                });   
-                            }
-                            else{
-                                _.find(that.statisticDataArray, function(eachAuthor){
-                                    if (eachAuthor.authorId === authorId){
-                                        eachAuthor.otherEdit += 1;
-                                    }
-                                });   
-                            }
-
                     		return eachSegment;
 
                 		}
                 		else {
-                			// segmentsArray[index].segStr = strBeforeDelete + strAfterDelete;
-                			// segmentsArray[index].endIndex -= 1;
-
-                			// // updates all the following segments
-                			// for (var i = (index+1); i <= (segmentsArray.length-1); i++){
-                			//     segmentsArray[i].startIndex -= 1;
-                			//     segmentsArray[i].endIndex -= 1;
-                			// }
-                			// return eachSegment;
                             // create two new segments, one with offset 0, another with offeset 
                             that.currentSegID += 1;
                             var segBefore  = that.constructSegment(eachSegment.authorId, strBeforeDelete, that.currentSegID, eachSegment.parentSegID, eachSegment.offset, that.revID, eachSegment.startIndex, (deleteIndex - 1), "segBefore when eachSegment.startIndex === eachSegment.endIndex, in (eachSegment.startIndex < deleteIndex && deleteIndex < eachSegment.endIndex), permanentflag = true", false);
@@ -1389,24 +1388,6 @@ $.extend(window.docuviz, {
                                 segmentsArray[i].startIndex -= 1;
                                 segmentsArray[i].endIndex -= 1;
                             }
-
-
-                            // new
-                            if (eachSegment.authorId === authorId){
-                                _.find(that.statisticDataArray, function(eachAuthor){
-                                    if (eachAuthor.authorId === authorId){
-                                        eachAuthor.selfEdit += 1;
-                                    }
-                                });   
-                            }
-                            else{
-                                _.find(that.statisticDataArray, function(eachAuthor){
-                                    if (eachAuthor.authorId === authorId){
-                                        eachAuthor.otherEdit += 1;
-                                    }
-                                });   
-                            }
-
                             return eachSegment;
                 		}
 
@@ -1473,7 +1454,7 @@ $.extend(window.docuviz, {
         		// delete within the same segment
         		if (deleteStartSegmentLocation === deleteEndSegmentLocation) {
 
-                    // new
+                    // new calculating edits
                     if (effectedSegmentOfDeleteStart.authorId === authorId){
                         _.find(that.statisticDataArray, function(eachAuthor){
                             if (eachAuthor.authorId === authorId){ 
@@ -1488,6 +1469,7 @@ $.extend(window.docuviz, {
                             }
                         });   
                     }
+                    // end of calculating edits
 
 
 
@@ -1496,7 +1478,6 @@ $.extend(window.docuviz, {
 						var strAfterDelete = effectedSegmentOfDeleteStart.segStr.substring(deleteEndIndex - effectedSegmentOfDeleteStart.startIndex + 1 ); 
 
 						if (effectedSegmentOfDeleteStart.permanentFlag === true) {
-				    		
 
 				    		// create two new segments, one with offset 0, another with offeset 
 				    		that.currentSegID += 1;
@@ -1516,18 +1497,8 @@ $.extend(window.docuviz, {
 				    		    segmentsArray[i].startIndex -= (deleteEndIndex - deleteStartIndex + 1 );
 				    		    segmentsArray[i].endIndex -= (deleteEndIndex - deleteStartIndex + 1 );
 				    		}
-
-
 						}
 						else {
-							// segmentsArray[deleteStartSegmentLocation].segStr = strBeforeDelete + strAfterDelete;
-							// segmentsArray[deleteStartSegmentLocation].endIndex -= (deleteEndIndex - deleteStartIndex + 1 );
-
-							// // updates all the following segments
-							// for (var i = (deleteStartSegmentLocation+1); i <= (segmentsArray.length-1); i++){
-							//     segmentsArray[i].startIndex -= (deleteEndIndex - deleteStartIndex + 1 );
-							//     segmentsArray[i].endIndex -= (deleteEndIndex - deleteStartIndex + 1 );
-							// }
                             // create two new segments, one with offset 0, another with offeset 
                             that.currentSegID += 1;
                             var segBefore  = that.constructSegment(effectedSegmentOfDeleteStart.authorId, strBeforeDelete, that.currentSegID, effectedSegmentOfDeleteStart.parentSegID, effectedSegmentOfDeleteStart.offset, that.revID, effectedSegmentOfDeleteStart.startIndex, (deleteStartIndex - 1), "segBefore of delete in the middle within a segment when permanentFlag is true", false);
@@ -1573,15 +1544,6 @@ $.extend(window.docuviz, {
 
 						}
 						else {
-							// segmentsArray[deleteStartSegmentLocation].segStr = strAfterDelete;
-							// segmentsArray[deleteStartSegmentLocation].endIndex -= (deleteEndIndex - deleteStartIndex + 1 );
-
-							// // updates all the following segments
-							// for (var i = (deleteStartSegmentLocation+1); i <= (segmentsArray.length-1); i++){
-							//     segmentsArray[i].startIndex -= (deleteEndIndex - deleteStartIndex + 1 );
-							//     segmentsArray[i].endIndex -= (deleteEndIndex - deleteStartIndex + 1 );
-							// }
-
                             // create a new segment with offset
                             that.currentSegID += 1;
 
@@ -1605,7 +1567,6 @@ $.extend(window.docuviz, {
 						var strBeforeDelete = effectedSegmentOfDeleteStart.segStr.substring(0, (deleteStartIndex - effectedSegmentOfDeleteStart.startIndex)); // = substring(0,end-1)
 						
 						if (effectedSegmentOfDeleteStart.permanentFlag === true) {
-				    		
 
 				    		// create two new segments, one with offset 0, another with offeset 
 				    		that.currentSegID += 1;
@@ -1627,14 +1588,6 @@ $.extend(window.docuviz, {
 
 						}
 						else {
-							// segmentsArray[deleteStartSegmentLocation].segStr = strBeforeDelete;
-							// segmentsArray[deleteStartSegmentLocation].endIndex -= (deleteEndIndex - deleteStartIndex + 1 );
-
-							// // updates all the following segments
-							// for (var i = (deleteStartSegmentLocation+1); i <= (segmentsArray.length-1); i++){
-							//     segmentsArray[i].startIndex -= (deleteEndIndex - deleteStartIndex + 1 );
-							//     segmentsArray[i].endIndex -= (deleteEndIndex - deleteStartIndex + 1 );
-							// }
                             // create two new segments, one with offset 0, another with offeset 
                             that.currentSegID += 1;
 
@@ -1671,12 +1624,12 @@ $.extend(window.docuviz, {
         		}
         		// not within one segment, across multiple segments
         		else {
-                    // new
-                    
+
+                    // new calculating edits
                     var selfEditCount = 0;
                     var otherEditCount = 0;
 
-                    for (var i = deleteStartSegmentLocation+1; i<= deleteEndSegmentLocation-1; i++){
+                    for (var i = (deleteStartSegmentLocation + 1); i<= deleteEndSegmentLocation-1; i++){
                         if (segmentsArray[i].authorId === authorId){
                             selfEditCount += segmentsArray[i].endIndex - segmentsArray[i].startIndex + 1;
                         }
@@ -1707,18 +1660,17 @@ $.extend(window.docuviz, {
                         _.find(that.statisticDataArray, function(eachAuthor){
                             if (eachAuthor.authorId === authorId){ 
                                 eachAuthor.selfEdit += deleteEndIndex - effectedSegmentOfDeleteEnd.startIndex + 1;
-                                //eachAuthor.otherEdit += otherEditCount;
                             }
                         });   
                     }
                     else{
                         _.find(that.statisticDataArray, function(eachAuthor){
                             if (eachAuthor.authorId === authorId){ 
-                                //eachAuthor.selfEdit += deleteEndIndex - effectedSegmentOfDeleteEnd.startIndex + 1;
                                 eachAuthor.otherEdit +=  deleteEndIndex - effectedSegmentOfDeleteEnd.startIndex + 1;
                             }
                         });   
                     }
+                    // end
 
 
 					if(deleteStartIndex > effectedSegmentOfDeleteStart.startIndex && deleteEndIndex < effectedSegmentOfDeleteEnd.endIndex){
@@ -1726,27 +1678,18 @@ $.extend(window.docuviz, {
 						var strAfterDelete = effectedSegmentOfDeleteEnd.segStr.substring(deleteEndIndex - effectedSegmentOfDeleteEnd.startIndex + 1); 
 
 						if (effectedSegmentOfDeleteStart.permanentFlag === true) {
-				    		
-
 				    		// create a new segment, one with offset 0, another with offeset 
 				    		that.currentSegID += 1;
-  
 				    		var segBefore  = that.constructSegment(effectedSegmentOfDeleteStart.authorId, strBeforeDelete, that.currentSegID, effectedSegmentOfDeleteStart.segID, 0, that.revID, effectedSegmentOfDeleteStart.startIndex, (deleteStartIndex - 1), "segBefore of delete in the middle across many segments when permanentFlag is true", false);
-                            
 				    		segmentsArray.insert(segBefore, deleteStartSegmentLocation);
 				    		// delete the old segment from current revision
 				    		segmentsArray.delete((deleteStartSegmentLocation + 1), (deleteStartSegmentLocation + 1));
 
 						}
 						else {
-							// segmentsArray[deleteStartSegmentLocation].segStr = strBeforeDelete;
-							// segmentsArray[deleteStartSegmentLocation].endIndex = (deleteStartIndex -1 );
-
                             // create a new segment, one with offset 0, another with offeset 
                             that.currentSegID += 1;
-                            
                             var segBefore  = that.constructSegment(effectedSegmentOfDeleteStart.authorId, strBeforeDelete, that.currentSegID, effectedSegmentOfDeleteStart.parentSegID, effectedSegmentOfDeleteStart.offset, that.revID, effectedSegmentOfDeleteStart.startIndex, (deleteStartIndex - 1), "segBefore of delete in the middle across many segments when permanentFlag is true", false);
-                                              
                             segmentsArray.insert(segBefore, deleteStartSegmentLocation);
                             // delete the old segment from current revision
                             segmentsArray.delete((deleteStartSegmentLocation + 1), (deleteStartSegmentLocation + 1));
@@ -1755,27 +1698,18 @@ $.extend(window.docuviz, {
 						}
 
 						if (effectedSegmentOfDeleteEnd.permanentFlag === true) {
-							
-
 				    		// create a new segment with offset
 				    		that.currentSegID += 1;
-
 				    		var segAfter  = that.constructSegment(effectedSegmentOfDeleteEnd.authorId, strAfterDelete, that.currentSegID, effectedSegmentOfDeleteEnd.segID, (deleteEndIndex - effectedSegmentOfDeleteEnd.startIndex + 1), that.revID, deleteStartIndex, (effectedSegmentOfDeleteEnd.endIndex - 1 - deleteEndIndex + deleteStartIndex), "segAfter of delete from the beginning of a segment to the middle of any segment across when permanentFlag is true", false);
-                            
 				    		segmentsArray.insert(segAfter, deleteEndSegmentLocation );
 				    		// delete the old segment from current revision
 				    		segmentsArray.delete( (deleteEndSegmentLocation + 1), (deleteEndSegmentLocation+ 1 ));
 
 						}
 						else {
-							// segmentsArray[deleteEndSegmentLocation].segStr = strAfterDelete;
-							// segmentsArray[deleteEndSegmentLocation].startIndex = deleteStartIndex;
-							// segmentsArray[deleteEndSegmentLocation].endIndex = (effectedSegmentOfDeleteEnd.endIndex - 1 - deleteEndIndex + deleteStartIndex);
-
                             // create a new segment with offset
                             that.currentSegID += 1;
                             var segAfter  = that.constructSegment(effectedSegmentOfDeleteEnd.authorId, strAfterDelete, that.currentSegID, effectedSegmentOfDeleteEnd.parentSegID, (deleteEndIndex - effectedSegmentOfDeleteEnd.startIndex + 1 + effectedSegmentOfDeleteEnd.offset), that.revID, deleteStartIndex, (effectedSegmentOfDeleteEnd.endIndex - 1 - deleteEndIndex + deleteStartIndex), "segAfter of delete from the beginning of a segment to the middle of any segment across when permanentFlag is true", false);
-                                              
                             segmentsArray.insert(segAfter, deleteEndSegmentLocation );
                             // delete the old segment from current revision
                             segmentsArray.delete( (deleteEndSegmentLocation + 1), (deleteEndSegmentLocation+ 1 ));
@@ -1797,39 +1731,23 @@ $.extend(window.docuviz, {
 
 					else if (deleteStartIndex === effectedSegmentOfDeleteStart.startIndex && deleteEndIndex < effectedSegmentOfDeleteEnd.endIndex){
 
-						// segmentsArray.delete(deleteStartSegmentLocation, deleteStartSegmentLocation);
-
-						//var strBeforeDelete = effectedSegmentOfDeleteStart.segStr.substring(0, (deleteStartIndex - effectedSegmentOfDeleteStart.startIndex)); // = substring(0,end-1)
-
 						var strAfterDelete = effectedSegmentOfDeleteEnd.segStr.substring(deleteEndIndex - effectedSegmentOfDeleteEnd.startIndex + 1 );
 
 						if (effectedSegmentOfDeleteEnd.permanentFlag === true) {
-							
 				    		// create a new segment with offset
 				    		that.currentSegID += 1;
-
                             var segAfter  = that.constructSegment(effectedSegmentOfDeleteEnd.authorId, strAfterDelete, that.currentSegID, effectedSegmentOfDeleteEnd.segID, (deleteEndIndex - effectedSegmentOfDeleteEnd.startIndex + 1), that.revID, deleteStartIndex, (effectedSegmentOfDeleteEnd.endIndex - 1 - deleteEndIndex + deleteStartIndex), "segAfter of delete from the beginning of a segment to the middle of any segment across when permanentFlag is true", false);
-
 				    		segmentsArray.insert(segAfter, deleteEndSegmentLocation );
 				    		// delete the old segment from current revision
 				    		segmentsArray.delete( (deleteEndSegmentLocation + 1), (deleteEndSegmentLocation + 1 ));
-
-
 						}
 						else {
-							// segmentsArray[deleteEndSegmentLocation].segStr = strAfterDelete;
-							// segmentsArray[deleteEndSegmentLocation].startIndex = deleteStartIndex;
-							// segmentsArray[deleteEndSegmentLocation].endIndex = (effectedSegmentOfDeleteEnd.endIndex - 1 - deleteEndIndex + deleteStartIndex);
-
                             // create a new segment with offset
                             that.currentSegID += 1;
-
                             var segAfter  = that.constructSegment(effectedSegmentOfDeleteEnd.authorId, strAfterDelete, that.currentSegID, effectedSegmentOfDeleteEnd.parentSegID, (deleteEndIndex - effectedSegmentOfDeleteEnd.startIndex + 1 + effectedSegmentOfDeleteEnd.offset), that.revID, deleteStartIndex, (effectedSegmentOfDeleteEnd.endIndex - 1 - deleteEndIndex + deleteStartIndex), "segAfter of delete from the beginning of a segment to the middle of any segment across when permanentFlag is true", false);
-
                             segmentsArray.insert(segAfter, deleteEndSegmentLocation );
                             // delete the old segment from current revision
                             segmentsArray.delete( (deleteEndSegmentLocation + 1), (deleteEndSegmentLocation + 1 ));
-
 						}
 
 						// updates all the following segments
@@ -1843,36 +1761,22 @@ $.extend(window.docuviz, {
 					}
 					else if (deleteStartIndex > effectedSegmentOfDeleteStart.startIndex && deleteEndIndex === effectedSegmentOfDeleteEnd.endIndex){
 						var strBeforeDelete = effectedSegmentOfDeleteStart.segStr.substring(0, (deleteStartIndex - effectedSegmentOfDeleteStart.startIndex)); // = substring(0,end-1)
-						//var strAfterDelete = effectedSegmentOfDeleteEnd.segStr.substring(deleteEndIndex - effectedSegmentOfDeleteEnd.startIndex + 1); 
-
-
 						if (effectedSegmentOfDeleteStart.permanentFlag === true) {
-				    		
 
 				    		// create a new segment, one with offset 0, another with offeset 
 				    		that.currentSegID += 1;
-
                             var segBefore  = that.constructSegment(effectedSegmentOfDeleteStart.authorId, strBeforeDelete, that.currentSegID, effectedSegmentOfDeleteStart.segID, 0, that.revID, effectedSegmentOfDeleteStart.startIndex, (deleteStartIndex - 1), "segBefore of delete from middle of a segment to the end of any segment across when permanentFlag is true", false);
-                            
 				    		segmentsArray.insert(segBefore, deleteStartSegmentLocation);
 				    		// delete the old segment from current revision
 				    		segmentsArray.delete( (deleteStartSegmentLocation + 1), (deleteStartSegmentLocation + 1));
-
 						}
 						else {
-							// segmentsArray[deleteStartSegmentLocation].segStr = strBeforeDelete;
-							// segmentsArray[deleteStartSegmentLocation].endIndex = (deleteStartIndex -1 );
-
                             // create a new segment, one with offset 0, another with offeset 
                             that.currentSegID += 1;
-
                             var segBefore  = that.constructSegment(effectedSegmentOfDeleteStart.authorId, strBeforeDelete, that.currentSegID, effectedSegmentOfDeleteStart.parentSegID, effectedSegmentOfDeleteStart.offset, that.revID, effectedSegmentOfDeleteStart.startIndex, (deleteStartIndex - 1), "segBefore of delete from middle of a segment to the end of any segment across when permanentFlag is true", false);
-                            
                             segmentsArray.insert(segBefore, deleteStartSegmentLocation);
                             // delete the old segment from current revision
                             segmentsArray.delete( (deleteStartSegmentLocation + 1), (deleteStartSegmentLocation + 1));
-
-
 						}
 
 						// updates all the following segments
@@ -1882,7 +1786,6 @@ $.extend(window.docuviz, {
 						}
 
 						segmentsArray.delete((deleteStartSegmentLocation+1), deleteEndSegmentLocation);
-						
 					}
 					else if (deleteStartIndex === effectedSegmentOfDeleteStart.startIndex && deleteEndIndex === effectedSegmentOfDeleteEnd.endIndex){
 
@@ -1891,17 +1794,13 @@ $.extend(window.docuviz, {
 						    segmentsArray[i].startIndex -= (deleteEndIndex - deleteStartIndex + 1 );
 						    segmentsArray[i].endIndex -= (deleteEndIndex - deleteStartIndex + 1 );
 						}
-
 						segmentsArray.delete( (deleteStartSegmentLocation), (deleteEndSegmentLocation));
-						
 					}
 					else {
 						console.log("This should never happen, segmentsArray is null,  buildSegmentsWhenDelete");
 					}
 
         		}
-
-
         	}
         	else{
         	    console.log("This should never happen, segmentsArray is null,  buildSegmentsWhenDelete when deleteStartIndex === deleteEndIndex");
