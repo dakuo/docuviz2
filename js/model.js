@@ -128,7 +128,7 @@ $.extend(window.docuviz, {
                     eachAuthor.totalEdit += entry.s.length;
                 }
             });
-
+            // end 
 
             _.each(entry.s, function(character, index) {
                 var charObj = {
@@ -147,22 +147,14 @@ $.extend(window.docuviz, {
             // new
             _.find(that.statisticDataArray, function(eachAuthor){
                 if (eachAuthor.authorId === authorId){
-                    eachAuthor.totalEdit += deleteEndIndex - deleteStartIndex + 1;
+                    eachAuthor.totalEdit += (deleteEndIndex - deleteStartIndex + 1);
                 }
             });
+            // end
 
             that.str.delete(deleteStartIndex, deleteEndIndex);
             that.allSegmentsInCurrentRev = that.buildSegmentsWhenDelete(deleteStartIndex, deleteEndIndex, authorId, that.allSegmentsInCurrentRev);
         }
-        // else if (type === 'as' && entry.st === 'paragraph'){
-        //     insertStartIndex = entry.si -1;
-        //     that.allSegmentsInCurrentRev = that.buildSegmentsWhenInsert('', insertStartIndex, authorId, that.allSegmentsInCurrentRev);
-        //     var charObj = {
-        //         s: ' ',
-        //         aid: authorId
-        //     };
-        //     that.str.insert(charObj, insertStartIndex);  
-        // }
         else {
 
         	// all other types such as AS (formatting)
