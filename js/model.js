@@ -1443,7 +1443,7 @@ $.extend(window.docuviz, {
                         that.adjustStatisticData(authorId, "self", (deleteEndIndex - effectedSegmentOfDeleteEnd.startIndex + 1));    
                     }
                     else{ 
-                        that.adjustStatisticData(authorId, "otherEdit", (deleteEndIndex - effectedSegmentOfDeleteEnd.startIndex + 1));    
+                        that.adjustStatisticData(authorId, "other", (deleteEndIndex - effectedSegmentOfDeleteEnd.startIndex + 1));    
                     }
                     // end
 
