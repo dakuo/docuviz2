@@ -528,7 +528,8 @@ $.extend(window.docuviz, {
                 revAuthor: val[2],
                 revTime: parseDate,
                 revSegments: val[3],
-                revContribution: val[4]
+                revContribution: val[5],
+                revEditsSinceLastRevision: val[4],
             }
         });
 
@@ -824,6 +825,41 @@ $.extend(window.docuviz, {
         var columnTitles = ['Name', 'Self Edit', 'Other Edit','Total Edit'];
         var varNames = ['authorName', 'selfEdit', 'otherEdit','totalEdit'];
 
+        function statisticDataObject (authorName, authorId, selfEdit, otherEdit, totalEdit){
+            return {
+                authorName: authorName,
+                authorId: authorId,
+                selfEdit: selfEdit,
+                otherEdit: otherEdit,
+                totalEdit: totalEdit
+            }
+        }
+
+        var revEditsSinceLastRevisionData = [];
+        var allRevEditsSinceLastRevisionData = [];
+
+        _.each(data[data.length-1].revEditsSinceLastRevision, function(eachAuthor){
+            revEditsSinceLastRevisionData.push(statisticDataObject(eachAuthor.authorName, eachAuthor.authorId, eachAuthor.selfEdit, eachAuthor.otherEdit, eachAuthor.totalEdit));
+        });
+
+        _.each(data, function(eachRevision){
+            allRevEditsSinceLastRevisionData.push(eachRevision.revEditsSinceLastRevision);
+        });
+
+        _.each(revEditsSinceLastRevisionData, function(eachAuthor, index){
+            var sumSelfEdit = 0, sumOtherEdit = 0, sumTotalEdit = 0;
+            _.each(allRevEditsSinceLastRevisionData, function(eachRevision){
+                sumSelfEdit += eachRevision[index].selfEdit;
+                sumOtherEdit += eachRevision[index].otherEdit;
+                sumTotalEdit += eachRevision[index].selfEdit + eachRevision[index].otherEdit;
+
+            });
+            revEditsSinceLastRevisionData[index].selfEdit = sumSelfEdit;
+            revEditsSinceLastRevisionData[index].otherEdit = sumOtherEdit;
+            revEditsSinceLastRevisionData[index].totalEdit = sumTotalEdit;
+
+        });
+
         var statisticsTable = svg.append("foreignObject")
                             .attr("width",400)
                             .attr("height", 300)
@@ -835,7 +871,6 @@ $.extend(window.docuviz, {
                             .append("table")
                             .attr("border", 1)
 
-
             statisticsTable.append('thead')
                             .append("tr")
                             .selectAll("th")
@@ -846,7 +881,7 @@ $.extend(window.docuviz, {
 
             statisticsTable.append('tbody')
                             .selectAll('tr')
-                            .data(statisticData).enter()
+                            .data(revEditsSinceLastRevisionData).enter()
                             .append('tr')
                             .selectAll('td')
                             .data(function(row) {
@@ -1173,6 +1208,41 @@ $.extend(window.docuviz, {
         var columnTitles = ['Name', 'Self Edit', 'Other Edit','Total Edit'];
         var varNames = ['authorName', 'selfEdit', 'otherEdit','totalEdit'];
 
+        function statisticDataObject (authorName, authorId, selfEdit, otherEdit, totalEdit){
+            return {
+                authorName: authorName,
+                authorId: authorId,
+                selfEdit: selfEdit,
+                otherEdit: otherEdit,
+                totalEdit: totalEdit
+            }
+        }
+
+        var revEditsSinceLastRevisionData = [];
+        var allRevEditsSinceLastRevisionData = [];
+
+        _.each(data[data.length-1].revEditsSinceLastRevision, function(eachAuthor){
+            revEditsSinceLastRevisionData.push(statisticDataObject(eachAuthor.authorName, eachAuthor.authorId, eachAuthor.selfEdit, eachAuthor.otherEdit, eachAuthor.totalEdit));
+        });
+
+        _.each(data, function(eachRevision){
+            allRevEditsSinceLastRevisionData.push(eachRevision.revEditsSinceLastRevision);
+        });
+
+        _.each(revEditsSinceLastRevisionData, function(eachAuthor, index){
+            var sumSelfEdit = 0, sumOtherEdit = 0, sumTotalEdit = 0;
+            _.each(allRevEditsSinceLastRevisionData, function(eachRevision){
+                sumSelfEdit += eachRevision[index].selfEdit;
+                sumOtherEdit += eachRevision[index].otherEdit;
+                sumTotalEdit += eachRevision[index].selfEdit + eachRevision[index].otherEdit;
+
+            });
+            revEditsSinceLastRevisionData[index].selfEdit = sumSelfEdit;
+            revEditsSinceLastRevisionData[index].otherEdit = sumOtherEdit;
+            revEditsSinceLastRevisionData[index].totalEdit = sumTotalEdit;
+
+        });
+
         var statisticsTable = svg.append("foreignObject")
                             .attr("width",400)
                             .attr("height", 300)
@@ -1184,7 +1254,6 @@ $.extend(window.docuviz, {
                             .append("table")
                             .attr("border", 1)
 
-
             statisticsTable.append('thead')
                             .append("tr")
                             .selectAll("th")
@@ -1195,7 +1264,7 @@ $.extend(window.docuviz, {
 
             statisticsTable.append('tbody')
                             .selectAll('tr')
-                            .data(statisticData).enter()
+                            .data(revEditsSinceLastRevisionData).enter()
                             .append('tr')
                             .selectAll('td')
                             .data(function(row) {
