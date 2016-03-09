@@ -1,8 +1,8 @@
 {
   "manifest_version": 2,
 
-  "name": "DocuViz2",
-  "version": "2.14",
+  "name": "DocuViz",
+  "version": "3.0",
   "description": "Visualize the evolution of authors' contributions in a Google Doc",
   "background": {
     "scripts": ["js/lib/underscore.js", "js/lib/jquery.min.js","js/lib/async.js","js/model.js","js/lib/d3.min.js"]
