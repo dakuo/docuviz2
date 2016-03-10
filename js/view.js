@@ -1069,7 +1069,44 @@ $.extend(window.docuviz, {
             return (index >= beginRev - 1) && (index <= endRev - 1);
         }
         var data = data.filter(filterRevisionArray);
-        var authorsColors = authorsColors.filter(filterRevisionArray);
+        //var authorsColors = authorsColors.filter(filterRevisionArray);
+
+
+        // begin prototyping: 
+        var startTime = new Date(1296003720000);
+        var endTime = new Date(1296633540000);
+
+        var minDate = new Date(startTime.toISOString()),
+            maxDate = new Date(endTime.toISOString());
+
+        var filteredData = [];
+        var maxIndex = null;
+        // filteredData.push({revAuthor: [], revContribution: [], revLength: 0, revTime: minDate, revEditsSinceLastRevision: [], revSegments: []});
+
+        _.each(data, function(eachData, index){
+            if (eachData.revTime <= maxDate){
+                filteredData.push(eachData)
+                maxIndex = index;
+            }
+
+        });
+
+        // filteredData.push({revAuthor: [], revContribution: [], revLength: 0, revTime: maxDate, revEditsSinceLastRevision: [], revSegments: []});
+
+        var data = filteredData;
+
+
+        function filterRevisionArrayForAuthorColors(value, index) {
+            return (index >= beginRev - 1) && (index <= maxIndex);
+        }
+
+        var authorsColors = authorsColors.filter(filterRevisionArrayForAuthorColors);
+        //console.log(data.length);
+        //console.log(authorsColors.length)
+
+        // adjust the slider:
+
+        $("#revision_index").val("Revision: " + 1 + " - Revision: " + data.length);
 
 
         var svg = d3.select($('.js-result-docuviz')[0]).append("svg")
@@ -1080,8 +1117,12 @@ $.extend(window.docuviz, {
 
 
 
-        var minDate = data[0].revTime,
-            maxDate = data[(data.length - 1)].revTime;
+
+        // var minDate = data[0].revTime,
+        //     maxDate = data[(data.length - 1)].revTime;
+
+
+
         var x = d3.time.scale().domain([minDate, maxDate])
             .range([0, width - margin.left - margin.right]);
         var barWidth = 5;
@@ -1146,6 +1187,36 @@ $.extend(window.docuviz, {
             .attr("transform", "translate(23," + 15 + ") rotate(-90)");
 
 
+
+        // draw new min time label:
+        svg.append("text")
+            .attr("class", "time_label")
+            .attr("x", 80)
+            .attr("y", x(minDate))
+            .attr("font-family", "sans-serif")
+            .attr("font-size", "10px")
+            .attr("fill", "black")
+            .html(
+                function() {
+                    return minDate.toString().substring(4, 10) + " " + minDate.toString().substring(16, 21);
+                })
+            .attr("transform", "translate(23," + 15 + ") rotate(-90)");
+
+
+
+        // draw new max time label:
+        svg.append("text")
+            .attr("class", "time_label")
+            .attr("x", 80)
+            .attr("y", x(maxDate))
+            .attr("font-family", "sans-serif")
+            .attr("font-size", "10px")
+            .attr("fill", "black")
+            .html(
+                function() {
+                    return maxDate.toString().substring(4, 10) + " " + maxDate.toString().substring(16, 21);
+                })
+            .attr("transform", "translate(23," + 15 + ") rotate(-90)");
 
         // Draw author legends:
 
