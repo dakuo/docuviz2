@@ -304,14 +304,16 @@ $.extend(window.docuviz, {
                     soFar: soFar + 1
                 }, function(response) {
 
-                    that.analyzeEachEditInChangelog(command, authorId, that.revID, that.currentSegID, that.allSegmentsInCurrentRev, statisticDataArray);                    
-                    authorsCounter.push(currentAuthor);
+                    // that.analyzeEachEditInChangelog(command, authorId, that.revID, that.currentSegID, that.allSegmentsInCurrentRev, statisticDataArray);                    
+                    // authorsCounter.push(currentAuthor);
 
                     if (timeCounter === null){
                         timeCounter = editTime;
                     }
+                    else{
+                    }
 
-                    if (editTime > timeCounter + 420000 || editTime===revTimestamps[revTimestamps.length-1]) { // 420 seconds = 7 minutes
+                    if ((editTime > (timeCounter + 420000)) || soFar === (editCount-1)) { // 420 seconds = 7 minutes editTime===revTimestamps[revTimestamps.length-1]
                     //if (soFar === intervalChangesIndex[that.revID] ) {
                         // change all segments'revID to the same revID
                         _.each(that.allSegmentsInCurrentRev, function(eachSegment) {
@@ -333,10 +335,8 @@ $.extend(window.docuviz, {
 
                         // we have to recalculate revAuthors:
 
-
-
                         //revsForFrontend.push([revLength, revTimestamps[that.revID], revAuthors[that.revID], segmentsForFrontend, copyStatisticDataArray]);
-                        revsForFrontend.push([revLength, editTime, _.uniq(authorsCounter), segmentsForFrontend, copyStatisticDataArray]);
+                        revsForFrontend.push([revLength, timeCounter, _.uniq(authorsCounter), segmentsForFrontend, copyStatisticDataArray]);
 
                        //reset the statisticDataArray:
                         _.each(statisticDataArray, function(eachData){
@@ -355,9 +355,9 @@ $.extend(window.docuviz, {
                         timeCounter = editTime;
                         authorsCounter = [];
 
-                    } else {
-                        
+                    } else {                        
                     }
+
 
 
                     // reaching the end of changelog, calculate the contributions and push it to frontend
@@ -381,6 +381,9 @@ $.extend(window.docuviz, {
 
                     }
 
+                    that.analyzeEachEditInChangelog(command, authorId, that.revID, that.currentSegID, that.allSegmentsInCurrentRev, statisticDataArray);                    
+                    authorsCounter.push(currentAuthor);
+                    
 
                     // update soFar
                     soFar += 1;
