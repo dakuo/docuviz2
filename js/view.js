@@ -1073,15 +1073,14 @@ $.extend(window.docuviz, {
 
 
         // begin prototyping: 
-        var startTime = new Date(1296003720000);
-        var endTime = new Date(1296633540000);
+        var startTime = new Date(1326913680000);
+        var endTime = new Date(1327478340000);
 
         var minDate = new Date(startTime.toISOString()),
             maxDate = new Date(endTime.toISOString());
 
         var filteredData = [];
         var maxIndex = null;
-        // filteredData.push({revAuthor: [], revContribution: [], revLength: 0, revTime: minDate, revEditsSinceLastRevision: [], revSegments: []});
 
         _.each(data, function(eachData, index){
             if (eachData.revTime <= maxDate){
@@ -1090,8 +1089,6 @@ $.extend(window.docuviz, {
             }
 
         });
-
-        // filteredData.push({revAuthor: [], revContribution: [], revLength: 0, revTime: maxDate, revEditsSinceLastRevision: [], revSegments: []});
 
         var data = filteredData;
 
