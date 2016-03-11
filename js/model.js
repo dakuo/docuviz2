@@ -244,6 +244,7 @@ $.extend(window.docuviz, {
         //this.statisticDataArray = [];
 
         console.log(changelog);
+        console.log(revTimestamps);
 
         var that = this,
             soFar = 0,
@@ -275,12 +276,16 @@ $.extend(window.docuviz, {
             statisticDataArray.push(that.statisticDataObject(eachAuthor.name, eachAuthor.id, 0, 0, 0)); // initalize the array with author's name, author's id, selfEdit =0, otherEdit = 0,totalEdit = 0
         });
 
-
+        // begin prototype2 branch
+        var timeCounter = null;
+        var authorsCounter = [];
 
         // Async run through each entry in a synchronous sequence.
         async.eachSeries(changelog, function(entry, callBack) {
             authorId = entry[2],
-            command = entry[0];
+            command = entry[0],
+            editTime = entry[1];
+
 
             // Find author object based on authorId:
 
@@ -300,8 +305,14 @@ $.extend(window.docuviz, {
                 }, function(response) {
 
                     that.analyzeEachEditInChangelog(command, authorId, that.revID, that.currentSegID, that.allSegmentsInCurrentRev, statisticDataArray);                    
+                    authorsCounter.push(currentAuthor);
 
-                    if (soFar === intervalChangesIndex[that.revID] ) {
+                    if (timeCounter === null){
+                        timeCounter = editTime;
+                    }
+
+                    if (editTime > timeCounter + 420000 || editTime===revTimestamps[revTimestamps.length-1]) { // 420 seconds = 7 minutes
+                    //if (soFar === intervalChangesIndex[that.revID] ) {
                         // change all segments'revID to the same revID
                         _.each(that.allSegmentsInCurrentRev, function(eachSegment) {
                             eachSegment.revID = that.revID;
@@ -320,7 +331,12 @@ $.extend(window.docuviz, {
 
                         });
 
-                        revsForFrontend.push([revLength, revTimestamps[that.revID], revAuthors[that.revID], segmentsForFrontend, copyStatisticDataArray]);
+                        // we have to recalculate revAuthors:
+
+
+
+                        //revsForFrontend.push([revLength, revTimestamps[that.revID], revAuthors[that.revID], segmentsForFrontend, copyStatisticDataArray]);
+                        revsForFrontend.push([revLength, editTime, _.uniq(authorsCounter), segmentsForFrontend, copyStatisticDataArray]);
 
                        //reset the statisticDataArray:
                         _.each(statisticDataArray, function(eachData){
@@ -336,6 +352,8 @@ $.extend(window.docuviz, {
 
                         // update the current revision id
                         that.revID += 1;
+                        timeCounter = editTime;
+                        authorsCounter = [];
 
                     } else {
                         
@@ -344,24 +362,25 @@ $.extend(window.docuviz, {
 
                     // reaching the end of changelog, calculate the contributions and push it to frontend
                     if (soFar === (editCount-1) ) {
-                    	// calculate the revision's contributions, edit Nov 02, 2015 by Kenny
-                    	var revDataWithContribution = that.calculateRevContribution(revsForFrontend, authors);
+                        // calculate the revision's contributions, edit Nov 02, 2015 by Kenny
+                        var revDataWithContribution = that.calculateRevContribution(revsForFrontend, authors);
                         // console.log(that.allSegmentsInCurrentRev);
-                    	chrome.tabs.query({
-                    	    url: '*://docs.google.com/*/' + docId + '/edit*'
-                    	}, function(tabs) {
-                    	    chrome.tabs.sendMessage(tabs[0].id, {
-                    	        msg: 'renderDocuviz',
-                    	        chars: that.str,
-                    	        // calculate the revision's contributions, edit Nov 02, 2015 by Kenny
-                    	        revData: revDataWithContribution,
+                        chrome.tabs.query({
+                            url: '*://docs.google.com/*/' + docId + '/edit*'
+                        }, function(tabs) {
+                            chrome.tabs.sendMessage(tabs[0].id, {
+                                msg: 'renderDocuviz',
+                                chars: that.str,
+                                // calculate the revision's contributions, edit Nov 02, 2015 by Kenny
+                                revData: revDataWithContribution,
                                 statisticData: statisticDataArray // new
-                    	    }, function(response) {});
-                    	});
+                            }, function(response) {});
+                        });
                     }
                     else{
 
                     }
+
 
                     // update soFar
                     soFar += 1;
