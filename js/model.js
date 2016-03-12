@@ -633,7 +633,7 @@ $.extend(window.docuviz, {
                                 that.adjustStatisticData(authorId, "self", entryStr.length, statisticDataArray);
                             }
                             else{
-                                that.adjustStatisticData(authorId, "other", entryStr.length), statisticDataArray;
+                                that.adjustStatisticData(authorId, "other", entryStr.length, statisticDataArray);
                             }
                             // end of calculating edits
 
@@ -842,7 +842,7 @@ $.extend(window.docuviz, {
                                 that.adjustStatisticData(authorId, "self", entryStr.length, statisticDataArray);
                             }
                             else{
-                                that.adjustStatisticData(authorId, "other", entryStr.length);
+                                that.adjustStatisticData(authorId, "other", entryStr.length, statisticDataArray);
                             }
                             // end of calculating edits
         				}
