@@ -680,6 +680,8 @@ $.extend(window.docuviz, {
         var data = data.filter(filterRevisionArray);
         var authorsColors = authorsColors.filter(filterRevisionArray);
 
+        //format = d3.format(",");
+
         var x = d3.scale.ordinal().domain(d3.range(data.length)).rangeRoundBands([0, width], 0.5);
 
         var y = d3.scale.linear()
@@ -741,9 +743,9 @@ $.extend(window.docuviz, {
         // show the revision's total length, Nov 02, 2015 by Dakuo
         // the yAxis ending tick
         svg.append("text").attr("class","ending_tick").attr("transform",
-            "translate(-43," + (height+15) + ")").text(d3.max(data, function(d) {
+            "translate(-43," + (height+15) + ")").text(d3.format(",")(d3.max(data, function(d) {
                 return d.revLength;
-            }));
+            })));
 
 
         // Draw time label:
@@ -765,7 +767,7 @@ $.extend(window.docuviz, {
             .attr("transform", "translate(4," + 15 + ") rotate(-90)");
 
 
-        // Draw author legends:
+/*        // Draw author legends:
 
         for (var index = 0; index < authorsColors.length; index++) {
             var currentColors = authorsColors[index][0];
@@ -818,20 +820,22 @@ $.extend(window.docuviz, {
         .attr(
             "transform",
             "translate(" + (margin.left - 120)
-                + "," + (height - margin.bottom + (barHeight*4 )+ 250 ) + ")");
+                + "," + (height - margin.bottom + (barHeight*4 )+ 250 ) + ")");*/
 
 
-        // start draw new statistic table
-        var columnTitles = ['Name', 'Self Edit', 'Other Edit','Total Edit'];
-        var varNames = ['authorName', 'selfEdit', 'otherEdit','totalEdit'];
+        // begin draw new statistic table
+        var columnTitles = ['Color', 'Name', 'Edit in self', 'Edit in others','Total edit', 'Contribution'];
+        var varNames = ['authorColor','authorName', 'selfEdit', 'otherEdit','totalEdit', 'authorContribution'];
 
-        function statisticDataObject (authorName, authorId, selfEdit, otherEdit, totalEdit){
+        function statisticDataObject (authorColor,authorName, authorId, selfEdit, otherEdit, totalEdit, authorContribution){
             return {
+                authorColor: authorColor,
                 authorName: authorName,
                 authorId: authorId,
                 selfEdit: selfEdit,
                 otherEdit: otherEdit,
-                totalEdit: totalEdit
+                totalEdit: totalEdit,
+                authorContribution: authorContribution
             }
         }
 
@@ -839,8 +843,10 @@ $.extend(window.docuviz, {
         var allRevEditsSinceLastRevisionData = [];
 
         _.each(data[data.length-1].revEditsSinceLastRevision, function(eachAuthor){
-            revEditsSinceLastRevisionData.push(statisticDataObject(eachAuthor.authorName, eachAuthor.authorId, eachAuthor.selfEdit, eachAuthor.otherEdit, eachAuthor.totalEdit));
+            revEditsSinceLastRevisionData.push(statisticDataObject(eachAuthor.authorColor,eachAuthor.authorName, eachAuthor.authorId, eachAuthor.selfEdit, eachAuthor.otherEdit, eachAuthor.totalEdit,eachAuthor.authorContribution));
         });
+
+
 
         _.each(data, function(eachRevision){
             allRevEditsSinceLastRevisionData.push(eachRevision.revEditsSinceLastRevision);
@@ -861,15 +867,16 @@ $.extend(window.docuviz, {
         });
 
         var statisticsTable = svg.append("foreignObject")
-                            .attr("width",400)
+                            .attr("width",550)
                             .attr("height", 300)
                             .attr(
                                 "transform",
-                                "translate(" + (width - margin.right - 340)
-                                    + "," + (height - margin.bottom + (barHeight*4 )+ 250 ) + ")")
+                                "translate(" + (margin.left)
+                                    + "," + (height - margin.bottom + (barHeight*4 )+ 270 ) + ")")
                             .append("xhtml:body")
                             .append("table")
                             .attr("border", 1)
+                            .attr("font-family", "Consolas, sans-serif")
 
             statisticsTable.append('thead')
                             .append("tr")
@@ -886,17 +893,59 @@ $.extend(window.docuviz, {
                             .selectAll('td')
                             .data(function(row) {
                                 return varNames.map(function(column) {
-                                    //console.log(row[column]);
                                     return {column: column, value: row[column]};
                                 });
                             }).enter()
                             .append('td')
-                            .html(function(d) { return d.value; });
+                            .attr('bgcolor', function(d,i){
+                                if (i===0){
+                                    return d.value;
+                                }
+                            })
+                            .html(function(d,i) { 
+                                if (i === 0){
+                                    return;
+                                }
+                                else{
+                                    return d.value; 
+                                }
+                                
+                            });
+
+        var totalRow = {title: 'Total', totalEditInSelf: 0, totalEditinOthers: 0, totalTotalEdit: 0, totalAuthorContribution: 0};
+        _.each(revEditsSinceLastRevisionData, function(eachAuthor){
+            totalRow.totalEditInSelf += eachAuthor.selfEdit;
+            totalRow.totalEditinOthers += eachAuthor.otherEdit;
+            totalRow.totalTotalEdit += eachAuthor.totalEdit;
+            totalRow.totalAuthorContribution += eachAuthor.authorContribution;
+        })
+
+        statisticsTable.append('tr')
+                    .selectAll('td')
+                    .data(varNames).enter()
+                    .append('td')
+                    .html(function(d,i) { 
+                        if (i === 1){
+                            return '<strong>' + totalRow.title + '</strong>';
+                        }
+                        else if (i=== 2){
+                            return '<strong>' + totalRow.totalEditInSelf + '</strong>';
+                        }
+                        else if (i===3){
+                            return '<strong>' + totalRow.totalEditinOthers + '</strong>';
+                        }
+
+                        else if (i===4){
+                            return '<strong>' + totalRow.totalTotalEdit + '</strong>';
+                        }
+                        else if (i===5){
+                            return '<strong>' + totalRow.totalAuthorContribution + '</strong>';
+                        }
+                        
+                    });
 
         // end draw new statictic table
                             
-
-
         _.each(data, function(rev, index) {
             var segStartIndex = 0;
             var soFarSegmentsLength = 0;

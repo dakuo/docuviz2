@@ -51,13 +51,15 @@ $.extend(window.docuviz, {
     },
 
     //new:
-    statisticDataObject: function(authorName, authorId, selfEdit, otherEdit, totalEdit){
+    statisticDataObject: function(authorColor,authorName, authorId, selfEdit, otherEdit, totalEdit, authorContribution){
         return {
+            authorColor: authorColor,
             authorName: authorName,
             authorId: authorId,
             selfEdit: selfEdit,
             otherEdit: otherEdit,
-            totalEdit: totalEdit
+            totalEdit: totalEdit,
+            authorContribution: authorContribution
         }
     },
 
@@ -224,6 +226,13 @@ $.extend(window.docuviz, {
                     }
                 });
                 revContribution.push({author: eachAuthor, contributionLength: sum});
+
+                _.find(eachRevision[4], function(eachRevEdits){
+                    if (eachRevEdits.authorName === eachAuthor.name){
+                        eachRevEdits.authorColor = eachAuthor.color;
+                        eachRevEdits.authorContribution = sum;
+                    }
+                });
             });
 
             eachRevision.push(revContribution);
@@ -272,7 +281,7 @@ $.extend(window.docuviz, {
         // new
         // initialize the statisticDataArray:
         _.each(authors, function(eachAuthor){
-            statisticDataArray.push(that.statisticDataObject(eachAuthor.name, eachAuthor.id, 0, 0, 0)); // initalize the array with author's name, author's id, selfEdit =0, otherEdit = 0,totalEdit = 0
+            statisticDataArray.push(that.statisticDataObject('',eachAuthor.name, eachAuthor.id, 0, 0, 0,0)); // initalize the array with author's name, author's id, selfEdit =0, otherEdit = 0,totalEdit = 0
         });
 
 
@@ -316,7 +325,7 @@ $.extend(window.docuviz, {
                         // begin calculating revEditSinceLastRevision
                         var copyStatisticDataArray = [];
                         _.each(statisticDataArray, function(eachData){
-                            copyStatisticDataArray.push(that.statisticDataObject(eachData.authorName, eachData.authorId, eachData.selfEdit, eachData.otherEdit, eachData.totalEdit));
+                            copyStatisticDataArray.push(that.statisticDataObject('',eachData.authorName, eachData.authorId, eachData.selfEdit, eachData.otherEdit, eachData.totalEdit,''));
 
                         });
 
