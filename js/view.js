@@ -679,7 +679,6 @@ $.extend(window.docuviz, {
         var data = data.filter(filterRevisionArray);
         var authorsColors = authorsColors.filter(filterRevisionArray);
 
-        //format = d3.format(",");
 
         var x = d3.scale.ordinal().domain(d3.range(data.length)).rangeRoundBands([0, width], 0.5);
 

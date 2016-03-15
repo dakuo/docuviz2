@@ -384,7 +384,7 @@ $.extend(window.docuviz, {
                         // begin calculating revEditSinceLastRevision
                         var copyStatisticDataArray = [];
                         _.each(statisticDataArray, function(eachData){
-                            copyStatisticDataArray.push(that.statisticDataObject(eachData.authorName, eachData.authorId, eachData.selfEdit, eachData.otherEdit, eachData.totalEdit));
+                            copyStatisticDataArray.push(that.statisticDataObject('',eachData.authorName, eachData.authorId, eachData.selfEdit, eachData.otherEdit, eachData.totalEdit,''));
 
                         });
 
