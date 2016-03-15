@@ -213,11 +213,10 @@ $.extend(window.docuviz, {
     },
 
 
-    // calculate the revision's contributions Nov 02, 2015 by Kenny
+    // calculate the revision's contributions with statistic table March 14, 2016 by Kenny
     calculateRevContribution: function(revisionData, authors) {
         var newRevisionData = [];
         _.each(revisionData, function(eachRevision){
-            var revContribution = []
             _.each(authors, function(eachAuthor){
                 var sum = 0;
                 _.each(eachRevision[3], function(eachSegment){
@@ -225,8 +224,6 @@ $.extend(window.docuviz, {
                         sum += eachSegment.segLength;
                     }
                 });
-                revContribution.push({author: eachAuthor, contributionLength: sum});
-
                 _.find(eachRevision[4], function(eachRevEdits){
                     if (eachRevEdits.authorName === eachAuthor.name){
                         eachRevEdits.authorColor = eachAuthor.color;
@@ -235,7 +232,6 @@ $.extend(window.docuviz, {
                 });
             });
 
-            eachRevision.push(revContribution);
             newRevisionData.push(eachRevision);
         });
 
@@ -340,8 +336,8 @@ $.extend(window.docuviz, {
                         // end calculating revEditSinceLastRevision
 
 
-                        console.log("allSegmentsInCurrentRev for revisionID: " + that.revID);
-                        console.log(that.allSegmentsInCurrentRev);
+                        // console.log("allSegmentsInCurrentRev for revisionID: " + that.revID);
+                        // console.log(that.allSegmentsInCurrentRev);
 
                         // update the current revision id
                         that.revID += 1;
