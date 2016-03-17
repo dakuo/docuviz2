@@ -151,21 +151,18 @@ $.extend(window.docuviz, {
                 id: id
             };
         };
-
-        _.each(Object.keys(userMap), function(d){
-        	authors.push(Author(userMap[d].name, userMap[d].color, d));
-
-        });
-
-		// TODO
         var color10 = d3.scale.category10();
-        _.each(authors, function(val, index) {
-            if (val.id === undefined) { // handle anonymous user which ID is undefined
-                val.name = "Anonymous";
-                val.color = "#7F7F7F";
-            } else {
-                val.color = color10(index);
+
+        _.each(Object.keys(userMap), function(d, i){
+
+            if (userMap[d].anonymous === true){
+                authors.push(Author("Anonymous", "#7F7F7F", d));
             }
+            else{
+                authors.push(Author(userMap[d].name, color10(i), d));
+            }
+        	
+
         });
 
         return authors;
