@@ -17,8 +17,8 @@ $.extend(window.docuviz, {
     // Store each author object in the document
     // Each author object will have a unique ID, color, and name
     authors: [],
-    authorsTimestamp: [],
-    timestamps: [],
+    revAuthors: [],
+    revTimestamps: [],
     revisionLengths: [],
 
 
@@ -92,7 +92,7 @@ $.extend(window.docuviz, {
             http = http.replace('/d/', '/u/1/d/');
         }
 
-        historyUrl = http + '/revisions/history?id=' + this.getDocId() + "&token=" + token + "&start=1&end=-1&zoom_level=0";
+        historyUrl = http + '/revisions/tiles?id=' + this.getDocId() + "&token=" + token + "&start=1&showDetailedRevisions=false";
         // console.log("historyUrl is at: ");
         // console.log(historyUrl);
         return historyUrl;
@@ -121,14 +121,15 @@ $.extend(window.docuviz, {
             // If the call success, turn the result DATA into JSON object and get the important information (Revision number & authors data)
             success: function(data) {
                 var raw = jQuery.parseJSON(data.substring(4)),
-                    revisionNumber = raw[2][raw[2].length - 1][3];
+                    // revisionNumber = raw[2][raw[2].length - 1][3];
+                    revisionNumber = raw.tileInfo[raw.tileInfo.length-1].end;
 
                 that.setRevisionNumber(revisionNumber);
                 //$('.js-authorviz-btn').removeClass('is-disabled');
                 $('.js-docuviz-btn').removeClass('is-disabled');
 
-                that.authors = that.parseAuthors(raw[2]); // set list of authors
-                that.parseTimestampsAuthors(raw[2], that.authors); // set an array of authors which correspond for revisions' time
+                that.authors = that.parseAuthors(raw.userMap); // set list of authors
+                that.parseRevTimestampsAuthors(raw.tileInfo, that.authors); // set an array of authors which correspond for revisions' time
 
             }
         })
@@ -137,12 +138,9 @@ $.extend(window.docuviz, {
 
     // parseAuthors method receive "raw authors" data (JSON Object) and maniputlate on that JSON Object to return a set of structural Author Object.
     // ** BB
-    parseAuthors: function(data) {
-        var rawData,
-            i,
-            rawAuthors = [],
-            authors = [],
-            authorId = [];
+    parseAuthors: function(userMap) {
+        var 
+            authors = [];
 
         // Author is a factory that creat "author object" a set of structural property and value.
         // If you come from Programming language like Java, C, C++, Python, think of this Author as a Class used to create as many author children as needed
@@ -154,46 +152,12 @@ $.extend(window.docuviz, {
             };
         };
 
+        _.each(Object.keys(userMap), function(d){
+        	authors.push(Author(userMap[d].name, userMap[d].color, d));
 
-        // _. is a reserved syntax used in Underscore Library
-        // _.map receives input in a form of Array then loop through that Array to return a value based on your definition. The result will also be in a form of an Array
-        // e.g.
-        // _.map([0,1,2,3], function(val) {
-        //    return val + 2;
-        // });
-        // The result of the above function would be
-        // [2,3,4,5]
-        rawData = _.map(data, function(val) {
-            return val[1];
         });
 
-
-        // _.flatten removes one level of from the Array hierarchy
-        // e.g.
-        // _.flatten([a,b,[c],[[d]]], true);
-        // The result of the above function would be
-        // [a,b,c,[d]]
-        rawData = _.flatten(rawData, true);
-
-
-        //var color = d3.scale.category10();
-        // _.each loops through the rawData and do something for each value
-        _.each(rawData, function(val, index) {
-            //val[2] = Name
-            //val[3] = Color
-            //val[4] = ID
-            rawAuthors.push(Author(val[2], val[3], val[4]));
-            authorId.push(val[4]);
-        });
-
-        authorId = _.intersection(authorId);
-
-        _.each(authorId, function(val) {
-            authors.push(_.findWhere(rawAuthors, {
-                id: val
-            }));
-        });
-
+		// TODO
         var color10 = d3.scale.category10();
         _.each(authors, function(val, index) {
             if (val.id === undefined) { // handle anonymous user which ID is undefined
@@ -207,8 +171,8 @@ $.extend(window.docuviz, {
         return authors;
     },
 
-    // ** BB
-    parseTimestampsAuthors: function(data, authors) {
+    // 
+    parseRevTimestampsAuthors: function(tileInfo, authors) {
         var that = this,
             rawData,
             i,
@@ -219,63 +183,41 @@ $.extend(window.docuviz, {
 
         // Author is a factory that create "author object" a set of structural property and value.
         // If you come from Programming language like Java, C, C++, Python, think of this Author as a Class used to create as many author children as needed
-        var author = function(name, color, id) {
-            return {
-                name: name,
-                color: color,
-                id: id
-            };
-        };
+        // var Author = function(name, color, id) {
+        //     return {
+        //         name: name,
+        //         color: color,
+        //         id: id
+        //     };
+        // };
 
-        var timeStamp = function(timestamp1, timestamp2) {
-            return {
-                timestamp1: timestamp1,
-                timestamp2: timestamp2
-            };
-        };
-
-
-        rawData = data;
-        // console.log(rawData);
+        // var timeStamp = function(timestamp1, timestamp2) {
+        //     return {
+        //         timestamp1: timestamp1,
+        //         timestamp2: timestamp2
+        //     };
+        // };
 
 
-        _.each(rawData, function(val) {
+        _.each(tileInfo, function(tile) {
             var authorsArray = [];
-            _.each(val[1], function(eachAuthor) {
+            _.each(tile.users, function(eachAuthor) {
 
-                var authorColor = _.find(authors, function(val) {
-                    return eachAuthor[4] === val.id;
+                var author = _.find(authors, function(val) {
+                    return eachAuthor === val.id;
                 });
 
-                authorsArray.push(author(eachAuthor[2], authorColor.color, eachAuthor[4]));
+                authorsArray.push(author);
             });
 
-            if (val[6] != null) {
+            that.revTimestamps.push(tile.endMillis);
+            that.revAuthors.push(authorsArray);
 
-                _.each(val[6], function(eachElement, index) {
-                    that.timestamps.push(eachElement[2]);
-                    that.authorsTimestamp.push(authorsArray);
-
-                });
-
-                if (val[6][val[6].length - 1][2] != val[5]) { // handle the case where the history doesn't inlude the orginal time
-                    that.timestamps.push(val[5]);
-                    that.authorsTimestamp.push(authorsArray);
-                }
-
-
-            } else {
-
-                that.timestamps.push(val[5]);
-                that.authorsTimestamp.push(authorsArray);
-            }
-
-            authorsArray = [];
 
         });
 
         // console.log("Time: ");
-        // console.log(that.timestamps);
+        // console.log(that.revTimestamps);
 
     },
 
@@ -327,8 +269,8 @@ $.extend(window.docuviz, {
                     docId: that.getDocId(),
                     changelog: raw.changelog,
                     authors: that.authors,
-                    revTimestamps: that.timestamps,
-                    revAuthors: that.authorsTimestamp
+                    revTimestamps: that.revTimestamps,
+                    revAuthors: that.revAuthors
                 }, function(data) {});
                 // chrome.runtime.sendMessage({msg: 'buildRevLengths', changelog: raw.changelog, timeStamp: that.timestamps[0]}, function(data){});
             },

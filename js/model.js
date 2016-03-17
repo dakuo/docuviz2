@@ -265,6 +265,9 @@ $.extend(window.docuviz, {
         // an array of the cutting index of edits, e.g., [0,21,32] meaning: rev0 has 0, rev1 has 1-21, rev2 has 22-32
         var intervalChangesIndex = [];
         intervalChangesIndex = this.calculateIntervalChangesIndex(changelog, revTimestamps);
+
+        // console.log(intervalChangesIndex);
+
         if(intervalChangesIndex.length === 0) {
         	// Something is wrong, we didn't get changelog, or the cutting point
         	console.log("Check point 1");
@@ -276,30 +279,26 @@ $.extend(window.docuviz, {
             statisticDataArray.push(that.statisticDataObject('',eachAuthor.name, eachAuthor.id, 0, 0, 0,0)); // initalize the array with author's name, author's id, selfEdit =0, otherEdit = 0,totalEdit = 0
         });
 
+        // Retrieve the Google Doc Tab and send a message to that Tab's view
+        chrome.tabs.query({
+            url: '*://docs.google.com/*' + docId + '/edit*', active:true
+        }, function(tabs) {
 
-        // Async run through each entry in a synchronous sequence.
-        async.eachSeries(changelog, function(entry, callBack) {
-            authorId = entry[2],
-            command = entry[0];
+            // Async run through each entry in a synchronous sequence.
+            async.eachSeries(changelog, function(entry, callBack) {
+                authorId = entry[2],
+                command = entry[0];
 
-            // Find author object based on authorId:
+                // Find author object based on authorId:
 
-            var currentAuthor = _.find(authors, function(eachAuthor) {
-                return eachAuthor.id === authorId;
-            });
-
-
-            // Retrieve the Google Doc Tab and send a message to that Tab's view
-            // TODO
-            chrome.tabs.query({
-                url: '*://docs.google.com/*/' + docId + '/edit*'
-            }, function(tabs) {
+                var currentAuthor = _.find(authors, function(eachAuthor) {
+                    return eachAuthor.id === authorId;
+                });
 
                 chrome.tabs.sendMessage(tabs[0].id, {
                     msg: 'progress',
                     soFar: soFar + 1
                 }, function(response) {
-
                     that.analyzeEachEditInChangelog(command, authorId, that.revID, that.currentSegID, that.allSegmentsInCurrentRev, statisticDataArray);                    
 
                     if (soFar === intervalChangesIndex[that.revID] ) {
@@ -312,7 +311,6 @@ $.extend(window.docuviz, {
                         var revLength = that.str.length;
                         // convert every segments into constructSegmentForFrontend object:
                         var segmentsForFrontend = that.buildSegmentsForOneRevision(that.allSegmentsInCurrentRev, authors);
-
 
                         // begin calculating copyStatisticDataArray combine with Color and Contribution
                         var copyStatisticDataArray = [];
@@ -343,17 +341,14 @@ $.extend(window.docuviz, {
                     if (soFar === (editCount-1) ) {
                     	// calculate and combine the revision's contributions to the revsForFrontend
                     	revsForFrontend = that.calculateRevContribution(revsForFrontend, authors);
-                        // console.log(that.allSegmentsInCurrentRev);
-                    	chrome.tabs.query({
-                    	    url: '*://docs.google.com/*/' + docId + '/edit*'
-                    	}, function(tabs) {
-                    	    chrome.tabs.sendMessage(tabs[0].id, {
-                    	        msg: 'renderDocuviz',
-                    	        chars: that.str,
-                    	        // calculate the revision's contributions, edit Nov 02, 2015 by Kenny
-                    	        revData: revsForFrontend
-                    	    }, function(response) {});
-                    	});
+
+                	    chrome.tabs.sendMessage(tabs[0].id, {
+                	        msg: 'renderDocuviz',
+                	        chars: that.str,
+                	        // calculate the revision's contributions, edit Nov 02, 2015 by Kenny
+                	        revData: revsForFrontend
+                	    }, function(response) {});
+
                     }
                     else{
 
@@ -367,11 +362,12 @@ $.extend(window.docuviz, {
                     
                 }
                 );
-				// End of chrome.tabs.sendMessage function
+			    // End of chrome.tabs.sendMessage function
             });
-			// End of chrome.tabs.query function.
+            // End of async
         });
-		// End of async
+		// End of chrome.tabs.query function.
+        
     },
 
     // Creating the new segment, breaking the effected old segment if necessary, and updating all the following startIndex and endIndex
