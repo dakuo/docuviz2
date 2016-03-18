@@ -88,8 +88,15 @@ $.extend(window.docuviz, {
 
             historyUrl = null;
 
-        if (switchUrl) {
+        if (switchUrl === 0) {
             http = http.replace('/d/', '/u/1/d/');
+        }
+        else if(switchUrl > 0)
+        {
+            http = http.replace('/u/1/d/', '/u/0/d/');
+        }
+        else{
+
         }
 
         historyUrl = http + '/revisions/tiles?id=' + this.getDocId() + "&token=" + token + "&start=1&showDetailedRevisions=false";
@@ -102,6 +109,7 @@ $.extend(window.docuviz, {
     // Ajax call to get Google Doc's history data which contains revision number and authors data
     getHistoryData: function(url) {
         var that = this;
+        var errorCounter = 0;
 
         $.ajax({
             type: 'GET',
@@ -113,8 +121,13 @@ $.extend(window.docuviz, {
                 var historyUrl = null;
 
                 if (request.status === 400) {
-                    historyUrl = that.getHistoryUrl(location.href, true);
+                    historyUrl = that.getHistoryUrl(location.href, errorCounter);
                     that.getHistoryData(historyUrl);
+
+                    errorCounter++;
+                }
+                else{
+
                 }
             },
 
