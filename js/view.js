@@ -17,8 +17,8 @@ $.extend(window.docuviz, {
     // Store each author object in the document
     // Each author object will have a unique ID, color, and name
     authors: [],
-    authorsTimestamp: [],
-    timestamps: [],
+    revAuthors: [],
+    revTimestamps: [],
     revisionLengths: [],
 
 
@@ -88,11 +88,18 @@ $.extend(window.docuviz, {
 
             historyUrl = null;
 
-        if (switchUrl) {
+        if (switchUrl === 0) {
             http = http.replace('/d/', '/u/1/d/');
         }
+        else if(switchUrl > 0)
+        {
+            http = http.replace('/u/1/d/', '/u/0/d/');
+        }
+        else{
 
-        historyUrl = http + '/revisions/history?id=' + this.getDocId() + "&token=" + token + "&start=1&end=-1&zoom_level=0";
+        }
+
+        historyUrl = http + '/revisions/tiles?id=' + this.getDocId() + "&token=" + token + "&start=1&showDetailedRevisions=false";
         // console.log("historyUrl is at: ");
         // console.log(historyUrl);
         return historyUrl;
@@ -102,6 +109,7 @@ $.extend(window.docuviz, {
     // Ajax call to get Google Doc's history data which contains revision number and authors data
     getHistoryData: function(url) {
         var that = this;
+        var errorCounter = 0;
 
         $.ajax({
             type: 'GET',
@@ -113,23 +121,28 @@ $.extend(window.docuviz, {
                 var historyUrl = null;
 
                 if (request.status === 400) {
-                    historyUrl = that.getHistoryUrl(location.href, true);
+                    historyUrl = that.getHistoryUrl(location.href, errorCounter);
                     that.getHistoryData(historyUrl);
+
+                    errorCounter++;
+                }
+                else{
+
                 }
             },
 
             // If the call success, turn the result DATA into JSON object and get the important information (Revision number & authors data)
             success: function(data) {
                 var raw = jQuery.parseJSON(data.substring(4)),
-                    revisionNumber = raw[2][raw[2].length - 1][3];
+                    // revisionNumber = raw[2][raw[2].length - 1][3];
+                    revisionNumber = raw.tileInfo[raw.tileInfo.length-1].end;
 
                 that.setRevisionNumber(revisionNumber);
                 //$('.js-authorviz-btn').removeClass('is-disabled');
                 $('.js-docuviz-btn').removeClass('is-disabled');
 
-                that.authors = that.parseAuthors(raw[2]); // set list of authors
-                console.log(raw[2]);
-                that.parseTimestampsAuthors(raw[2], that.authors); // set an array of authors which correspond for revisions' time
+                that.authors = that.parseAuthors(raw.userMap); // set list of authors
+                that.parseRevTimestampsAuthors(raw.tileInfo, that.authors); // set an array of authors which correspond for revisions' time
 
             }
         })
@@ -138,12 +151,9 @@ $.extend(window.docuviz, {
 
     // parseAuthors method receive "raw authors" data (JSON Object) and maniputlate on that JSON Object to return a set of structural Author Object.
     // ** BB
-    parseAuthors: function(data) {
-        var rawData,
-            i,
-            rawAuthors = [],
-            authors = [],
-            authorId = [];
+    parseAuthors: function(userMap) {
+        var 
+            authors = [];
 
         // Author is a factory that creat "author object" a set of structural property and value.
         // If you come from Programming language like Java, C, C++, Python, think of this Author as a Class used to create as many author children as needed
@@ -154,62 +164,25 @@ $.extend(window.docuviz, {
                 id: id
             };
         };
-
-
-        // _. is a reserved syntax used in Underscore Library
-        // _.map receives input in a form of Array then loop through that Array to return a value based on your definition. The result will also be in a form of an Array
-        // e.g.
-        // _.map([0,1,2,3], function(val) {
-        //    return val + 2;
-        // });
-        // The result of the above function would be
-        // [2,3,4,5]
-        rawData = _.map(data, function(val) {
-            return val[1];
-        });
-
-
-        // _.flatten removes one level of from the Array hierarchy
-        // e.g.
-        // _.flatten([a,b,[c],[[d]]], true);
-        // The result of the above function would be
-        // [a,b,c,[d]]
-        rawData = _.flatten(rawData, true);
-
-
-        //var color = d3.scale.category10();
-        // _.each loops through the rawData and do something for each value
-        _.each(rawData, function(val, index) {
-            //val[2] = Name
-            //val[3] = Color
-            //val[4] = ID
-            rawAuthors.push(Author(val[2], val[3], val[4]));
-            authorId.push(val[4]);
-        });
-
-        authorId = _.intersection(authorId);
-
-        _.each(authorId, function(val) {
-            authors.push(_.findWhere(rawAuthors, {
-                id: val
-            }));
-        });
-
         var color10 = d3.scale.category10();
-        _.each(authors, function(val, index) {
-            if (val.id === undefined) { // handle anonymous user which ID is undefined
-                val.name = "Anonymous";
-                val.color = "#7F7F7F";
-            } else {
-                val.color = color10(index);
+
+        _.each(Object.keys(userMap), function(d, i){
+
+            if (userMap[d].anonymous === true){
+                authors.push(Author("Anonymous", "#7F7F7F", d));
             }
+            else{
+                authors.push(Author(userMap[d].name, color10(i), d));
+            }
+        	
+
         });
 
         return authors;
     },
 
-    // ** BB
-    parseTimestampsAuthors: function(data, authors) {
+    // 
+    parseRevTimestampsAuthors: function(tileInfo, authors) {
         var that = this,
             rawData,
             i,
@@ -220,63 +193,41 @@ $.extend(window.docuviz, {
 
         // Author is a factory that create "author object" a set of structural property and value.
         // If you come from Programming language like Java, C, C++, Python, think of this Author as a Class used to create as many author children as needed
-        var author = function(name, color, id) {
-            return {
-                name: name,
-                color: color,
-                id: id
-            };
-        };
+        // var Author = function(name, color, id) {
+        //     return {
+        //         name: name,
+        //         color: color,
+        //         id: id
+        //     };
+        // };
 
-        var timeStamp = function(timestamp1, timestamp2) {
-            return {
-                timestamp1: timestamp1,
-                timestamp2: timestamp2
-            };
-        };
-
-
-        rawData = data;
-        // console.log(rawData);
+        // var timeStamp = function(timestamp1, timestamp2) {
+        //     return {
+        //         timestamp1: timestamp1,
+        //         timestamp2: timestamp2
+        //     };
+        // };
 
 
-        _.each(rawData, function(val) {
+        _.each(tileInfo, function(tile) {
             var authorsArray = [];
-            _.each(val[1], function(eachAuthor) {
+            _.each(tile.users, function(eachAuthor) {
 
-                var authorColor = _.find(authors, function(val) {
-                    return eachAuthor[4] === val.id;
+                var author = _.find(authors, function(val) {
+                    return eachAuthor === val.id;
                 });
 
-                authorsArray.push(author(eachAuthor[2], authorColor.color, eachAuthor[4]));
+                authorsArray.push(author);
             });
 
-            if (val[6] != null) {
+            that.revTimestamps.push(tile.endMillis);
+            that.revAuthors.push(authorsArray);
 
-                _.each(val[6], function(eachElement, index) {
-                    that.timestamps.push(eachElement[2]);
-                    that.authorsTimestamp.push(authorsArray);
-
-                });
-
-                if (val[6][val[6].length - 1][2] != val[5]) { // handle the case where the history doesn't inlude the orginal time
-                    that.timestamps.push(val[5]);
-                    that.authorsTimestamp.push(authorsArray);
-                }
-
-
-            } else {
-
-                that.timestamps.push(val[5]);
-                that.authorsTimestamp.push(authorsArray);
-            }
-
-            authorsArray = [];
 
         });
 
         // console.log("Time: ");
-        // console.log(that.timestamps);
+        // console.log(that.revTimestamps);
 
     },
 
@@ -328,8 +279,8 @@ $.extend(window.docuviz, {
                     docId: that.getDocId(),
                     changelog: raw.changelog,
                     authors: that.authors,
-                    revTimestamps: that.timestamps,
-                    revAuthors: that.authorsTimestamp
+                    revTimestamps: that.revTimestamps,
+                    revAuthors: that.revAuthors
                 }, function(data) {});
                 // chrome.runtime.sendMessage({msg: 'buildRevLengths', changelog: raw.changelog, timeStamp: that.timestamps[0]}, function(data){});
             },
@@ -496,11 +447,9 @@ $.extend(window.docuviz, {
     },
 
 
-    renderResultPanelForDocuviz: function(chars, revData, statisticData) {
+    renderResultPanelForDocuviz: function(chars, revData) {
         var initial_render_revision_amount = 100;
         var rendered_revision_counter_end = initial_render_revision_amount;
-
-
 
         var margin = {
                 top: 150,
@@ -528,7 +477,7 @@ $.extend(window.docuviz, {
                 revAuthor: val[2],
                 revTime: parseDate,
                 revSegments: val[3],
-                revEditsSinceLastRevision: val[4],
+                revStatsData: val[4],
             }
         });
 
@@ -549,10 +498,8 @@ $.extend(window.docuviz, {
             authorsColors.push(colorLoop);
         });
 
-        console.log(data);
-
         /**
-         * Timescale
+         * Timescale v.s. Equal Distance switch
          **/
         $('.js-result-docuviz').append('<section class="chart-component"></section>')
         $('.chart-component').append('<section class="chart__controller"></section>')
@@ -588,9 +535,6 @@ $.extend(window.docuviz, {
                 setTimeout(function() {
                     sliderMethod(event, ui);
                 }, 200); // delay trigger for 0.2s
-
-
-
             }
         });
 
@@ -601,13 +545,12 @@ $.extend(window.docuviz, {
             beginRev = ui.values[0];
             endRev = ui.values[1];
 
-
             if (currentChartType === 'equalDistance') {
                 $('svg').remove();
-                docuviz.drawEqualDistance(data, margin, width, height, barHeight, authorsColors, beginRev, endRev,statisticData);
+                docuviz.drawEqualDistance(data, margin, width, height, barHeight, authorsColors, beginRev, endRev);
             } else {
                 $('svg').remove();
-                docuviz.drawTimeScaled(data, margin, width, height, barHeight, authorsColors, beginRev, endRev, statisticData);
+                docuviz.drawTimeScaled(data, margin, width, height, barHeight, authorsColors, beginRev, endRev);
             }
         }
 
@@ -619,7 +562,7 @@ $.extend(window.docuviz, {
 
 
         // at first, draw a intital graph with equal distance
-        this.drawEqualDistance(data, margin, width, height, barHeight, authorsColors, beginRev, endRev, statisticData);
+        this.drawEqualDistance(data, margin, width, height, barHeight, authorsColors, beginRev, endRev);
         $('#equal-distance-btn').css({
             'background': '#E25A5A',
             'color': 'white'
@@ -635,7 +578,7 @@ $.extend(window.docuviz, {
                 'background': '#E25A5A',
                 'color': 'white'
             });
-            docuviz.drawEqualDistance(data, margin, width, height, barHeight, authorsColors, beginRev, endRev, statisticData);
+            docuviz.drawEqualDistance(data, margin, width, height, barHeight, authorsColors, beginRev, endRev);
         };
 
         document.getElementById('time-scaled-btn').onclick = function() { // if time scaled button is clicked
@@ -648,7 +591,7 @@ $.extend(window.docuviz, {
                     'color': 'white'
                 });
                 currentChartType = 'timeScaled';
-                docuviz.drawTimeScaled(data, margin, width, height, barHeight, authorsColors, beginRev, endRev, statisticData);
+                docuviz.drawTimeScaled(data, margin, width, height, barHeight, authorsColors, beginRev, endRev);
                 timeScaledGraph = $('svg').html();
             } else {
                 $('#equal-distance-btn').removeAttr('style');
@@ -658,28 +601,20 @@ $.extend(window.docuviz, {
                     'color': 'white'
                 });
                 currentChartType = 'timeScaled';
-                docuviz.drawTimeScaled(data, margin, width, height, barHeight, authorsColors, beginRev, endRev, statisticData);
+                docuviz.drawTimeScaled(data, margin, width, height, barHeight, authorsColors, beginRev, endRev);
                 timeScaledGraph = $('svg').html();
 
             }
 
-
         };
-
-
-
     },
 
-
-
-    drawEqualDistance: function(data, margin, width, height, barHeight, authorsColors, beginRev, endRev, statisticData) {
+    drawEqualDistance: function(data, margin, width, height, barHeight, authorsColors, beginRev, endRev) {
         function filterRevisionArray(value, index) {
             return (index >= beginRev - 1) && (index <= endRev - 1);
         }
         var data = data.filter(filterRevisionArray);
         var authorsColors = authorsColors.filter(filterRevisionArray);
-
-        //format = d3.format(",");
 
         var x = d3.scale.ordinal().domain(d3.range(data.length)).rangeRoundBands([0, width], 0.5);
 
@@ -706,22 +641,6 @@ $.extend(window.docuviz, {
             .append("g")
             .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-/*
-        var revTotalText = svg.selectAll("authorText").data(data[data.length-1].revContribution).enter()
-        .append("text").attr("class", "legend_text").attr("x", 40*2 + 10).attr("y", function(d, i) {
-            return i * (barHeight + 5);
-        })
-        .attr("font-family", "sans-serif").attr("font-size", "13px")
-        .attr("fill", "black").text(
-            function(d, i) {
-                return d.author.name + " " + d.contributionLength;
-            })
-        .attr(
-            "transform",
-            "translate(" + (margin.left - 80)
-                + "," + (height - margin.bottom + (barHeight*4 ) + 259 ) + ")");
-*/
-
         svg.append("g")
             .attr("class", "x axis")
             .attr("transform", "translate(0," + 10 + ")")
@@ -741,14 +660,13 @@ $.extend(window.docuviz, {
 
         // show the revision's total length, Nov 02, 2015 by Dakuo
         // the yAxis ending tick
+        var format = d3.format(",");
         svg.append("text").attr("class","ending_tick").attr("transform",
-            "translate(-43," + (height+15) + ")").text(d3.format(",")(d3.max(data, function(d) {
+            "translate(-43," + (height+15) + ")").text(format(d3.max(data, function(d) {
                 return d.revLength;
             })));
 
-
-        // Draw time label:
-
+        // Draw time labels:
         var time_label = svg.selectAll("time_label").data(data).enter()
             .append("text")
             .attr("class", "time_label")
@@ -766,8 +684,7 @@ $.extend(window.docuviz, {
             .attr("transform", "translate(4," + 15 + ") rotate(-90)");
 
 
-       // Draw author legends:
-
+       // Draw author labels:
         for (var index = 0; index < authorsColors.length; index++) {
             var currentColors = authorsColors[index][0];
             //deal with multi author
@@ -791,7 +708,7 @@ $.extend(window.docuviz, {
 
         // begin draw new statistic table
         var columnTitles = ['','Name', 'Edit of Self', 'Edit of Other','Total Edit', 'Contribution'];
-        var varNames = ['authorColor','authorName', 'selfEdit', 'otherEdit','totalEdit', 'authorContribution'];
+        var columnVarNames = ['authorColor','authorName', 'selfEdit', 'otherEdit','totalEdit', 'authorContribution'];
 
         function statisticDataObject (authorColor,authorName, authorId, selfEdit, otherEdit, totalEdit, authorContribution){
             return {
@@ -805,30 +722,28 @@ $.extend(window.docuviz, {
             }
         }
 
-        var revEditsSinceLastRevisionData = [];
-        var allRevEditsSinceLastRevisionData = [];
+        var theLastRevStatsData = [];
+        var allRevsStatsData = [];
 
-        _.each(data[data.length-1].revEditsSinceLastRevision, function(eachAuthor){
-            revEditsSinceLastRevisionData.push(statisticDataObject(eachAuthor.authorColor, eachAuthor.authorName, eachAuthor.authorId, eachAuthor.selfEdit, eachAuthor.otherEdit, eachAuthor.totalEdit,eachAuthor.authorContribution));
+        _.each(data[data.length-1].revStatsData, function(eachAuthor){
+            theLastRevStatsData.push(statisticDataObject(eachAuthor.authorColor, eachAuthor.authorName, eachAuthor.authorId, eachAuthor.selfEdit, eachAuthor.otherEdit, eachAuthor.totalEdit,eachAuthor.authorContribution));
         });
-
-
 
         _.each(data, function(eachRevision){
-            allRevEditsSinceLastRevisionData.push(eachRevision.revEditsSinceLastRevision);
+            allRevsStatsData.push(eachRevision.revStatsData);
         });
 
-        _.each(revEditsSinceLastRevisionData, function(eachAuthor, index){
+        _.each(theLastRevStatsData, function(eachAuthor, index){
             var sumSelfEdit = 0, sumOtherEdit = 0, sumTotalEdit = 0;
-            _.each(allRevEditsSinceLastRevisionData, function(eachRevision){
+            _.each(allRevsStatsData, function(eachRevision){
                 sumSelfEdit += eachRevision[index].selfEdit;
                 sumOtherEdit += eachRevision[index].otherEdit;
                 sumTotalEdit += eachRevision[index].selfEdit + eachRevision[index].otherEdit;
 
             });
-            revEditsSinceLastRevisionData[index].selfEdit = sumSelfEdit;
-            revEditsSinceLastRevisionData[index].otherEdit = sumOtherEdit;
-            revEditsSinceLastRevisionData[index].totalEdit = sumTotalEdit;
+            theLastRevStatsData[index].selfEdit = sumSelfEdit;
+            theLastRevStatsData[index].otherEdit = sumOtherEdit;
+            theLastRevStatsData[index].totalEdit = sumTotalEdit;
 
         });
 
@@ -856,11 +771,11 @@ $.extend(window.docuviz, {
 
             statisticsTable.append('tbody')
                             .selectAll('tr')
-                            .data(revEditsSinceLastRevisionData).enter()
+                            .data(theLastRevStatsData).enter()
                             .append('tr')
                             .selectAll('td')
                             .data(function(row) {
-                                return varNames.map(function(column) {
+                                return columnVarNames.map(function(column) {
                                     return {column: column, value: row[column]};
                                 });
                             }).enter()
@@ -872,7 +787,6 @@ $.extend(window.docuviz, {
                                 else if (i===1){ // name
                                     return 150;
                                 }
-
                                 else{
                                     return 110;
                                 }
@@ -891,7 +805,7 @@ $.extend(window.docuviz, {
                             });
 
         var totalRow = {title: 'Total', totalEditInSelf: 0, totalEditinOthers: 0, totalTotalEdit: 0, totalAuthorContribution: 0};
-        _.each(revEditsSinceLastRevisionData, function(eachAuthor){
+        _.each(theLastRevStatsData, function(eachAuthor){
             totalRow.totalEditInSelf += eachAuthor.selfEdit;
             totalRow.totalEditinOthers += eachAuthor.otherEdit;
             totalRow.totalTotalEdit += eachAuthor.totalEdit;
@@ -900,7 +814,7 @@ $.extend(window.docuviz, {
 
         statisticsTable.append('tr')
                     .selectAll('td')
-                    .data(varNames).enter()
+                    .data(columnVarNames).enter()
                     .append('td')
                     .html(function(d,i) { 
                         if (i === 1){
@@ -927,7 +841,7 @@ $.extend(window.docuviz, {
 
         // Draw authors' colors to the table:
 
-        svg.selectAll("authorRectangle").data(data[data.length-1].revEditsSinceLastRevision).enter()
+        svg.selectAll("authorRectangle").data(data[data.length-1].revStatsData).enter()
         .append("rect")
         .attr("class", "author_label")
         .attr("x", 63)
@@ -1115,7 +1029,7 @@ $.extend(window.docuviz, {
     },
 
 
-    drawTimeScaled: function(data, margin, width, height, barHeight, authorsColors, beginRev, endRev, statisticData) {
+    drawTimeScaled: function(data, margin, width, height, barHeight, authorsColors, beginRev, endRev) {
 
         function filterRevisionArray(value, index) {
             return (index >= beginRev - 1) && (index <= endRev - 1);
@@ -1125,8 +1039,8 @@ $.extend(window.docuviz, {
 
 
         // begin prototyping: 
-        var startTime = new Date(1326913680000);
-        var endTime = new Date(1327478340000);
+        var startTime = new Date(1329936360000);
+        var endTime = new Date(1330675140000);
 
         var minDate = new Date(startTime.toISOString()),
             maxDate = new Date(endTime.toISOString());
@@ -1212,8 +1126,9 @@ $.extend(window.docuviz, {
 
         // show the revision's total length, Nov 02, 2015 by Dakuo
         // the yAxis ending tick
+        var format = d3.format(",");
         svg.append("text").attr("class","ending_tick").attr("transform",
-            "translate(-43," + (height+15) + ")").text(d3.format(",")(d3.max(data, function(d) {
+            "translate(-43," + (height+15) + ")").text(format(d3.max(data, function(d) {
                 return d.revLength;
             })));
 
@@ -1291,7 +1206,7 @@ $.extend(window.docuviz, {
 
         // begin draw new statistic table
         var columnTitles = ['','Name', 'Edit of Self', 'Edit of Other','Total Edit', 'Contribution'];
-        var varNames = ['authorColor','authorName', 'selfEdit', 'otherEdit','totalEdit', 'authorContribution'];
+        var columnVarNames = ['authorColor','authorName', 'selfEdit', 'otherEdit','totalEdit', 'authorContribution'];
 
         function statisticDataObject (authorColor,authorName, authorId, selfEdit, otherEdit, totalEdit, authorContribution){
             return {
@@ -1305,30 +1220,30 @@ $.extend(window.docuviz, {
             }
         }
 
-        var revEditsSinceLastRevisionData = [];
-        var allRevEditsSinceLastRevisionData = [];
+        var theLastRevStatsData = [];
+        var allRevsStatsData = [];
 
-        _.each(data[data.length-1].revEditsSinceLastRevision, function(eachAuthor){
-            revEditsSinceLastRevisionData.push(statisticDataObject(eachAuthor.authorColor, eachAuthor.authorName, eachAuthor.authorId, eachAuthor.selfEdit, eachAuthor.otherEdit, eachAuthor.totalEdit,eachAuthor.authorContribution));
+        _.each(data[data.length-1].revStatsData, function(eachAuthor){
+            theLastRevStatsData.push(statisticDataObject(eachAuthor.authorColor, eachAuthor.authorName, eachAuthor.authorId, eachAuthor.selfEdit, eachAuthor.otherEdit, eachAuthor.totalEdit,eachAuthor.authorContribution));
         });
 
 
 
         _.each(data, function(eachRevision){
-            allRevEditsSinceLastRevisionData.push(eachRevision.revEditsSinceLastRevision);
+            allRevsStatsData.push(eachRevision.revStatsData);
         });
 
-        _.each(revEditsSinceLastRevisionData, function(eachAuthor, index){
+        _.each(theLastRevStatsData, function(eachAuthor, index){
             var sumSelfEdit = 0, sumOtherEdit = 0, sumTotalEdit = 0;
-            _.each(allRevEditsSinceLastRevisionData, function(eachRevision){
+            _.each(allRevsStatsData, function(eachRevision){
                 sumSelfEdit += eachRevision[index].selfEdit;
                 sumOtherEdit += eachRevision[index].otherEdit;
                 sumTotalEdit += eachRevision[index].selfEdit + eachRevision[index].otherEdit;
 
             });
-            revEditsSinceLastRevisionData[index].selfEdit = sumSelfEdit;
-            revEditsSinceLastRevisionData[index].otherEdit = sumOtherEdit;
-            revEditsSinceLastRevisionData[index].totalEdit = sumTotalEdit;
+            theLastRevStatsData[index].selfEdit = sumSelfEdit;
+            theLastRevStatsData[index].otherEdit = sumOtherEdit;
+            theLastRevStatsData[index].totalEdit = sumTotalEdit;
 
         });
 
@@ -1356,11 +1271,11 @@ $.extend(window.docuviz, {
 
             statisticsTable.append('tbody')
                             .selectAll('tr')
-                            .data(revEditsSinceLastRevisionData).enter()
+                            .data(theLastRevStatsData).enter()
                             .append('tr')
                             .selectAll('td')
                             .data(function(row) {
-                                return varNames.map(function(column) {
+                                return columnVarNames.map(function(column) {
                                     return {column: column, value: row[column]};
                                 });
                             }).enter()
@@ -1391,7 +1306,7 @@ $.extend(window.docuviz, {
                             });
 
         var totalRow = {title: 'Total', totalEditInSelf: 0, totalEditinOthers: 0, totalTotalEdit: 0, totalAuthorContribution: 0};
-        _.each(revEditsSinceLastRevisionData, function(eachAuthor){
+        _.each(theLastRevStatsData, function(eachAuthor){
             totalRow.totalEditInSelf += eachAuthor.selfEdit;
             totalRow.totalEditinOthers += eachAuthor.otherEdit;
             totalRow.totalTotalEdit += eachAuthor.totalEdit;
@@ -1400,7 +1315,7 @@ $.extend(window.docuviz, {
 
         statisticsTable.append('tr')
                     .selectAll('td')
-                    .data(varNames).enter()
+                    .data(columnVarNames).enter()
                     .append('td')
                     .html(function(d,i) { 
                         if (i === 1){
@@ -1428,7 +1343,7 @@ $.extend(window.docuviz, {
 
         // Draw authors' colors to the table:
 
-        svg.selectAll("authorRectangle").data(data[data.length-1].revEditsSinceLastRevision).enter()
+        svg.selectAll("authorRectangle").data(data[data.length-1].revStatsData).enter()
         .append("rect")
         .attr("class", "author_label")
         .attr("x", 63)
@@ -1459,19 +1374,15 @@ $.extend(window.docuviz, {
                 })
                 .attr("y", function(d, i) {
                     segStartIndex = y(soFarSegmentsLength);
-                    //soFarSegmentsLength = soFarSegmentsLength + d[1].length;
                     soFarSegmentsLength = soFarSegmentsLength + d.segLength;
                     return segStartIndex;
                 })
                 .attr("width", 10)
                 .attr("height", function(d, i) {
-                    //console.log(d[1].length);
-                    //return y(d[1].length);
                     return y(d.segLength);
                 })
                 .attr("transform", "translate(25,0)")
                 .style("fill", function(d) {
-                    //return d[0].color;
                     return d.authorColor;
                 })
                 .append("svg:title").text(function(d) {
@@ -1639,7 +1550,7 @@ chrome.runtime.onMessage.addListener(
                 break;
 
             case 'renderDocuviz': // this is when the Docuviz button is pressed
-                window.docuviz.renderResultPanelForDocuviz(request.chars, request.revData, request.statisticData); // new
+                window.docuviz.renderResultPanelForDocuviz(request.chars, request.revData); 
                 sendResponse('end');
                 break;
 

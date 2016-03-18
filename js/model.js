@@ -114,7 +114,7 @@ $.extend(window.docuviz, {
             }
         }
 
-        else if (foundIndex === -1){
+        else {
             if (anonymousAuthorCount === 0){
                 _.find(statisticDataArray, function(eachAuthor, index){
                     if (eachAuthor.authorName === "Anonymous"){
@@ -179,10 +179,9 @@ $.extend(window.docuviz, {
             that.allSegmentsInCurrentRev = that.buildSegmentsWhenInsert(entry.s, insertStartIndex, authorId, that.allSegmentsInCurrentRev, statisticDataArray);
 
             // new
+            // that.adjustStatisticData(authorId, "total", entry.s.length, statisticDataArray);
+            // end
 
-            that.adjustStatisticData(authorId, "total", entry.s.length, statisticDataArray);
-
-            // end 
             _.each(entry.s, function(character, index) {
                 var charObj = {
                     s: character,
@@ -198,7 +197,7 @@ $.extend(window.docuviz, {
             deleteEndIndex = entry.ei - 1;
 
             // new
-            that.adjustStatisticData(authorId, "total", (deleteEndIndex - deleteStartIndex + 1), statisticDataArray);
+            // that.adjustStatisticData(authorId, "total", (deleteEndIndex - deleteStartIndex + 1), statisticDataArray);
             // end
 
             that.str.delete(deleteStartIndex, deleteEndIndex);
@@ -220,6 +219,7 @@ $.extend(window.docuviz, {
             _.each(authors, function(eachAuthor){
                 var sum = 0;
                 _.each(eachRevision[3], function(eachSegment){
+                    // TODO
                     if (eachAuthor.color === eachSegment.authorColor){
                         sum += eachSegment.segLength;
                     }
@@ -246,9 +246,8 @@ $.extend(window.docuviz, {
         this.revID = 0;
         this.allSegmentsInCurrentRev = [];
         this.segmentsArray = [];
-        //this.statisticDataArray = [];
 
-        console.log(changelog);
+        // console.log(changelog);
 
         var that = this,
             soFar = 0,
@@ -266,13 +265,13 @@ $.extend(window.docuviz, {
         // an array of the cutting index of edits, e.g., [0,21,32] meaning: rev0 has 0, rev1 has 1-21, rev2 has 22-32
         var intervalChangesIndex = [];
         intervalChangesIndex = this.calculateIntervalChangesIndex(changelog, revTimestamps);
+
+        // console.log(intervalChangesIndex);
+
         if(intervalChangesIndex.length === 0) {
         	// Something is wrong, we didn't get changelog, or the cutting point
         	console.log("Check point 1");
         }
-
-        // console.log(intervalChangesIndex);
-
 
         // new
         // initialize the statisticDataArray:
@@ -280,30 +279,26 @@ $.extend(window.docuviz, {
             statisticDataArray.push(that.statisticDataObject('',eachAuthor.name, eachAuthor.id, 0, 0, 0,0)); // initalize the array with author's name, author's id, selfEdit =0, otherEdit = 0,totalEdit = 0
         });
 
+        // Retrieve the Google Doc Tab and send a message to that Tab's view
+        chrome.tabs.query({
+            url: '*://docs.google.com/*' + docId + '/edit*', active:true
+        }, function(tabs) {
 
+            // Async run through each entry in a synchronous sequence.
+            async.eachSeries(changelog, function(entry, callBack) {
+                authorId = entry[2],
+                command = entry[0];
 
-        // Async run through each entry in a synchronous sequence.
-        async.eachSeries(changelog, function(entry, callBack) {
-            authorId = entry[2],
-            command = entry[0];
+                // Find author object based on authorId:
 
-            // Find author object based on authorId:
-
-            var currentAuthor = _.find(authors, function(eachAuthor) {
-                return eachAuthor.id === authorId;
-            });
-
-
-            // Retrieve the Google Doc Tab and send a message to that Tab's view
-            chrome.tabs.query({
-                url: '*://docs.google.com/*/' + docId + '/edit*'
-            }, function(tabs) {
+                var currentAuthor = _.find(authors, function(eachAuthor) {
+                    return eachAuthor.id === authorId;
+                });
 
                 chrome.tabs.sendMessage(tabs[0].id, {
                     msg: 'progress',
                     soFar: soFar + 1
                 }, function(response) {
-
                     that.analyzeEachEditInChangelog(command, authorId, that.revID, that.currentSegID, that.allSegmentsInCurrentRev, statisticDataArray);                    
 
                     if (soFar === intervalChangesIndex[that.revID] ) {
@@ -317,8 +312,7 @@ $.extend(window.docuviz, {
                         // convert every segments into constructSegmentForFrontend object:
                         var segmentsForFrontend = that.buildSegmentsForOneRevision(that.allSegmentsInCurrentRev, authors);
 
-
-                        // begin calculating revEditSinceLastRevision
+                        // begin calculating copyStatisticDataArray combine with Color and Contribution
                         var copyStatisticDataArray = [];
                         _.each(statisticDataArray, function(eachData){
                             copyStatisticDataArray.push(that.statisticDataObject('',eachData.authorName, eachData.authorId, eachData.selfEdit, eachData.otherEdit, eachData.totalEdit,''));
@@ -335,10 +329,6 @@ $.extend(window.docuviz, {
                         });
                         // end calculating revEditSinceLastRevision
 
-
-                        // console.log("allSegmentsInCurrentRev for revisionID: " + that.revID);
-                        // console.log(that.allSegmentsInCurrentRev);
-
                         // update the current revision id
                         that.revID += 1;
 
@@ -349,20 +339,16 @@ $.extend(window.docuviz, {
 
                     // reaching the end of changelog, calculate the contributions and push it to frontend
                     if (soFar === (editCount-1) ) {
-                    	// calculate the revision's contributions, edit Nov 02, 2015 by Kenny
-                    	var revDataWithContribution = that.calculateRevContribution(revsForFrontend, authors);
-                        // console.log(that.allSegmentsInCurrentRev);
-                    	chrome.tabs.query({
-                    	    url: '*://docs.google.com/*/' + docId + '/edit*'
-                    	}, function(tabs) {
-                    	    chrome.tabs.sendMessage(tabs[0].id, {
-                    	        msg: 'renderDocuviz',
-                    	        chars: that.str,
-                    	        // calculate the revision's contributions, edit Nov 02, 2015 by Kenny
-                    	        revData: revDataWithContribution,
-                                statisticData: statisticDataArray // new
-                    	    }, function(response) {});
-                    	});
+                    	// calculate and combine the revision's contributions to the revsForFrontend
+                    	revsForFrontend = that.calculateRevContribution(revsForFrontend, authors);
+
+                	    chrome.tabs.sendMessage(tabs[0].id, {
+                	        msg: 'renderDocuviz',
+                	        chars: that.str,
+                	        // calculate the revision's contributions, edit Nov 02, 2015 by Kenny
+                	        revData: revsForFrontend
+                	    }, function(response) {});
+
                     }
                     else{
 
@@ -376,11 +362,12 @@ $.extend(window.docuviz, {
                     
                 }
                 );
-				// End of chrome.tabs.sendMessage function
+			    // End of chrome.tabs.sendMessage function
             });
-			// End of chrome.tabs.query function.
+            // End of async
         });
-		// End of async
+		// End of chrome.tabs.query function.
+        
     },
 
     // Creating the new segment, breaking the effected old segment if necessary, and updating all the following startIndex and endIndex
@@ -444,7 +431,8 @@ $.extend(window.docuviz, {
             	var currentSeg = that.constructSegment(authorId, entryStr, that.currentSegID, that.currentSegID, 0, that.revID, (segmentsArray[(segmentsArray.length-1)].endIndex+1), ((segmentsArray[(segmentsArray.length-1)].endIndex+1) + entryStr.length - 1), "new segment at the end because of couldn't find previous segment", false);    
             	
             	segmentsArray.insert(currentSeg,segmentsArray.length);
-                // new
+
+                // self edit v.s. other edit
                 that.adjustStatisticData(authorId, "self", entryStr.length, statisticDataArray);
             }
         } 
@@ -463,22 +451,22 @@ $.extend(window.docuviz, {
 					    	segmentsArray[i].startIndex += entryStr.length;
 					    	segmentsArray[i].endIndex += entryStr.length;
 			    		}
-                        // new calculating edits
+
+                        //self edit v.s. other edit
                         if (effectedSegment.authorId === authorId) {
                             that.adjustStatisticData(authorId, "self", entryStr.length, statisticDataArray);
                         }
                         else{
                             that.adjustStatisticData(authorId, "other", entryStr.length, statisticDataArray);
                         }
-                        // end of calculating edits
-        			}
+                    }
         			else {
         				if (effectedSegment.authorId === authorId && effectedSegment.parentSegID === effectedSegment.segID) {
 
 	        				effectedSegment.segStr = entryStr + effectedSegment.segStr;
 		            		effectedSegment.endIndex += entryStr.length;
 
-                            // new
+                            // self edit v.s. other edit
                             that.adjustStatisticData(authorId, "self", entryStr.length, statisticDataArray);
 
 	            		}
@@ -487,7 +475,7 @@ $.extend(window.docuviz, {
 	            			var currentSeg = that.constructSegment(authorId, entryStr, that.currentSegID, that.currentSegID, 0, that.revID, startIndex, (startIndex + entryStr.length - 1), "new segment and found the effected segment, permanentflag = false,  authorId != , when effectedSegment.startIndex === startIndex and startIndex === 0", false);
 	            			segmentsArray.insert(currentSeg, segmentLocation );
 
-                            // new calculating edits
+                            // self edit v.s. other edit
                             if (effectedSegment.authorId === authorId) {
                                 that.adjustStatisticData(authorId, "self", entryStr.length, statisticDataArray);
                             }
@@ -510,7 +498,7 @@ $.extend(window.docuviz, {
         				var currentSeg = that.constructSegment(authorId, entryStr, that.currentSegID, that.currentSegID, 0, that.revID, startIndex, (startIndex + entryStr.length - 1), "new segment and found the effected segment, permanentflag = true, when ((effectedSegment.endIndex+1) ===  startIndex )&& (segmentLocation === (segmentsArray.length-1 ))", false);
         				segmentsArray.insert(currentSeg, (segmentLocation+1) );
 
-                        // new calculating edits
+                        // self edit v.s. other edit
                         if (effectedSegment.authorId === authorId) {
                             that.adjustStatisticData(authorId, "self", entryStr.length, statisticDataArray);
                         }
@@ -524,7 +512,7 @@ $.extend(window.docuviz, {
         					effectedSegment.segStr += entryStr;
 	            			effectedSegment.endIndex += entryStr.length;
 
-                            // new
+                            // self edit v.s. other edit
                             that.adjustStatisticData(authorId, "self", entryStr.length, statisticDataArray);
 
 	            		}
@@ -533,7 +521,7 @@ $.extend(window.docuviz, {
 	            			var currentSeg = that.constructSegment(authorId, entryStr, that.currentSegID, that.currentSegID, 0, that.revID, startIndex, (startIndex + entryStr.length - 1), "new segment and found the effected segment, differentAuthor, permanentflag=false, when ((effectedSegment.endIndex+1) ===  startIndex )&& (segmentLocation === (segmentsArray.length-1 ))", false);
 	            			segmentsArray.insert(currentSeg, (segmentLocation+1) );
 
-                            // new calculating edits
+                            // self edit v.s. other edit
                             if (effectedSegment.authorId === authorId) {
                                 that.adjustStatisticData(authorId, "self", entryStr.length, statisticDataArray);
                             }
@@ -554,7 +542,7 @@ $.extend(window.docuviz, {
 					    	segmentsArray[i].startIndex += entryStr.length;
 					    	segmentsArray[i].endIndex += entryStr.length;
 			    		}
-                        // new calculating edits
+                        // self edit v.s. other edit
                             if (effectedSegment.authorId === authorId) {
                                 that.adjustStatisticData(authorId, "self", entryStr.length, statisticDataArray);
                             }
@@ -573,7 +561,7 @@ $.extend(window.docuviz, {
         				    	segmentsArray[i].endIndex += entryStr.length;
         		    		}
 
-                            // new
+                            // self edit v.s. other edit
                             that.adjustStatisticData(authorId, "self", entryStr.length, statisticDataArray);
 
         				}
@@ -586,7 +574,7 @@ $.extend(window.docuviz, {
 						    	segmentsArray[i].endIndex += entryStr.length;
 				    		}
 
-                            // new calculating edits
+                            // self edit v.s. other edit
                             if (effectedSegment.authorId === authorId) {
 
                                 that.adjustStatisticData(authorId, "self", entryStr.length, statisticDataArray);
@@ -607,7 +595,7 @@ $.extend(window.docuviz, {
         				    	segmentsArray[i].endIndex += entryStr.length;
         		    		}
 
-                            // new
+                            // self edit v.s. other edit
                             that.adjustStatisticData(authorId, "self", entryStr.length, statisticDataArray);
 
         				}
@@ -620,7 +608,7 @@ $.extend(window.docuviz, {
 						    	segmentsArray[i].endIndex += entryStr.length;
 				    		}
 
-                            // new calculating edits
+                            //self edit v.s. other edit
                             if (effectedSegment.authorId === authorId) {
                                 that.adjustStatisticData(authorId, "self", entryStr.length, statisticDataArray);
                             }
@@ -639,7 +627,7 @@ $.extend(window.docuviz, {
         				    	segmentsArray[i].endIndex += entryStr.length;
         		    		}
 
-                            // new
+                            // self edit v.s. other edit
                             that.adjustStatisticData(authorId, "self", entryStr.length, statisticDataArray);
 
         				}
@@ -650,7 +638,7 @@ $.extend(window.docuviz, {
         				    	segmentsArray[i].startIndex += entryStr.length;
         				    	segmentsArray[i].endIndex += entryStr.length;
         		    		}
-                            // new
+                            // self edit v.s. other edit
                             that.adjustStatisticData(authorId, "self", entryStr.length, statisticDataArray);
         				}
         				else{
@@ -662,7 +650,7 @@ $.extend(window.docuviz, {
 						    	segmentsArray[i].endIndex += entryStr.length;
 				    		}
 
-                            // new calculating edits
+                            // self edit v.s. other edit
                             if (effectedSegment.authorId === authorId) {
                                 that.adjustStatisticData(authorId, "self", entryStr.length, statisticDataArray);
                             }
@@ -684,7 +672,7 @@ $.extend(window.docuviz, {
 	        			var currentSeg = that.constructSegment(authorId, entryStr, that.currentSegID, that.currentSegID, 0, that.revID, startIndex, (startIndex + entryStr.length - 1), "new segment and found the effected segment, not the same author when segmentLocation ===  (segmentsArray.length-1)", false);
 	        			segmentsArray.insert(currentSeg, (segmentLocation+1) );
 
-                        // new calculating edits
+                        // self edit v.s. other edit
                         if (effectedSegment.authorId === authorId) {
                             that.adjustStatisticData(authorId, "self", entryStr.length, statisticDataArray);
                         }
@@ -698,8 +686,7 @@ $.extend(window.docuviz, {
         					effectedSegment.segStr += entryStr;
 	            			effectedSegment.endIndex += entryStr.length;
 
-                            // new
-
+                            //self edit v.s. other edit
                             that.adjustStatisticData(authorId, "self", entryStr.length, statisticDataArray);
         				}
         				else{
@@ -707,7 +694,7 @@ $.extend(window.docuviz, {
 	            			var currentSeg = that.constructSegment(authorId, entryStr, that.currentSegID, that.currentSegID, 0, that.revID, startIndex, (startIndex + entryStr.length - 1), "new segment and found the effected segment, not the same author when segmentLocation ===  (segmentsArray.length-1)", false);
 	            			segmentsArray.insert(currentSeg, (segmentLocation+1) );
 
-	            			// new calculating edits
+	            			// self edit v.s. other edit
 	            			if (effectedSegment.authorId === authorId) {
                                 that.adjustStatisticData(authorId, "self", entryStr.length, statisticDataArray);
 	            			}
@@ -729,7 +716,7 @@ $.extend(window.docuviz, {
 					    	segmentsArray[i].endIndex += entryStr.length;
 			    		}
 
-                        // new calculating edits
+                        // self edit v.s. other edit
                         if (effectedSegment.authorId === authorId) {
                             that.adjustStatisticData(authorId, "self", entryStr.length, statisticDataArray);
                         }
@@ -748,8 +735,7 @@ $.extend(window.docuviz, {
         				    	segmentsArray[i].endIndex += entryStr.length;
         		    		}
 
-                            // new
-
+                            // self edit v.s. other edit
                             that.adjustStatisticData(authorId, "self", entryStr.length, statisticDataArray);
         				}
         				else{
@@ -761,7 +747,7 @@ $.extend(window.docuviz, {
 						    	segmentsArray[i].startIndex += entryStr.length;
 						    	segmentsArray[i].endIndex += entryStr.length;
 				    		}
-                            // new calculating edits
+                            // self edit v.s. other edit
                             if (effectedSegment.authorId === authorId) {
                                 that.adjustStatisticData(authorId, "self", entryStr.length, statisticDataArray);
                             }
@@ -782,7 +768,7 @@ $.extend(window.docuviz, {
     					    	segmentsArray[i].endIndex += entryStr.length;
     			    		}
 
-                            // new
+                            // self edit v.s. other edit
                             that.adjustStatisticData(authorId, "self", entryStr.length, statisticDataArray);
 
         				}
@@ -796,7 +782,7 @@ $.extend(window.docuviz, {
 						    	segmentsArray[i].endIndex += entryStr.length;
 				    		}
 
-                            // new calculating edits
+                            // self edit v.s. other edit
                             if (effectedSegment.authorId === authorId) {
                                 that.adjustStatisticData(authorId, "self", entryStr.length, statisticDataArray);
                             }
@@ -817,7 +803,7 @@ $.extend(window.docuviz, {
 	    				    	segmentsArray[i].endIndex += entryStr.length;
 	    		    		}
 
-                            // new
+                            //self edit v.s. other edit
                             that.adjustStatisticData(authorId, "self", entryStr.length, statisticDataArray);
         				}
         				else if (effectedSegment.authorId != authorId && segmentsArray[segmentLocation+1].authorId === authorId && segmentsArray[segmentLocation+1].parentSegID === segmentsArray[segmentLocation+1].segID) {
@@ -828,7 +814,7 @@ $.extend(window.docuviz, {
 						    	segmentsArray[i].endIndex += entryStr.length;
 				    		}
 
-                            // new
+                            // self edit v.s. other edit
                             that.adjustStatisticData(authorId, "other", entryStr.length, statisticDataArray);
         				}
         				else if (effectedSegment.authorId != authorId && segmentsArray[segmentLocation+1].authorId != authorId) {
@@ -841,7 +827,7 @@ $.extend(window.docuviz, {
 						    	segmentsArray[i].endIndex += entryStr.length;
 				    		}
 
-                            // new
+                            //self edit v.s. other edit
                             that.adjustStatisticData(authorId, "other", entryStr.length, statisticDataArray);
 
         				}
@@ -854,7 +840,7 @@ $.extend(window.docuviz, {
 	    				    	segmentsArray[i].endIndex += entryStr.length;
 	    		    		}
 
-                            // new calculating edits
+                            //self edit v.s. other edit
                             if (effectedSegment.authorId === authorId) {
                                 that.adjustStatisticData(authorId, "self", entryStr.length, statisticDataArray);
                             }
@@ -881,7 +867,7 @@ $.extend(window.docuviz, {
                             segmentsArray[i].startIndex += entryStr.length;
                             segmentsArray[i].endIndex += entryStr.length;
                         }
-                        // new calculating edits
+                        //self edit v.s. other edit
                         if (effectedSegment.authorId === authorId) {
                             that.adjustStatisticData(authorId, "self", entryStr.length, statisticDataArray);
                         }
@@ -919,7 +905,7 @@ $.extend(window.docuviz, {
             		    	segmentsArray[i].endIndex += entryStr.length;
                 		}
 
-                		// new calculating edits
+                		//self edit v.s. other edit
                 		if (effectedSegment.authorId === authorId) {
                             that.adjustStatisticData(authorId, "self", entryStr.length, statisticDataArray);
                 		}
@@ -942,7 +928,7 @@ $.extend(window.docuviz, {
                                 segmentsArray[i].endIndex += entryStr.length;
                             }
 
-                            // new
+                            //self edit v.s. other edit
                             that.adjustStatisticData(authorId, "self", entryStr.length, statisticDataArray);
                         }
 
@@ -958,7 +944,7 @@ $.extend(window.docuviz, {
     					    	segmentsArray[i].endIndex += entryStr.length;
     			    		}
 
-                            // new
+                            //self edit v.s. other edit
                             that.adjustStatisticData(authorId, "self", entryStr.length, statisticDataArray);
                         }
 					}
@@ -997,7 +983,7 @@ $.extend(window.docuviz, {
     	        		    	segmentsArray[i].endIndex += entryStr.length;
     	            		}
                         }
-                        // new calculating edits
+                        // self edit v.s. other edit
                         if (effectedSegment.authorId === authorId) {
                             that.adjustStatisticData(authorId, "self", entryStr.length, statisticDataArray);
                         }
@@ -1038,7 +1024,7 @@ $.extend(window.docuviz, {
 
                     if (eachSegment.startIndex === deleteIndex ) {
 
-                    	// new calculating edits
+                    	// self edit v.s. other edit
                     	if (eachSegment.authorId === authorId) {
                             that.adjustStatisticData(authorId, "self", 1, statisticDataArray);
                     	}
@@ -1109,7 +1095,7 @@ $.extend(window.docuviz, {
                     }
                     else if (eachSegment.endIndex === deleteIndex ){
 
-                    	// new calculating edits
+                    	// self edit v.s. other edit
                     	if (eachSegment.authorId === authorId) {
                             that.adjustStatisticData(authorId, "self", 1, statisticDataArray);
                     	}
@@ -1173,7 +1159,7 @@ $.extend(window.docuviz, {
                     	
                     }
                     else if (eachSegment.startIndex < deleteIndex && deleteIndex < eachSegment.endIndex){
-                    	// new calculating edits
+                    	// self edit v.s. other edit
                     	if (eachSegment.authorId === authorId) {
                             that.adjustStatisticData(authorId, "self", 1, statisticDataArray);
                         }
@@ -1293,7 +1279,7 @@ $.extend(window.docuviz, {
         		// delete within the same segment
         		if (deleteStartSegmentLocation === deleteEndSegmentLocation) {
 
-                    // new calculating edits
+                    // self edit v.s. other edit
                     if (effectedSegmentOfDeleteStart.authorId === authorId){
                         that.adjustStatisticData(authorId, "self", (deleteEndIndex - deleteStartIndex + 1), statisticDataArray);    
                     }
@@ -1301,7 +1287,6 @@ $.extend(window.docuviz, {
                         that.adjustStatisticData(authorId, "other", (deleteEndIndex - deleteStartIndex + 1), statisticDataArray);    
                     }
                     // end of calculating edits
-
 
 
         			if(deleteStartIndex > effectedSegmentOfDeleteStart.startIndex && deleteEndIndex < effectedSegmentOfDeleteStart.endIndex){
@@ -1456,7 +1441,7 @@ $.extend(window.docuviz, {
         		// not within one segment, across multiple segments
         		else {
 
-                    // new calculating edits
+                    // self edit v.s. other edit
                     var selfEditCount = 0;
                     var otherEditCount = 0;
 
