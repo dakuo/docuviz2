@@ -225,7 +225,7 @@ $.extend(window.docuviz, {
                     }
                 });
                 _.find(eachRevision[4], function(eachRevEdits){
-                    if (eachRevEdits.authorName === eachAuthor.name){
+                    if (eachRevEdits.authorId === eachAuthor.id){
                         eachRevEdits.authorColor = eachAuthor.color;
                         eachRevEdits.authorContribution = sum;
                     }
