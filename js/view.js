@@ -42,6 +42,7 @@ $.extend(window.docuviz, {
 
         // This method makes the Ajax call using the History URL. The method will grab Google Doc's History Data. In that data, there are important informations such as Revision Numbers and Authors data
         this.getHistoryData(historyUrl);
+
     },
 
 
@@ -748,7 +749,7 @@ $.extend(window.docuviz, {
         });
 
         var statisticsTable = svg.append("foreignObject")
-                            .attr("width",605)
+                            .attr("width",705)
                             .attr("height", 300)
                             .attr(
                                 "transform",
@@ -766,13 +767,52 @@ $.extend(window.docuviz, {
                             .selectAll("th")
                             .data(columnTitles).enter()
                             .append("th")
-                            .attr('class', 'title')
-                            .text(function(title){return title;});
+                            // .attr('title', function(d){ // tooltip for table header
+                            //     if (d==="Edit of Self"){
+                            //         return "Tooltip text for Edit of Self";
+                            //     }
+                            //     else if (d==="Edit of Other"){
+                            //         return "Tooltip text for Edit of Other";
+                            //     }
+                            //     else if (d==="Total Edit"){
+                            //         return "Tooltip text for Total Edit";
+                            //     }
+                            //     else if (d==="Contribution"){
+                            //         return "Tooltip text for Contribution";
+                            //     }
+                            //     else{
+                            //         return "";
+                            //     }
+
+                            // })
+                            .html(function(d){
+
+                                if (d==="Edit of Self"){
+                                    return '<a class="tooltip" title="Tooltip text for Edit of Self">Edit of Self</a>';
+                                }
+                                else if (d==="Edit of Other"){
+                                    return '<a class="tooltip" title="Tooltip text for Edit of Other">Edit of Other</a>';
+                                }
+                                else if (d==="Total Edit"){
+                                    return '<a class="tooltip" title="Tooltip text for Total Edit">Total Edit</a>';
+                                }
+                                else if (d==="Contribution"){
+                                    return '<a class="tooltip" title="Tooltip text for Contribution">Contribution</a>';
+                                }
+                                else{
+                                    return '<a>' + d + '</a>';
+                                }
+
+                                //return '<a class="tooltip" title="Hihi">Hello</a>';
+                                //return title;
+                                //return '<p class="tooltip">' + + '</p>';
+                            });
 
             statisticsTable.append('tbody')
                             .selectAll('tr')
                             .data(theLastRevStatsData).enter()
                             .append('tr')
+                            .attr('height', 25)
                             .selectAll('td')
                             .data(function(row) {
                                 return columnVarNames.map(function(column) {
@@ -787,8 +827,11 @@ $.extend(window.docuviz, {
                                 else if (i===1){ // name
                                     return 150;
                                 }
+                                else if (i===2 || i===3){
+                                    return 150;
+                                }
                                 else{
-                                    return 110;
+                                    return 120;
                                 }
                             })
                             .attr('height', 25)
@@ -1025,6 +1068,16 @@ $.extend(window.docuviz, {
                     return d[1].authorColor;
             })
             .attr("opacity", 0.8);
+
+
+            // setup tooltipster
+            $('.tooltip').tooltipster({
+               delay: 0,
+               trigger: 'hover',
+               iconDesktop: true,
+               contentAsHTML: true,
+               touchDevices: false
+            });
 
     },
 
