@@ -767,45 +767,23 @@ $.extend(window.docuviz, {
                             .selectAll("th")
                             .data(columnTitles).enter()
                             .append("th")
-                            // .attr('title', function(d){ // tooltip for table header
-                            //     if (d==="Edit of Self"){
-                            //         return "Tooltip text for Edit of Self";
-                            //     }
-                            //     else if (d==="Edit of Other"){
-                            //         return "Tooltip text for Edit of Other";
-                            //     }
-                            //     else if (d==="Total Edit"){
-                            //         return "Tooltip text for Total Edit";
-                            //     }
-                            //     else if (d==="Contribution"){
-                            //         return "Tooltip text for Contribution";
-                            //     }
-                            //     else{
-                            //         return "";
-                            //     }
-
-                            // })
                             .html(function(d){
 
                                 if (d==="Edit of Self"){
-                                    return '<a class="tooltip" title="Tooltip text for Edit of Self">Edit of Self</a>';
+                                    return '<a class="tooltip" title="How many characters that were inserted/deleted within the content contributed by himself/herself.">Edit of Self</a>';
                                 }
                                 else if (d==="Edit of Other"){
-                                    return '<a class="tooltip" title="Tooltip text for Edit of Other">Edit of Other</a>';
+                                    return '<a class="tooltip" title="How many characters that were inserted/deleted within the content contributed by others.">Edit of Other</a>';
                                 }
                                 else if (d==="Total Edit"){
-                                    return '<a class="tooltip" title="Tooltip text for Total Edit">Total Edit</a>';
+                                    return '<a class="tooltip" title="How many characters that were inserted/deleted in total. For example, if Alice inserted 500 characters and then deleted those 500 characters, it will be counted as 1,000 edits.">Total Edit</a>';
                                 }
                                 else if (d==="Contribution"){
-                                    return '<a class="tooltip" title="Tooltip text for Contribution">Contribution</a>';
+                                    return '<a class="tooltip" title="How many characters that were left in the final draft.">Contribution</a>';
                                 }
                                 else{
                                     return '<a>' + d + '</a>';
                                 }
-
-                                //return '<a class="tooltip" title="Hihi">Hello</a>';
-                                //return title;
-                                //return '<p class="tooltip">' + + '</p>';
                             });
 
             statisticsTable.append('tbody')
@@ -824,10 +802,7 @@ $.extend(window.docuviz, {
                                 if (i===0){ // color
                                    return 55;
                                 }
-                                else if (i===1){ // name
-                                    return 150;
-                                }
-                                else if (i===2 || i===3){
+                                else if (i===1 || i===2 || i===3){ // name
                                     return 150;
                                 }
                                 else{
@@ -879,7 +854,6 @@ $.extend(window.docuviz, {
                         else{
 
                         }
-                        
                     });
 
         // Draw authors' colors to the table:
@@ -923,8 +897,6 @@ $.extend(window.docuviz, {
                 })
                 .attr("width", x.rangeBand())
                 .attr("height", function(d, i) {
-                    //console.log(d[1].length);
-                    //return y(d[1].length);
                     return y(d.segLength);
                 })
                 .style("fill", function(d) {
@@ -1231,7 +1203,7 @@ $.extend(window.docuviz, {
         });
 
         var statisticsTable = svg.append("foreignObject")
-                            .attr("width",605)
+                            .attr("width",705)
                             .attr("height", 300)
                             .attr(
                                 "transform",
@@ -1249,13 +1221,32 @@ $.extend(window.docuviz, {
                             .selectAll("th")
                             .data(columnTitles).enter()
                             .append("th")
-                            .attr('class', 'title')
-                            .text(function(title){return title;});
+                            // .attr('class', 'title')
+                            // .text(function(title){return title;}
+                            .html(function(d){
+                                 if (d==="Edit of Self"){
+                                     return '<a class="tooltip" title="How many characters that were inserted/deleted within the content contributed by himself/herself.">Edit of Self</a>';
+                                 }
+                                 else if (d==="Edit of Other"){
+                                     return '<a class="tooltip" title="How many characters that were inserted/deleted within the content contributed by others.">Edit of Other</a>';
+                                 }
+                                 else if (d==="Total Edit"){
+                                     return '<a class="tooltip" title="How many characters that were inserted/deleted in total. For example, if Alice inserted 500 characters and then deleted those 500 characters, it will be counted as 1,000 edits.">Total Edit</a>';
+                                 }
+                                 else if (d==="Contribution"){
+                                     return '<a class="tooltip" title="How many characters that were left in the final draft.">Contribution</a>';
+                                 }
+                                 else{
+                                     return '<a>' + d + '</a>';
+                                 }
+                            }
+                            );
 
             statisticsTable.append('tbody')
                             .selectAll('tr')
                             .data(theLastRevStatsData).enter()
                             .append('tr')
+                            .attr('height', 25)
                             .selectAll('td')
                             .data(function(row) {
                                 return columnVarNames.map(function(column) {
@@ -1267,12 +1258,12 @@ $.extend(window.docuviz, {
                                 if (i===0){ // color
                                    return 55;
                                 }
-                                else if (i===1){ // name
+                                else if (i===1 || i===2 || i===3){ // name
                                     return 150;
                                 }
 
                                 else{
-                                    return 110;
+                                    return 120;
                                 }
                             })
                             .attr('height', 25)
@@ -1508,6 +1499,14 @@ $.extend(window.docuviz, {
             .attr("opacity", 0.75)
             .attr("transform", "translate(25,0)");
 
+            // setup tooltipster
+            $('.tooltip').tooltipster({
+               delay: 0,
+               trigger: 'hover',
+               iconDesktop: true,
+               contentAsHTML: true,
+               touchDevices: false
+            });
     },
 
 })
