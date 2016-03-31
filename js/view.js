@@ -165,7 +165,8 @@ $.extend(window.docuviz, {
                 id: id
             };
         };
-        var color10 = d3.scale.category10();
+
+        var d3Color = d3.scale.category20();
 
         _.each(Object.keys(userMap), function(d, i){
 
@@ -173,7 +174,7 @@ $.extend(window.docuviz, {
                 authors.push(Author("Anonymous", "#7F7F7F", d));
             }
             else{
-                authors.push(Author(userMap[d].name, color10(i), d));
+                authors.push(Author(userMap[d].name, d3Color(i), d));
             }
         	
 
@@ -430,7 +431,7 @@ $.extend(window.docuviz, {
 
             var printWindow = window.open('', '', 'left=0,top=0,width=900,height=900,toolbar=0,scrollbars=0,status=0');
             // printWindow.document.write($('.js-author-docuviz').html() + '<svg width=1200 height=600>' + printContent.html() + '<svg>');
-            printWindow.document.write($('.js-doc-title-docuviz').html() + '</br>' + $('.js-author-docuviz').html() + '</br>' + '<svg width=1200 height=800>' + printContent.html() + '<svg>');
+            printWindow.document.write($('.js-doc-title-docuviz').html() + '</br>' + $('.js-author-docuviz').html() + '</br>' + '<svg width=1200 height=1000>' + printContent.html() + '<svg>');
             //console.log(printContent.html());
             $("svg")[0].removeAttribute('viewBox');
             //$('.js-result-docuviz').prepend(chartComponent.html());
@@ -455,12 +456,12 @@ $.extend(window.docuviz, {
         var margin = {
                 top: 150,
                 right: 60,
-                bottom: 280,
+                bottom: 480,
                 left: 60
             },
 
             width = 1280 - margin.left - margin.right,
-            height = 800 - margin.top - margin.bottom;
+            height = 1000 - margin.top - margin.bottom;
 
         // width and height values below are for vizsualization that can scale for any screen resolution:
         //width = $(window).width() - margin.left - margin.right - 150,
@@ -750,11 +751,11 @@ $.extend(window.docuviz, {
 
         var statisticsTable = svg.append("foreignObject")
                             .attr("width",705)
-                            .attr("height", 300)
+                            .attr("height", 500)
                             .attr(
                                 "transform",
                                 "translate(" + (margin.left)
-                                    + "," + (height - margin.bottom + (barHeight*4 )+ 270 ) + ")")
+                                    + "," + (height - 10 + (barHeight*4 ) ) + ")")
                             .append("xhtml:body")
                             .append("table")
                             .attr("border", 1)
@@ -873,7 +874,7 @@ $.extend(window.docuviz, {
         .attr(
             "transform",
             "translate(" + (0)
-                + "," + (height - margin.bottom + 40 + 300 ) + ")");
+                + "," + (height + 60) + ")");
 
 
 
@@ -1204,11 +1205,11 @@ $.extend(window.docuviz, {
 
         var statisticsTable = svg.append("foreignObject")
                             .attr("width",705)
-                            .attr("height", 300)
+                            .attr("height", 500)
                             .attr(
                                 "transform",
                                 "translate(" + (margin.left)
-                                    + "," + (height - margin.bottom + (barHeight*4 )+ 270 ) + ")")
+                                    + "," + (height - 10 + (barHeight*4 )) + ")")
                             .append("xhtml:body")
                             .append("table")
                             .attr("border", 1)
@@ -1332,7 +1333,7 @@ $.extend(window.docuviz, {
         .attr(
             "transform",
             "translate(" + (0)
-                + "," + (height - margin.bottom + 40 + 300 ) + ")");
+                + "," + (height + 60 ) + ")");
 
         // end draw new statictic table
 
