@@ -193,16 +193,11 @@ $.extend(window.docuviz, {
             }
             else if (i > 30){
                 authors.push(Author(userMap[d].name, "#a8a8a8", d));
-
             }
             else{
                 authors.push(Author(userMap[d].name, d3Color(i), d));
             }
-        	
-
         });
-        
-
         return authors;
     },
 
@@ -233,7 +228,6 @@ $.extend(window.docuviz, {
         //     };
         // };
 
-
         _.each(tileInfo, function(tile) {
             var authorsArray = [];
             _.each(tile.users, function(eachAuthor) {
@@ -250,10 +244,6 @@ $.extend(window.docuviz, {
 
 
         });
-
-        // console.log("Time: ");
-        // console.log(that.revTimestamps);
-
     },
 
 
@@ -619,7 +609,6 @@ $.extend(window.docuviz, {
                 currentChartType = 'timeScaled';
                 docuviz.drawTimeScaled(data, margin, width, height, barHeight, authorsColors, beginRev, endRev);
                 timeScaledGraph = $('svg').html();
-
                 
             } else {
                 $('#equal-distance-btn').removeAttr('style');
@@ -631,9 +620,7 @@ $.extend(window.docuviz, {
                 currentChartType = 'timeScaled';
                 docuviz.drawTimeScaled(data, margin, width, height, barHeight, authorsColors, beginRev, endRev);
                 timeScaledGraph = $('svg').html();
-
             }
-
         };
     },
 
@@ -1159,30 +1146,7 @@ $.extend(window.docuviz, {
             .attr("class", "time_label")
             .attr("x", 80)
             .attr("y", function(d, i) {
-                //haha
-                // console.log(x(d.revTime));
-                // var tempYvalue = x(d.revTime);
-                // console.log("temp = " + tempYvalue + "last = " + lastYvalue);
-                // if (x(d.revTime) < yBarEndingPoint && (x(d.revTime) !== 0)){
-                //     //store current revTime in tempYvalue
-                //     yBarEndingPoint += 10;
-                //     lastYvalue = tempYvalue;
-                //     return " ";
-                // }
-                // else if (x(d.revTime) > yBarEndingPoint && (x(d.revTime) !== 0)){
-                //     var tempYvalue = x(d.revTime);
-                //     console.log(lastYvalue + " last and temp " + tempYvalue);
-                //     lastYvalue = tempYvalue;
-                //     return " ";
-                // }
-                // if (abs(x(d.revTime) - lastYvalue) < 10){
-
-                // }
-                // else {
-                //     return x(d.revTime);
-                // }
                 return x(d.revTime);
-                
             })
             .attr("font-family", "sans-serif")
             .attr("font-size", "10px")
@@ -1196,7 +1160,6 @@ $.extend(window.docuviz, {
                     }
                 })
             .attr("transform", "translate(28," + 15 + ") rotate(-90)");
-
 
         // Draw author legends:
 
@@ -1218,7 +1181,6 @@ $.extend(window.docuviz, {
                 })
                 .attr("transform", "translate(21," + (6 * barHeight) + ")");
         }
-
 
         // begin draw new statistic table
         var columnTitles = ['','Name', 'Edit of Self', 'Edit of Other','Total Edit', 'Contribution'];
