@@ -165,13 +165,35 @@ $.extend(window.docuviz, {
                 id: id
             };
         };
+        //set my own range of colors. Using the first 10 colors from category10 and then alternating between every other color
+        //found in category 20.
 
-        var d3Color = d3.scale.category20();
+        //old code
+        // var d3Color = d3.scale.category20();
+
+        var colorArray = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd",
+            "#8c564b", "#e377c2", "#7B8A91", "#bcbd22", "#17becf", "#aec7e8", "#ffbb78", "#98df8a", "#ff9896", "#c5b0d5", "#bd9e39",
+            "#e6550d", "#637939", "#aa2287", "#fed000", "#cedb9c", "#393b79", "#E71AC9", "#FEFC5A", "#c18A61", "#A6B1A5",
+            "#8743fd", "#517EB8", "#014D0B", "#B90367", "#C54d07" ];
+
+        
+        //check size of users and use math to append more colors to colorarray based on the number of users.
+        //ex: 80 users. colorArray.append(80-30(50 colors of gray into the colorArray))
+            
+        //new code
+        var d3Color = d3.scale.category20().range(colorArray);
+        //colors will repeat if more than 20 authors. range can accomodate for more than 20 colors in the array of hex colors.
+    
 
         _.each(Object.keys(userMap), function(d, i){
 
             if (userMap[d].anonymous === true){
-                authors.push(Author("Anonymous", "#7F7F7F", d));
+                //need to keep track of all unique anonymous users.
+                authors.push(Author("Anonymous Author(s)", "#D3D3D3", d));
+            }
+            else if (i > 30){
+                authors.push(Author(userMap[d].name, "#a8a8a8", d));
+
             }
             else{
                 authors.push(Author(userMap[d].name, d3Color(i), d));
@@ -179,6 +201,7 @@ $.extend(window.docuviz, {
         	
 
         });
+        
 
         return authors;
     },
@@ -583,6 +606,7 @@ $.extend(window.docuviz, {
             docuviz.drawEqualDistance(data, margin, width, height, barHeight, authorsColors, beginRev, endRev);
         };
 
+
         document.getElementById('time-scaled-btn').onclick = function() { // if time scaled button is clicked
 
             if (timeScaledGraph === null) {
@@ -595,6 +619,8 @@ $.extend(window.docuviz, {
                 currentChartType = 'timeScaled';
                 docuviz.drawTimeScaled(data, margin, width, height, barHeight, authorsColors, beginRev, endRev);
                 timeScaledGraph = $('svg').html();
+
+                
             } else {
                 $('#equal-distance-btn').removeAttr('style');
                 $('svg').remove();
@@ -669,6 +695,7 @@ $.extend(window.docuviz, {
             })));
 
         // Draw time labels:
+        var lastYvalue = 0;
         var time_label = svg.selectAll("time_label").data(data).enter()
             .append("text")
             .attr("class", "time_label")
@@ -681,7 +708,11 @@ $.extend(window.docuviz, {
             .attr("fill", "black")
             .html(
                 function(d) {
-                    return d.revTime.toString().substring(4, 10) + " " + d.revTime.toString().substring(16, 21);
+                    var tempYvalue = d.revTime;
+                    if (Math.abs(tempYvalue - lastYvalue) > 10 || (tempYvalue - lastYvalue) === 0){
+                        lastYvalue = tempYvalue;
+                        return d.revTime.toString().substring(4, 10) + " " + d.revTime.toString().substring(16, 21);
+                    }
                 })
             .attr("transform", "translate(4," + 15 + ") rotate(-90)");
 
@@ -1122,21 +1153,50 @@ $.extend(window.docuviz, {
 
 
         // Draw time label:
+        var lastYvalue = 0;
         var time_label = svg.selectAll("time_label").data(data).enter()
             .append("text")
             .attr("class", "time_label")
             .attr("x", 80)
             .attr("y", function(d, i) {
+                //haha
+                // console.log(x(d.revTime));
+                // var tempYvalue = x(d.revTime);
+                // console.log("temp = " + tempYvalue + "last = " + lastYvalue);
+                // if (x(d.revTime) < yBarEndingPoint && (x(d.revTime) !== 0)){
+                //     //store current revTime in tempYvalue
+                //     yBarEndingPoint += 10;
+                //     lastYvalue = tempYvalue;
+                //     return " ";
+                // }
+                // else if (x(d.revTime) > yBarEndingPoint && (x(d.revTime) !== 0)){
+                //     var tempYvalue = x(d.revTime);
+                //     console.log(lastYvalue + " last and temp " + tempYvalue);
+                //     lastYvalue = tempYvalue;
+                //     return " ";
+                // }
+                // if (abs(x(d.revTime) - lastYvalue) < 10){
+
+                // }
+                // else {
+                //     return x(d.revTime);
+                // }
                 return x(d.revTime);
+                
             })
             .attr("font-family", "sans-serif")
             .attr("font-size", "10px")
-            .attr("fill", "black")
+             .attr("fill", "black")
             .html(
                 function(d) {
-                    return d.revTime.toString().substring(4, 10) + " " + d.revTime.toString().substring(16, 21);
+                    var tempYvalue = x(d.revTime);
+                    if (Math.abs(tempYvalue - lastYvalue) > 10 || (tempYvalue - lastYvalue) === 0){
+                        lastYvalue = tempYvalue;
+                        return d.revTime.toString().substring(4, 10) + " " + d.revTime.toString().substring(16, 21);
+                    }
                 })
             .attr("transform", "translate(28," + 15 + ") rotate(-90)");
+
 
         // Draw author legends:
 
