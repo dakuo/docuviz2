@@ -153,7 +153,10 @@ $.extend(window.docuviz, {
     // parseAuthors method receive "raw authors" data (JSON Object) and maniputlate on that JSON Object to return a set of structural Author Object.
     // ** BB
     parseAuthors: function(userMap) {
-        var 
+        var rawData,
+            i,
+            rawAuthors = [],
+            authorId = [],
             authors = [];
 
         // Author is a factory that creat "author object" a set of structural property and value.
@@ -168,9 +171,7 @@ $.extend(window.docuviz, {
         //set my own range of colors. Using the first 10 colors from category10 and then alternating between every other color
         //found in category 20.
 
-        //old code
-        // var d3Color = d3.scale.category20();
-
+   
         var colorArray = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd",
             "#8c564b", "#e377c2", "#7B8A91", "#bcbd22", "#17becf", "#aec7e8", "#ffbb78", "#98df8a", "#ff9896", "#c5b0d5", "#bd9e39",
             "#e6550d", "#637939", "#aa2287", "#fed000", "#cedb9c", "#393b79", "#E71AC9", "#FEFC5A", "#c18A61", "#A6B1A5",
@@ -183,6 +184,46 @@ $.extend(window.docuviz, {
         //new code
         var d3Color = d3.scale.category20().range(colorArray);
         //colors will repeat if more than 20 authors. range can accomodate for more than 20 colors in the array of hex colors.
+
+        //authorviz CHANGES HERE
+        // rawData = _.map(data, function(val) {
+        //         return val[1];
+        // });
+
+
+        // // _.flatten removes one level of from the Array hierarchy
+        // // e.g.
+        // // _.flatten([a,b,[c],[[d]]], true);
+        // // The result of the above function would be
+        // // [a,b,c,[d]]
+        // rawData = _.flatten(rawData, true);
+
+
+        // // _.each loops through the rawData and do something for each value
+        // _.each(rawData, function(val) {
+        //     //val[2] = Name
+        //     //val[3] = Color
+        //     //val[4] = ID
+        //     rawAuthors.push(Author(val[2], val[3], val[4]));
+        //     authorId.push(val[4]);
+        // });
+
+        // authorId = _.intersection(authorId);
+
+        // _.each(authorId, function(val) {
+        //     authors.push(_.findWhere(rawAuthors, {
+        //         id: val
+        //     }));
+        // });
+
+        // _.each(authors, function(val, index) {
+        //     if (val.id === undefined) { // handle anonymous user which ID is undefined
+        //         val.name = "Anonymous";
+        //         val.color = "#D3D3D3";
+        //     }
+        // });
+
+        //END AUTHORVIZ CHANGES
     
 
         _.each(Object.keys(userMap), function(d, i){
@@ -436,17 +477,21 @@ $.extend(window.docuviz, {
 
         $(document).on('click', '.js-print-docuviz', function() {
             //$("svg").attr('viewBox','0 100 1600 800');
-            //var newWidth = parseInt($("svg").attr("width")) + parseInt(100);
-            $("svg")[0].setAttribute('viewBox', '0 0 1000 800');
+            // //var newWidth = parseInt($("svg").attr("width")) + parseInt(100);
+            // $("svg")[0].setAttribute('viewBox', '0 0 400 400');
             var printContent = $('.js-result-docuviz svg');
 
 
+            var doc_height = $(document).height();
+            var doc_width = $(document).width();
 
-            var printWindow = window.open('', '', 'left=0,top=0,width=900,height=900,toolbar=0,scrollbars=0,status=0');
+            var printWindow = window.open('', '', 'left=0,top=0,width=' + doc_width.toString() + ' ,height='+ doc_height.toString() + ' ,toolbar=0,scrollbars=0,status=0');
             // printWindow.document.write($('.js-author-docuviz').html() + '<svg width=1200 height=600>' + printContent.html() + '<svg>');
-            printWindow.document.write($('.js-doc-title-docuviz').html() + '</br>' + $('.js-author-docuviz').html() + '</br>' + '<svg width=1200 height=1000>' + printContent.html() + '<svg>');
-            //console.log(printContent.html());
-            $("svg")[0].removeAttribute('viewBox');
+            printWindow.document.write($('.js-doc-title-docuviz').html() + '</br>' + $('.js-author-docuviz').html() + '</br>' + '<svg viewBox = "0 0 ' +
+            doc_width*.55.toString() + " " + doc_height*.75.toString() + '" , width=' + doc_width*0.25.toString() +", height=" + doc_height*0.5.toString() + '>' + printContent.html() + '</svg>');
+
+            // //console.log(printContent.html());
+            // $("svg")[0].removeAttribute('viewBox');
             //$('.js-result-docuviz').prepend(chartComponent.html());
 
             printWindow.document.close();
