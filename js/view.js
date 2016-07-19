@@ -482,13 +482,13 @@ $.extend(window.docuviz, {
             var printContent = $('.js-result-docuviz svg');
 
 
-            var doc_height = $(document).height();
-            var doc_width = $(document).width();
+            var doc_height = $(window).height();
+            var doc_width = $(window).width();
 
             var printWindow = window.open('', '', 'left=0,top=0,width=' + doc_width.toString() + ' ,height='+ doc_height.toString() + ' ,toolbar=0,scrollbars=0,status=0');
             // printWindow.document.write($('.js-author-docuviz').html() + '<svg width=1200 height=600>' + printContent.html() + '<svg>');
             printWindow.document.write($('.js-doc-title-docuviz').html() + '</br>' + $('.js-author-docuviz').html() + '</br>' + '<svg viewBox = "0 0 ' +
-            doc_width*.55.toString() + " " + doc_height*.75.toString() + '" , width=' + doc_width*0.25.toString() +", height=" + doc_height*0.5.toString() + '>' + printContent.html() + '</svg>');
+            doc_width*.65.toString() + " " + doc_height*.75.toString() + '" , width=' + doc_width*0.5.toString() +", height=" + doc_height*0.5.toString() + '>' + printContent.html() + '</svg>');
 
             // //console.log(printContent.html());
             // $("svg")[0].removeAttribute('viewBox');
