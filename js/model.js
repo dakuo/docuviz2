@@ -26,7 +26,8 @@ String.prototype.insert = function(index, string) {
 
 
 // If authorviz is already exist, use it. Otherwise make a new object
-window.docuviz = window.docuviz || {}
+window.docuviz = {}
+var runViz = false;
 
 $.extend(window.docuviz, {
 
@@ -238,7 +239,31 @@ $.extend(window.docuviz, {
         return newRevisionData;
     },
 
-    buildRevisions: function(vizType, docId, changelog, authors, revTimestamps, revAuthors) {
+    checkRunning: function(docId){
+        chrome.tabs.query({
+                url: '*://docs.google.com/*/' + docId + '/edit*'
+            }, function(tabs) {
+                if (runViz){
+                    chrome.tabs.sendMessage(tabs[0].id, {
+                    msg: 'alreadyRunning'
+                    }, function(response) {
+                    });
+                }
+                else{
+                    runViz = true; 
+                    chrome.tabs.sendMessage(tabs[0].id, {
+                    msg: 'doAjax'
+                    // vizRunning: vizRunning
+                    }, function(response) {
+                    });
+                
+                }
+            }
+        );
+
+    },
+
+    buildRevisions: function(docId, changelog, authors, revTimestamps, revAuthors) {
         // Clear previous revision data
         this.str = [];
         this.firstRevisionSegments = [];
@@ -257,8 +282,6 @@ $.extend(window.docuviz, {
             authorId = null,
             revsForFrontend = [],
             statisticDataArray = [],
-            //currentRevID = 0,
-            //segsInFirstRev = null,
             differentAuthor = null;
 
 
@@ -297,7 +320,8 @@ $.extend(window.docuviz, {
 
                 chrome.tabs.sendMessage(tabs[0].id, {
                     msg: 'progress',
-                    soFar: soFar + 1
+                    soFar: soFar + 1,
+                    runViz: runViz
                 }, function(response) {
                     that.analyzeEachEditInChangelog(command, authorId, that.revID, that.currentSegID, that.allSegmentsInCurrentRev, statisticDataArray);                    
 
@@ -339,6 +363,7 @@ $.extend(window.docuviz, {
 
                     // reaching the end of changelog, calculate the contributions and push it to frontend
                     if (soFar === (editCount-1) ) {
+                        runViz = false;
                     	// calculate and combine the revision's contributions to the revsForFrontend
                     	revsForFrontend = that.calculateRevContribution(revsForFrontend, authors);
 
@@ -346,7 +371,8 @@ $.extend(window.docuviz, {
                 	        msg: 'renderDocuviz',
                 	        chars: that.str,
                 	        // calculate the revision's contributions, edit Nov 02, 2015 by Kenny
-                	        revData: revsForFrontend
+                	        revData: revsForFrontend,
+                            runViz: runViz
                 	    }, function(response) {});
 
                     }
@@ -1656,9 +1682,12 @@ $.extend(window.docuviz, {
 chrome.runtime.onMessage.addListener(
     function(request, sender, sendResponse) {
         switch (request.msg) {
+            case 'inquiry':
+                docuviz.checkRunning(request.docId);
+                break;
             // If the message is 'changelog', run 'buildRevision'
             case 'changelog':
-                window.docuviz.buildRevisions(request.vizType, request.docId, request.changelog, request.authors, request.revTimestamps, request.revAuthors);
+                docuviz.buildRevisions(request.docId, request.changelog, request.authors, request.revTimestamps, request.revAuthors);
                 break;
 
             default:

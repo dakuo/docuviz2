@@ -9,7 +9,7 @@
 var $ = jQuery.noConflict()
 
 // If authorviz is already exist, use it. Otherwise make a new object
-window.docuviz = window.docuviz || {}
+window.docuviz = {}
 
 
 // Add new properties to the existing object's properties
@@ -21,6 +21,36 @@ $.extend(window.docuviz, {
     revTimestamps: [],
     revisionLengths: [],
 
+    confirm: function(message, title, okAction) {
+            $("<div>docuviz-dialog</div>").dialog({
+                show: {
+                    effect: "bounce",
+                    duration: 1000
+                  },
+
+                hide: {
+                    effect: 'fade',
+                    duration: 1000
+                },
+                
+                open: function(event, ui) {
+
+                //removes x from button titlebar
+                $(".ui-dialog-titlebar-close").hide();
+                }, 
+                buttons: {
+                    "Ok": function() {
+                        $(this).dialog("close");
+                        okAction();
+                    }
+
+                },
+                close: function(event, ui) { $(this).remove(); },
+                resizable: false,
+                title: title,
+                modal: true
+            }).text(message).prev(".ui-dialog-titlebar").css("background","#1f77b4");
+        },
 
     // Loaded lets us know whether users run Authorviz or not. If they already ran it, "loaded" will be set to "true" and the next time they click on the Authorviz Button again, the app won't load the revisions again and simply display the results since they already loaded the revisions on their first time clicking the Authorviz Button
     loaded: false,
@@ -139,7 +169,6 @@ $.extend(window.docuviz, {
                     revisionNumber = raw.tileInfo[raw.tileInfo.length-1].end;
 
                 that.setRevisionNumber(revisionNumber);
-                //$('.js-authorviz-btn').removeClass('is-disabled');
                 $('.js-docuviz-btn').removeClass('is-disabled');
 
                 that.authors = that.parseAuthors(raw.userMap); // set list of authors
@@ -193,11 +222,16 @@ $.extend(window.docuviz, {
             }
             else if (i > 30){
                 authors.push(Author(userMap[d].name, "#a8a8a8", d));
+
             }
             else{
                 authors.push(Author(userMap[d].name, d3Color(i), d));
             }
+        	
+
         });
+        
+
         return authors;
     },
 
@@ -228,6 +262,7 @@ $.extend(window.docuviz, {
         //     };
         // };
 
+
         _.each(tileInfo, function(tile) {
             var authorsArray = [];
             _.each(tile.users, function(eachAuthor) {
@@ -244,6 +279,10 @@ $.extend(window.docuviz, {
 
 
         });
+
+        // console.log("Time: ");
+        // console.log(that.revTimestamps);
+
     },
 
 
@@ -310,30 +349,51 @@ $.extend(window.docuviz, {
     addListenerToDocuvizBtn: function() {
         var that = this;
 
-        // When the button is click, show the app and disable this button
+        // if click, check with model if there is existing viz running
         $(document).on('click', '.js-docuviz-btn', function() {
-            var changelogUrl = null;
-            $('.js-result-docuviz').html('')
-            // Make the App Visible to user
-            $('.js-docuviz').removeClass('hideVisually');
-            // $('.js-progress-bar').removeClass('hideVisually');
-            // console.log('got docuviz');
 
-            changelogUrl = that.getChangelogUrlForDocuviz(location.href);
-            that.getChangelog(changelogUrl, 'docuviz');
+            //make the jqueryui change here and in MANIFEST
 
-            //Remove the click event from Docuviz button
-            $(document).off('click', '.js-docuviz-btn');
-        });
+            chrome.runtime.sendMessage({
+                    msg: 'inquiry',
+                    docId: that.getDocId()
+                }, function(response) {
+                });
+            });  
+
     },
 
+    alertVizRunning: function(){
+        docuviz.confirm("There is another instance of docuviz Running. Please wait until it is completed and try again.",
+             "Another instance running!", function(){
+                //maybe do another jqueryui effect here.
+            });
+        //while loop check if running, check every x amount of seconds.
+    },
+
+    startViz: function(){
+        var that = this;
+        var changelogUrl = null;
+
+        $('.js-result-docuviz').html('')
+        // Make the App Visible to user
+        $('.js-docuviz').removeClass('hideVisually');
+        $('.js-progress-bar').removeClass('hideVisually');
+
+        changelogUrl = that.getChangelogUrlForDocuviz(location.href);
+        that.getChangelog(changelogUrl, 'docuviz');
+
+        //Remove the click event from Docuviz button
+        $(document).off('click', '.js-docuviz-btn');
+
+    },
 
     // *************************************
     //   RENDER (Inject HTML in the page)
     // *************************************
 
     renderApp: function() {
-        // js-authorviz: Authoviz App
+        // js-docuviz: Docuviz App
         // js-progress-bar: Progress Bar
         // js-progress-so-far: Updated part of Progress Bar
         // js-revision-so-far: Revision Number so far
@@ -358,7 +418,7 @@ $.extend(window.docuviz, {
     renderDocuvizBtn: function() {
         var btnGroup = $('#docs-titlebar-share-client-button').prev();
 
-        // js-authorviz: feature btn
+        // js-docuviz: feature btn
         // js-revision-number: revision number
         $('<div class="goog-inline-block js-docuviz-btn is-disabled"><div role="button" class="goog-inline-block jfk-button jfk-button-standard docs-titlebar-button jfk-button-clear-outline" aria-disabled="false" aria-pressed="false" tabindex="0" data-tooltip="Docuviz" aria-label="Docuviz" value="undefined" style="-webkit-user-select: none;">DocuViz (<span class="js-revision-number-docuviz">loading</span> changes)</div><div id="docs-docos-caret" style="display: none" class="docos-enable-new-header"><div class="docs-docos-caret-outer"></div><div class="docs-docos-caret-inner"></div></div></div>').prependTo(btnGroup);
         this.addListenerToDocuvizBtn();
@@ -436,17 +496,22 @@ $.extend(window.docuviz, {
 
         $(document).on('click', '.js-print-docuviz', function() {
             //$("svg").attr('viewBox','0 100 1600 800');
-            //var newWidth = parseInt($("svg").attr("width")) + parseInt(100);
-            $("svg")[0].setAttribute('viewBox', '0 0 1000 800');
+            // //var newWidth = parseInt($("svg").attr("width")) + parseInt(100);
+            // $("svg")[0].setAttribute('viewBox', '0 0 400 400');
             var printContent = $('.js-result-docuviz svg');
 
 
+            var doc_height = $(window).height();
+            var doc_width = $(window).width();
+            // console.log(doc_width, doc_height);
 
-            var printWindow = window.open('', '', 'left=0,top=0,width=900,height=900,toolbar=0,scrollbars=0,status=0');
+            var printWindow = window.open('', '', 'left=0,top=0,width=' + doc_width.toString() + ' ,height='+ doc_height.toString() + ' ,toolbar=0,scrollbars=0,status=0');
             // printWindow.document.write($('.js-author-docuviz').html() + '<svg width=1200 height=600>' + printContent.html() + '<svg>');
-            printWindow.document.write($('.js-doc-title-docuviz').html() + '</br>' + $('.js-author-docuviz').html() + '</br>' + '<svg width=1200 height=1000>' + printContent.html() + '<svg>');
-            //console.log(printContent.html());
-            $("svg")[0].removeAttribute('viewBox');
+            printWindow.document.write($('.js-doc-title-docuviz').html() + '</br>' + $('.js-author-docuviz').html() + '</br>' + '<svg viewBox = "0 0 ' +
+            doc_width*.65.toString() + " " + doc_height.toString() + '" , width=' + doc_width*0.5.toString() +", height=" + doc_height*.5.toString() + '>' + printContent.html() + '</svg>');
+
+            // //console.log(printContent.html());
+            // $("svg")[0].removeAttribute('viewBox');
             //$('.js-result-docuviz').prepend(chartComponent.html());
 
             printWindow.document.close();
@@ -475,11 +540,6 @@ $.extend(window.docuviz, {
 
             width = 1280 - margin.left - margin.right,
             height = 1000 - margin.top - margin.bottom;
-
-        // width and height values below are for vizsualization that can scale for any screen resolution:
-        //width = $(window).width() - margin.left - margin.right - 150,
-        //height = $(window).height() - margin.top - margin.bottom - ($(window).height()/10 * 2);
-
 
         var barHeight = 10; // author bar height
 
@@ -609,6 +669,7 @@ $.extend(window.docuviz, {
                 currentChartType = 'timeScaled';
                 docuviz.drawTimeScaled(data, margin, width, height, barHeight, authorsColors, beginRev, endRev);
                 timeScaledGraph = $('svg').html();
+
                 
             } else {
                 $('#equal-distance-btn').removeAttr('style');
@@ -620,7 +681,9 @@ $.extend(window.docuviz, {
                 currentChartType = 'timeScaled';
                 docuviz.drawTimeScaled(data, margin, width, height, barHeight, authorsColors, beginRev, endRev);
                 timeScaledGraph = $('svg').html();
+
             }
+
         };
     },
 
@@ -1146,7 +1209,9 @@ $.extend(window.docuviz, {
             .attr("class", "time_label")
             .attr("x", 80)
             .attr("y", function(d, i) {
+
                 return x(d.revTime);
+                
             })
             .attr("font-family", "sans-serif")
             .attr("font-size", "10px")
@@ -1160,6 +1225,7 @@ $.extend(window.docuviz, {
                     }
                 })
             .attr("transform", "translate(28," + 15 + ") rotate(-90)");
+
 
         // Draw author legends:
 
@@ -1181,6 +1247,7 @@ $.extend(window.docuviz, {
                 })
                 .attr("transform", "translate(21," + (6 * barHeight) + ")");
         }
+
 
         // begin draw new statistic table
         var columnTitles = ['','Name', 'Edit of Self', 'Edit of Other','Total Edit', 'Contribution'];
@@ -1535,27 +1602,30 @@ $.extend(window.docuviz, {
 })
 
 
-// When Google Doc is finished loading, initialize authorViz app
+// When Google Doc is finished loading, initialize docuviz app
 docuviz.init();
 
 
 // These methods are provided by Chrome API
-// chrome.runtime.onMessage method listen to the Model. Whenever Model wants to send data over to View, this method will activate and listen the call
 chrome.runtime.onMessage.addListener(
     function(request, sender, sendResponse) {
         switch (request.msg) {
+            case 'doAjax':
+                console.log("doajxx");
+                docuviz.startViz();
+                break;
+            case 'alreadyRunning':
+                console.log("already");
+                docuviz.alertVizRunning();
+                break;
             case 'progress':
-                window.docuviz.renderProgressBar(request.soFar, request.outOf);
+                // $(document).off('click', '.js-docuviz-btn');
+                docuviz.renderProgressBar(request.soFar, request.outOf);
                 sendResponse('done');
                 break;
-
-            case 'render':
-                docuviz.renderResultPanel(request.html);
-                sendResponse('end');
-                break;
-
-            case 'renderDocuviz': // this is when the Docuviz button is pressed
-                window.docuviz.renderResultPanelForDocuviz(request.chars, request.revData); 
+            case 'renderDocuviz':
+                // $(document).on('click', '.js-docuviz-btn');
+                docuviz.renderResultPanelForDocuviz(request.chars, request.revData); 
                 sendResponse('end');
                 break;
 
