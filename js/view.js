@@ -100,7 +100,6 @@ $.extend(window.docuviz, {
 
         }
 
-
         historyUrl = http + '/revisions/tiles?id=' + this.getDocId() + "&token=" + token + "&start=1&showDetailedRevisions=false";
         // console.log("historyUrl is at: ");
         // console.log(historyUrl);
@@ -135,106 +134,16 @@ $.extend(window.docuviz, {
 
             // If the call success, turn the result DATA into JSON object and get the important information (Revision number & authors data)
             success: function(data) {
-
                 var raw = jQuery.parseJSON(data.substring(4)),
                     // revisionNumber = raw[2][raw[2].length - 1][3];
-                    firstRev = raw.firstRev;
-
-console.log("firstRev"+firstRev);
-
-                if (firstRev === 1) {
-
                     revisionNumber = raw.tileInfo[raw.tileInfo.length-1].end;
-                    that.setRevisionNumber(revisionNumber);
-                    //$('.js-authorviz-btn').removeClass('is-disabled');
-                    $('.js-docuviz-btn').removeClass('is-disabled');
 
-                    that.authors = that.parseAuthors(raw.userMap); // set list of authors
-                    that.parseRevTimestampsAuthors(raw.tileInfo, that.authors); // set an array of authors which correspond for revisions' time
-                }
-                else {
-                    // 2021.03.09 By Dakuo
-                    // Sometimes Goolge Doc history is too long so Google decided to break it up to multiple requests, the marker is the firstRev field in the response, if it's 1 then it's good; if not, we need to send another AJAX call.
-                    // The current implementtation is limited to two requests only, this is really bad, we need an iterative solution but I don't have time for it now.
+                that.setRevisionNumber(revisionNumber);
+                //$('.js-authorviz-btn').removeClass('is-disabled');
+                $('.js-docuviz-btn').removeClass('is-disabled');
 
-                    revisionNumber = raw.tileInfo[raw.tileInfo.length-1].end;
-                    that.setRevisionNumber(revisionNumber);
-                    //$('.js-authorviz-btn').removeClass('is-disabled');
-                    $('.js-docuviz-btn').removeClass('is-disabled');
-                    that.authors = that.parseAuthors(raw.userMap); // set list of authors
-                    that.parseRevTimestampsAuthors(raw.tileInfo, that.authors); // set an array of authors which correspond for revisions' time
-
-                    var token = that.getToken(),
-                    regexMatch = url.match("((https?:\/\/)?docs\.google\.com\/(.*?\/)*document\/d\/(.*?))\/edit"),
-                    http = regexMatch[1],
-
-                    historyUrl = null;
-                    historyUrl = http + '/revisions/tiles?id=' + that.getDocId() + "&token=" + token + "&start=1&end=" + firstRev + "&showDetailedRevisions=false";
-
-
-                    var erCounter = 0;
-                    $.ajax({
-                        type: 'GET',
-                        url: historyUrl,
-                        dataType: 'html',
-                        error: function(request, error) {
-                            //TODO
-                        },
-                        success: function(data) {
-                            var tempRaw = jQuery.parseJSON(data.substring(4));
-                            var tempAuthor = that.parseAuthors(tempRaw.userMap);
-
-                            _.each(tempAuthor, function(val) {
-                                var exist = false;
-                                _.each(that.authors, function(val2) {
-                                    if (val.name === val2.name) {
-                                        exist = true;
-                                    }
-                                    else {
-
-                                    }
-
-                                });
-                                if (exist === false){
-
-                                    if (val.name === "Anonymous Author(s)"){
-                                        //need to keep track of all unique anonymous users.
-                                        that.authors.push(val);
-                                    }
-                                    else if (that.authors.length > 30){
-                                        that.authors.push(Author(val.name, "#a8a8a8", val.id));
-                                    }
-                                    else{
-                                        that.authors.push(Author(val.name, d3Color(that.authors.length-1), val.id));
-                                    }
-                                }
-
-                            });
-                            
-
-                            _.each(tempRaw.tileInfo, function(tile) {
-                                var authorsArray = [];
-                                _.each(tile.users, function(eachAuthor) {
-
-                                    var author = _.find(that.authors, function(val) {
-                                        return eachAuthor === val.id;
-                                    });
-
-                                    authorsArray.push(author);
-                                });
-
-                                that.revTimestamps.push(tile.endMillis);
-                                that.revAuthors.push(authorsArray);
-
-
-                            }); 
-
-                        },
-                    })
-
-                }
-
-                
+                that.authors = that.parseAuthors(raw.userMap); // set list of authors
+                that.parseRevTimestampsAuthors(raw.tileInfo, that.authors); // set an array of authors which correspond for revisions' time
 
             }
         })

@@ -2,15 +2,10 @@
   "manifest_version": 2,
 
   "name": "DocuViz",
-  "version": "3.10",
+  "version": "3.6",
   "description": "Visualize the evolution of authors' contributions in a Google Doc",
   "background": {
     "scripts": ["js/lib/underscore.js", "js/lib/jquery.min.js","js/lib/async.js","js/model.js","js/lib/d3.min.js"]
-  },
-  "icons":{
-    "16": "icon16.png",
-    "48": "icon48.png",
-    "128": "icon128.png"
   },
   "content_scripts":[{
     "matches" : ["*://docs.google.com/*"],
@@ -18,6 +13,7 @@
     "js": ["js/lib/underscore.js", "js/lib/jquery.min.js","js/view.js","js/lib/d3.min.js","js/lib/async.js", "js/lib/jquery-ui.min.js","js/lib/jquery.tooltipster.min.js"]
   }],
   "permissions": [
+    "webRequest",
     "activeTab",
     "*://docs.google.com/*"
   ],
