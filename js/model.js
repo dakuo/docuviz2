@@ -534,6 +534,7 @@ $.extend(window.docuviz, {
         		}
         		// start Index =  effected . startIndex, effectedSegment in the middle
         		else{
+                    segmentLocation = segmentLocation === 0 ? 1: segmentLocation;
         			if(effectedSegment.permanentFlag === true && segmentsArray[segmentLocation-1].permanentFlag === true){
         				that.currentSegID += 1;
         				var currentSeg = that.constructSegment(authorId, entryStr, that.currentSegID, that.currentSegID, 0, that.revID, startIndex, (startIndex + entryStr.length - 1), "new segment insert between two permanentflag== true", false);
