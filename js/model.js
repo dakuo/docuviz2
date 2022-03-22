@@ -1247,10 +1247,13 @@ $.extend(window.docuviz, {
         		});
 
         		if (effectedSegmentOfDeleteStart === undefined){
-        			console.log(deleteStartIndex);
-        			console.log(segmentsArray);
-        			console.log("error 1");
+                    //console.log(deleteStartIndex);
+                    //console.log(segmentsArray);
+                    //console.log("error 1");
 
+                    deleteStartSegmentLocation = 0;
+                    effectedSegmentOfDeleteStart = segmentsArray[0];
+                    deleteStartIndex = effectedSegmentOfDeleteStart.startIndex;
         		}
 
 
