@@ -49,13 +49,9 @@ $.extend(window.docuviz, {
     // Set Token on Body Tag
     // ** BB
     setToken: function() {
-        var code = function() {
-            document.getElementsByTagName('body')[0].setAttribute("tok", _docs_flag_initialData.info_params.token)
-        };
-        var script = document.createElement('script');
-        script.textContent = '(' + code + ')()';
-        (document.head || document.documentElement).appendChild(script);
-        script.parentNode.removeChild(script);
+        chrome.runtime.sendMessage({
+            msg: 'setToken'
+        });
     },
 
 

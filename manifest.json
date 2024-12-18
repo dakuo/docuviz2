@@ -1,24 +1,56 @@
 {
-  "manifest_version": 2,
-
+  "manifest_version": 3,
   "name": "DocuViz",
   "version": "3.6",
   "description": "Visualize the evolution of authors' contributions in a Google Doc",
   "background": {
-    "scripts": ["js/lib/underscore.js", "js/lib/jquery.min.js","js/lib/async.js","js/model.js","js/lib/d3.min.js"]
+    "service_worker": "js/background.js"
   },
-  "content_scripts":[{
-    "matches" : ["*://docs.google.com/*"],
-    "css": ["css/global.css","css/jquery-ui.min.css","css/tooltipster.css"],
-    "js": ["js/lib/underscore.js", "js/lib/jquery.min.js","js/view.js","js/lib/d3.min.js","js/lib/async.js", "js/lib/jquery-ui.min.js","js/lib/jquery.tooltipster.min.js"]
-  }],
+  "content_scripts": [
+    {
+      "matches": [
+        "*://docs.google.com/*"
+      ],
+      "css": [
+        "css/global.css",
+        "css/jquery-ui.min.css",
+        "css/tooltipster.css"
+      ],
+      "js": [
+        "js/lib/underscore.js",
+        "js/lib/jquery.min.js",
+        "js/view.js",
+        "js/lib/d3.min.js",
+        "js/lib/async.js",
+        "js/lib/jquery-ui.min.js",
+        "js/lib/jquery.tooltipster.min.js"
+      ]
+    }
+  ],
   "permissions": [
     "webRequest",
     "activeTab",
+    "scripting",
+    "webNavigation"
+  ],
+  "host_permissions": [
     "*://docs.google.com/*"
   ],
   "web_accessible_resources": [
-      "css/global.css",
-      "js/lib/underscore-min.map"
-    ]
+    {
+      "resources": [
+        "css/global.css",
+        "js/lib/underscore-min.map"
+      ],
+      "matches": [
+        "<all_urls>"
+      ]
+    }
+  ],
+  "action": {
+    "default_title": "DocuViz"
+  },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'"
+  }
 }

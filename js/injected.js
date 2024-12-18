@@ -1,0 +1,1 @@
+document.getElementsByTagName('body')[0].setAttribute("tok", _docs_flag_initialData.info_params.token);
