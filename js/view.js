@@ -79,9 +79,11 @@ $.extend(window.docuviz, {
     // Construct History URL to be use in an Ajax call
     // ** BB
     getHistoryUrl: function(url, switchUrl) {
-        var token = this.getToken(),
-            regexMatch = url.match("((https?:\/\/)?docs\.google\.com\/(.*?\/)*document\/d\/(.*?))\/edit"),
-            http = regexMatch[1],
+        var token = this.getToken();
+        console.log(token);
+        var regexMatch = url.match("((https?:\/\/)?docs\.google\.com\/(.*?\/)*document\/d\/(.*?))\/edit");
+        console.log(url, regexMatch);
+        var http = regexMatch[1];
 
             historyUrl = null;
 
@@ -448,7 +450,10 @@ $.extend(window.docuviz, {
             printWindow.document.close();
             printWindow.focus();
             printWindow.print();
-            printWindow.close();
+            printWindow.afterprint = function() {
+                printWindow.close();
+            };
+            // printWindow.close();
         });
     },
 
